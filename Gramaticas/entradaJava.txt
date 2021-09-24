@@ -1,0 +1,7 @@
+
+
+public static void main (String args[]){
+    int x=2;
+    float y = 3;
+    char z = '4';
+}
