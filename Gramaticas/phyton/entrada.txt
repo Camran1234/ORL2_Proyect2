@@ -1,0 +1,10 @@
+"""Comentario Nuevo"""  
+	"""COMENTARIO"""
+	"""COMENTARIO"""
+	"""COMENTARIO"""
+	def 	funcion	(	x	):
+	if x > 2 :
+	print("a")
+	if x>2++3-(4**5))) :
+	elif x>3 $$
+	print$$

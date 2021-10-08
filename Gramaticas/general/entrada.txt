@@ -1,0 +1,30 @@
+paquete com.paquete1 //Igual al de paquetes en java
+%%PY
+    Funciones y Procedimientos en Python
+
+
+
+
+                
+%%JAVA
+    Clases en Java
+%%PROGRAMA
+    Seccion de librerias de C //opcionales
+    #include “PY” //incluye el código en Python
+    #include “PY.dir_a_paquete.archivo” //incluye el código en Python
+    definido en el archivo ‘archivo’.
+    #include “JAVA.*” //incluye todas las clases declaradas en
+    //la sección de Java
+    #include “JAVA.nombre” //incluye una clase en especifico
+    //declarada en la sección de Java
+    #include “JAVA.dir_a_paquete.nombre” //incluye una clase
+    existente en el paquete dir_a_paquete
+    #include “JAVA.dir_a_paquete.*” //incluye todas las clases
+    existente en el paquete dir_a_paquete
+    // no hay orden en las instrucciones de la seccion de librerias
+    Seccion declaración de Constantes
+    Seccion de Variables Globales
+    void main()
+    {
+    // Programa principal
+    }

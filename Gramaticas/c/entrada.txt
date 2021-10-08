@@ -1,0 +1,55 @@
+#include "PY"
+#include "JAVA"
+
+/*
+    Comentario
+            De linea
+Mulitple
+*/
+void main(){
+    //var
+    const int x = 2;
+    float y = 4+3-7;
+    char z = (x+y+PY.metodoNuevo());
+    char nuevaClase = JAVA.identificador.Calculadora();
+    JAVA.Calculadora identificador(3, "ASD");
+
+    x++;
+    y--;
+    //metodo
+    PY.metodoAlternativo();
+    PY.metodoRe(General, 4+5, 7>0 && 8 < 10);
+    //if
+    if(JAVA.identificador.getValor() > 4){
+
+    }else if( x == y){
+
+    }else{
+
+    }
+    //for
+    for(int index=0; index<4; index++){
+
+    }
+    //while
+    while(z == 'r'){
+        printf("Nuevo Valor");
+        z++;
+    }
+    //do_while
+    do{
+        scanf("Ingrese un valor: ", &puntero);
+        printf("Entonces el valor es:", puntero);
+    }while(r == k);
+    //switch
+    switch(y){
+        case 2:
+
+        break;
+        case 1:
+
+        break;
+        default:
+
+    }
+}
