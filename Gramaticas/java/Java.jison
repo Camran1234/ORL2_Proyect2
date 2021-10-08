@@ -294,6 +294,7 @@
 %{
     
 %}
+    %left 'PUBLIC' 'PRIVATE'
     %left 'OR'
     %left 'AND'    
     %left 'MAYOR_IGUAL' 'MENOR_IGUAL' 'DIFERENTE' 'IGUAL_IGUAL' 'MAYOR' 'MENOR' 'IGUAL'
@@ -303,7 +304,6 @@
     %left 'POW'
     %left 'UMINUS'
     %left 'OPEN_PARENTHESIS' 'CLOSE_PARENTHESIS'
-    
     
     
 
@@ -358,6 +358,8 @@ entry_stmt
 
 this_stmt
     : THIS DOT IDENTIFICADOR
+    | THIS error
+    | THIS DOT error
     | IDENTIFICADOR
     ;
 
@@ -375,8 +377,8 @@ class_stmt
         ;
 
 class_instructions
-        : class_instructions class_instruction
-        | class_instructions error  {addSyntaxError("declaracion esperada en "+$1,this._$.first_line, this._$.first_column);}
+        : class_instructions identifier class_instruction
+        | class_instructions identifier error  {addSyntaxError("declaracion esperada en "+$1,this._$.first_line, this._$.first_column);}
         | error {addSyntaxError("declaracion no reconocida, agregar \'}\' en "+$1,this._$.first_line, this._$.first_column);}
         | CLOSE_CURLY 
         ;
@@ -403,7 +405,13 @@ function_stmt
         ;
 
 variable_stmt
-        : nombre_variables
+        : IDENTIFICADOR asignacion_variable variable_stmt_re
+        ;
+
+variable_stmt_re
+        : variable_stmt_re COMA IDENTIFICADOR asignacion_variable
+        | variable_stmt_re COMA error
+        | COLON
         ;
 
 class_statements
@@ -412,13 +420,16 @@ class_statements
         | error
         ;
 
-constructor
-        : IDENTIFICADOR OPEN_PARENTHESIS function_parameters OPEN_CURLY instruction
+constructor_class
+        : IDENTIFICADOR OPEN_PARENTHESIS function_parameters OPEN_CURLY instructions
+        | IDENTIFICADOR error
+        | IDENTIFICADOR OPEN_PARENTHESIS error
+        | IDENTIFICADOR OPEN_PARENTHESIS function_parameters error 
         ;
 
 class_instruction
-        : identifier data_type class_statements
-        | identifier constructor
+        : data_type class_statements
+        | constructor_class
         | identifier error {addSyntaxError("Se esperaba un tipo de dato: int, char...",this._$.first_line, this._$.first_column);}
         ;
 
@@ -497,7 +508,7 @@ asignacion_post
     ;
 
 nombre_variables
-    : this_stmt asignacion_variable nombre_variables_res
+    : this_stmt asignacion_variable nombre_variables_re
     ;
 
 nombre_variables_re
