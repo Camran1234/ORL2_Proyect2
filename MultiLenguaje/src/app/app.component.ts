@@ -3,7 +3,9 @@ import { AfterViewInit, Component, ElementRef, ViewChild } from "@angular/core";
 
 // 1️⃣
 import * as ace from "ace-builds";
-import * as parserJava from "../assets/js/parsers/java/Java.js";
+import Parser from "../assets/js/Parser.js";
+import {CodeService} from "./client/app.server";
+
 
 @Component({
   selector: 'app-root',
@@ -15,6 +17,12 @@ export class AppComponent implements AfterViewInit {
   line: string = 'Linea: 1 Column: 0';;
   title="MultiLenguaje";
   texto="Ingrese su codigo Aqui";
+  parser: Parser;
+
+  constructor(private codeService:CodeService){
+    
+  }
+
   // 3️⃣
   @ViewChild("editor") private editor: ElementRef<HTMLElement>;
   // 3️⃣
@@ -43,15 +51,34 @@ export class AppComponent implements AfterViewInit {
     this.line="Linea: "+currentLineNumber+" Columna: "+currentColumnNumber;
   }
 
-  parseJava(){
-    var inputText = this.salida.toString();
-
+  parseCode(){
+    /*var Parser = require("../assets/js/Parser");*/
+    const aceEditor = ace.edit(this.editor.nativeElement);
+    console.log("Entrando");
+    var codigo = aceEditor.getValue();
+    var jsonCodigo = {
+      codigo: codigo
+    };
+    var jsonString = JSON.stringify(jsonCodigo);
+    /*var parseador = new Parser(jsonString);
+    this.parser = parseador;
+    parseador.parse();*/
+    this.codeService.parse(JSON.parse(jsonString));
+    this.revisarErrores();
   }
-  
-  
-  
 
+  revisarErrores(){
+    /*var parseador = this.parser;
+    if(!parseador.isParsed()){
+      //Manejar Errores
+    }else{
+      this.revisarEjecucion();
+    }*/
+  }
 
-  
+  revisarEjecucion(){
+    //Manejar respuestas
+  }
+
 }
 

@@ -34,7 +34,7 @@
     </div>
     <div class="editor-wrapper">
       <div class="editor-desktop-top-bar">
-        Items2
+        <button mat-raised-button color="primary" (click)="parseCode()" ><mat-icon>arrow_forward_ios</mat-icon>Run</button>
       </div>
       <div class="wp-block-column">
         <div class="app-ace-editor-entry" name="entry" #editor (click)="getCurrentLineAndNumber()"  (keyup)="getCurrentLineAndNumber()" >
