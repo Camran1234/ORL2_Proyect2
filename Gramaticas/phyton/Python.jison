@@ -1,10 +1,24 @@
 /*Parsea python*/
 
 %{
+    //imports
+    var ErrorLexico = require ('../../../error/LexicalError');
+    var ErrorSintactico = require('../../../error/SyntaxError');
+    //variables
+    let erroresLexicos=[];
+    let erroresSintacticos=[];
     let indentation=0;
     let estado=0;
     let lineNumber=0;
     let columnNumber=0;
+
+    function getErroresLexico(){
+        return erroresLexicos;
+    }
+
+    function getErroresSintacticos(){
+        return erroresSintacticos;
+    }
 
     function setLineNumber(line){
         this.lineNumber=line;
@@ -14,7 +28,23 @@
         this.columnNumber=column;
     }
 
-    
+    function addLexicalError(lexema, line, column){
+        try{
+            let errorLexico = new ErrorLexico(lexema, line+lineNumber, column+columnNumber);
+            erroresLexicos.add(errorLexico);
+        }catch(ex){
+            console.log(ex);
+        }
+    }
+
+    function addSyntaxError(descripcion, token, line, column){
+        try{
+            let errorSintactico = new ErrorSintactico(descripcion, token, line+lineNumber, column+columnNumber);
+            erroresSintacticos.add(errorSintactico);
+        }catch(ex){
+            console.log(ex);
+        }
+    }
 
 %}
 
@@ -337,6 +367,7 @@ console.log(yytext); return'IDENTIFICADOR';
 
 .+	{                             
         console.log("ERROR LEXICO "+yytext);
+        addLexicalError(yytext, yylloc.first_line, yylloc.first_column);
     }
 <<EOF>>  return'EOF';
 /lex
@@ -355,6 +386,7 @@ console.log(yytext); return'IDENTIFICADOR';
     %left 'POW'
     %left 'UMINUS'
     %left 'OPEN_PARENTHESIS' 'CLOSE_PARENTHESIS'
+    
 %start ini
 
 %% 
@@ -363,6 +395,8 @@ console.log(yytext); return'IDENTIFICADOR';
 
 input
     :INPUT OPEN_PARENTHESIS CLOSE_PARENTHESIS
+    |INPUT error {addSyntaxError("Se esperaba \'(\'",$2,this._$.first_line, this._$.first_column);}
+    |INPUT OPEN_PARENTHESIS error {addSyntaxError("Se esperaba \')\'",$3,this._$.first_line, this._$.first_column);}
     ;
 
 expresion
@@ -394,28 +428,27 @@ expresion
 
 ini
     : statements EOF
-    | ini error 
+    | ini error {addSyntaxError("Se esperaba una funcion",$2,this._$.first_line, this._$.first_column);}
     ;
 
 /*Funcion*/
 parameters
     : IDENTIFICADOR parameters_re
-    | %empty /*empty*/
+    |  /*empty*/
     ;
 
 parameters_re
     : parameters_re COMA  IDENTIFICADOR
-    |parameters_re error
-    |%empty /*empty*/
+    |parameters_re error {addSyntaxError("Se esperaba \')\' u otro parametro",$2,this._$.first_line, this._$.first_column);}
+    | /*empty*/
     ;
 
 function_stmt
     :DEF IDENTIFICADOR OPEN_PARENTHESIS parameters CLOSE_PARENTHESIS SEMI_COLON SPACE 
-    |DEF error 
-    |DEF IDENTIFICADOR error
-    |DEF IDENTIFICADOR OPEN_PARENTHESIS error
-    |DEF IDENTIFICADOR OPEN_PARENTHESIS parameters CLOSE_PARENTHESIS error
-    |DEF IDENTIFICADOR OPEN_PARENTHESIS parameters CLOSE_PARENTHESIS SEMI_COLON error
+    |DEF error {addSyntaxError("Se esperaba un identificador",$2,this._$.first_line, this._$.first_column);}
+    |DEF IDENTIFICADOR error {addSyntaxError("Se esperaba \'(\'",$3,this._$.first_line, this._$.first_column);}
+    |DEF IDENTIFICADOR OPEN_PARENTHESIS parameters CLOSE_PARENTHESIS error {addSyntaxError("Se esperaba \':\'",$6,this._$.first_line, this._$.first_column);}
+    |DEF IDENTIFICADOR OPEN_PARENTHESIS parameters CLOSE_PARENTHESIS SEMI_COLON error {addSyntaxError("Se esperaba un salto de linea",$7,this._$.first_line, this._$.first_column);}
     ;
 
 /*End of Funcion*/
@@ -428,8 +461,8 @@ statements
     | statements function_stmt
     | statements SPACE
     | statements INDENTATION
-    | statements error
-    |%empty /*empty*/
+    | statements error {addSyntaxError("Se esperaba una funcion",$2,this._$.first_line, this._$.first_column);}
+    | /*empty*/
     ;
 
 statement
@@ -439,21 +472,20 @@ statement
     | while_stmt
     | print_stmt 
     | CONTINUE SPACE
-    | CONTINUE error
+    | CONTINUE error {addSyntaxError("Se esperaba salto de linea",$2,this._$.first_line, this._$.first_column);}
     | BREAK SPACE
-    | BREAK error
+    | BREAK error {addSyntaxError("Se esperaba un salto de linea",$2,this._$.first_line, this._$.first_column);}
     ;
 /*End of Declaraciones*/
 
 /*Print statement*/
 print_parameter
-    : expresion print_stmt_re
+    : expresion print_parameter_re
     ;
 
 print_parameter_re
-    : print_stmt_re COMA expresion 
-    | print_stmt_re error
-    | %empty /*empty*/
+    : print_parameter_re COMA expresion 
+    |  /*empty*/
     ;
 
 print_method
@@ -463,27 +495,26 @@ print_method
 
 print_stmt
     : print_method  OPEN_PARENTHESIS print_parameter CLOSE_PARENTHESIS SPACE
-    | print_method error 
-    | print_method OPEN_PARENTHESIS error 
-    | print_method OPEN_PARENTHESIS print_parameter error 
-    | print_method OPEN_PARENTHESIS print_parameter CLOSE_PARENTHESIS error
+    | print_method error {addSyntaxError("Se esperaba \'(\'",$2,this._$.first_line, this._$.first_column);}
+    | print_method OPEN_PARENTHESIS error {addSyntaxError("Se esperaba una cadena",$3,this._$.first_line, this._$.first_column);}
+    | print_method OPEN_PARENTHESIS print_parameter error {addSyntaxError("Se esperaba \')\'",$4,this._$.first_line, this._$.first_column);}
+    | print_method OPEN_PARENTHESIS print_parameter CLOSE_PARENTHESIS error {addSyntaxError("Se esperaba un salto de linea",$5,this._$.first_line, this._$.first_column);}
     ;
 /*End of Print statement*/
 
 /*If statement*/
 if_stmt
     : IF expresion SEMI_COLON SPACE
-    | IF expresion error 
-    | IF expresion SEMI_COLON error
-    | IF error
+    | IF error {addSyntaxError("Se esperaba una condicion",$2,this._$.first_line, this._$.first_column);}
+    | IF expresion error {addSyntaxError("Se esperaba \':\'",$3,this._$.first_line, this._$.first_column);}
+    | IF expresion SEMI_COLON error {addSyntaxError("Se esperaba un salto de linea",$4,this._$.first_line, this._$.first_column);}
     | ELIF expresion SEMI_COLON SPACE
-    | ELIF error SEMI_COLON SPACE
-    | ELIF expresion error SPACE
-    | ELIF expresion SEMI_COLON error 
-    | ELIF error
+    | ELIF error {addSyntaxError("Se esperaba una condicion",$2,this._$.first_line, this._$.first_column);}
+    | ELIF expresion error {addSyntaxError("Se esperaba \':\'",$3,this._$.first_line, this._$.first_column);}
+    | ELIF expresion SEMI_COLON error {addSyntaxError("Se esperaba un salto de linea",$4,this._$.first_line, this._$.first_column);}
     | ELSE SEMI_COLON SPACE
-    | ELSE error
-    | ELSE SEMI_COLON error
+    | ELSE error {addSyntaxError("Se esperaba \':\'",$2,this._$.first_line, this._$.first_column);}
+    | ELSE SEMI_COLON error {addSyntaxError("Se esperaba un salto de linea",$3,this._$.first_line, this._$.first_column);}
     ;
 /*End of statement*/
 
@@ -494,32 +525,32 @@ for_parameters
 
 for_parameters_re
     : for_parameters_re COMA expresion
-    | for_parameters_re error
-    | %empty /*empty*/
+    | for_parameters_re error {addSyntaxError("Se esperaba \')\' u otra parametro",$2,this._$.first_line, this._$.first_column);}
+    |  /*empty*/
     ;
 
 rango
     :RANGE OPEN_PARENTHESIS for_parameters CLOSE_PARENTHESIS
-    |RANGE error 
-    |RANGE OPEN_PARENTHESIS error 
+    |RANGE error {addSyntaxError("Se esperaba \'(\'",$2,this._$.first_line, this._$.first_column);}
+    |RANGE OPEN_PARENTHESIS error {addSyntaxError("Se esperaba indicar un rango",$3,this._$.first_line, this._$.first_column);}
     ;
 
 for_stmt
     : FOR IDENTIFICADOR IN rango SEMI_COLON SPACE
-    | FOR error 
-    | FOR IDENTIFICADOR error 
-    | FOR IDENTIFICADOR IN error 
-    | FOR IDENTIFICADOR IN rango error 
-    | FOR IDENTIFICADOR IN rango SEMI_COLON error
+    | FOR error {addSyntaxError("Se esperaba un identificador",$2,this._$.first_line, this._$.first_column);}
+    | FOR IDENTIFICADOR error {addSyntaxError("Se esperaba la palabra reservada \'in\'",$3,this._$.first_line, this._$.first_column);}
+    | FOR IDENTIFICADOR IN error {addSyntaxError("Se esperaba un rango",$4,this._$.first_line, this._$.first_column);} 
+    | FOR IDENTIFICADOR IN rango error {addSyntaxError("Se esperaba \':\'",$5,this._$.first_line, this._$.first_column);} 
+    | FOR IDENTIFICADOR IN rango SEMI_COLON error {addSyntaxError("Se esperaba un salto de linea",$6,this._$.first_line, this._$.first_column);}
     ;
 /*End of statement*/
 
 /*While statement*/
 while_stmt
     : WHILE expresion SEMI_COLON SPACE
-    | WHILE error 
-    | WHILE expresion error 
-    | WHILE expresion SEMI_COLON error
+    | WHILE error {addSyntaxError("Se esperaba una condicion",$2,this._$.first_line, this._$.first_column);}
+    | WHILE expresion error {addSyntaxError("Se esperaba \':\'",$3,this._$.first_line, this._$.first_column);}
+    | WHILE expresion SEMI_COLON error {addSyntaxError("Se esperaba un salto de linea",$4,this._$.first_line, this._$.first_column);}
     ;
 /*End of statement*/
 /*Variable statement*/
@@ -539,22 +570,22 @@ nombre_variables
 
 nombre_variables_re
     : nombre_variables_re COMA IDENTIFICADOR
-    | %empty /*empty*/
+    |  /*empty*/
     ;
 
 asignacion
     : igualaciones expresion asignacion_re
-    | igualaciones error 
+    | igualaciones error {addSyntaxError("Se esperaba una asignacion",$2,this._$.first_line, this._$.first_column);}
     ;
 
 asignacion_re
     : asignacion_re igualaciones expresion 
-    | asignacion_re error
-    | %empty /*empty*/
+    | asignacion_re error {addSyntaxError("Se esperaba un salto de linea",$2,this._$.first_line, this._$.first_column);}
+    |  /*empty*/
     ;
 
 var_stmt
     : nombre_variables asignacion SPACE
-    | nombre_variables error
+    | nombre_variables error {addSyntaxError("Se esperaba un salto de linea",$2,this._$.first_line, this._$.first_column);}
     ;
 /*End of statement*/

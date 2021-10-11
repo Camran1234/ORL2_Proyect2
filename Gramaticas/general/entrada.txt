@@ -3,11 +3,7 @@ paquete com.paquete1 //Igual al de paquetes en java
 @)I$)!
 %%PY
     Funciones y Procedimientos en Python
-
-
-
-
-                
+        
 %%JAVA
     Clases en Java
 %%PROGRAMA

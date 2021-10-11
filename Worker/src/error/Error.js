@@ -1,4 +1,4 @@
-export default class Error{
+class Error{
     constructor(linea, column, tipo){
         this.linea = linea;
         this.column = column;
@@ -17,3 +17,4 @@ export default class Error{
         return this.tipo;
     }
 }
+module.exports = Error;

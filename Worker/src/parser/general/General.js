@@ -72,21 +72,92 @@
   }
 */
 var General = (function(){
-var o=function(k,v,o,l){for(o=o||{},l=k.length;l--;o[k[l]]=v);return o},$V0=[2,11],$V1=[2,2],$V2=[1,4],$V3=[2,4,11,12,14],$V4=[2,12],$V5=[2,10],$V6=[2,14],$V7=[2,7],$V8=[1,23],$V9=[1,22],$Va=[2,4,7,10,16,18];
+var o=function(k,v,o,l){for(o=o||{},l=k.length;l--;o[k[l]]=v);return o},$V0=[2,2],$V1=[1,8],$V2=[2,9],$V3=[2,5],$V4=[1,21],$V5=[1,20],$V6=[2,4,6,9,15,17];
 var parser = {trace: function trace () { },
 yy: {},
-symbols_: {"error":2,"space_stmt":3,"SPACE":4,"space_stmt_re":5,"texto":6,"CHUNK":7,"ini":8,"paqueteria":9,"EOF":10,"PAQUETE":11,"PAQUETERIA":12,"condicional_py":13,"PY":14,"condicional_java":15,"JAVA":16,"condicional_c":17,"PROGRAMA":18,"$accept":0,"$end":1},
-terminals_: {2:"error",4:"SPACE",7:"CHUNK",10:"EOF",11:"PAQUETE",12:"PAQUETERIA",14:"PY",16:"JAVA",18:"PROGRAMA"},
-productions_: [0,[3,2],[3,0],[5,2],[5,0],[6,2],[6,2],[6,0],[8,2],[8,3],[9,6],[9,2],[9,4],[9,6],[13,3],[13,3],[15,3],[15,3],[17,2]],
+symbols_: {"error":2,"space_stmt":3,"SPACE":4,"texto":5,"CHUNK":6,"ini":7,"paqueteria":8,"EOF":9,"PAQUETE":10,"PAQUETERIA":11,"condicional_py":12,"PY":13,"condicional_java":14,"JAVA":15,"condicional_c":16,"PROGRAMA":17,"$accept":0,"$end":1},
+terminals_: {2:"error",4:"SPACE",6:"CHUNK",9:"EOF",10:"PAQUETE",11:"PAQUETERIA",13:"PY",15:"JAVA",17:"PROGRAMA"},
+productions_: [0,[3,2],[3,0],[5,2],[5,2],[5,0],[7,2],[7,3],[8,6],[8,2],[8,4],[8,6],[12,3],[12,3],[14,3],[14,3],[16,2]],
 performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate /* action[1] */, $$ /* vstack */, _$ /* lstack */) {
 /* this == yyval */
 
 var $0 = $$.length - 1;
 switch (yystate) {
+case 1:
+
+        console.log("ESPACIO");
+        $$[$0-1].push($$[$0].toString());
+        this.$=$$[$0-1]
+    
+break;
+case 2:
+
+        console.log("EMPTY");
+        this.$ = [];
+    
+break;
+case 3: case 4:
+
+        $$[$0-1].push($$[$0].toString());
+        this.$ = $$[$0-1];
+    
+break;
+case 5:
+
+        console.log("Vacio");
+        this.$=[];
+        
+break;
+case 6:
+console.log("ALGO");
+break;
+case 7:
+addSyntaxError("Se esperaba el final del archivo", $$[$0-1], this._$.first_line, this._$.first_column);
+break;
+case 8:
+this.dirPaquete = $$[$0-2].toString();
+break;
+case 9:
+addSyntaxError("Paqueteria no encontrada, falta agregar \'paqueteria\'",$$[$0], this._$.first_line, this._$.first_column);
+break;
+case 10:
+addSyntaxError("direccion de paquete no encontrada",$$[$0], this._$.first_line, this._$.first_column);
+break;
+case 11:
+addSyntaxError("Se esperaba el codigo python, agregar \'%%PY\' para leer el codigo",$$[$0], this._$.first_line, this._$.first_column);
+break;
+case 12:
+
+        setCodigoPython($$[$0-1]);
+        setLinePython(this._$.first_line);
+        setColumnPython(this._$.first_column);
+    
+break;
+case 13:
+addSyntaxError("Se esperaba el codigo JAVA, agregar \'%%JAVA\'", $$[$0], this._$.first_line, this._$.first_column);
+break;
+case 14:
+
+        console.log("INICIANDO AQUI");
+        setCodigoJava($$[$0-1]);
+        setLineJava(this._$.first_line);
+        setColumnJava(this._$.first_column);
+    
+break;
+case 15:
+addSyntaxError("Se esperaba el codigo C, agregar \'%%PROGRAMA\'",$$[$0], this._$.first_line, this._$.first_column);
+break;
+case 16:
+
+        setCodigoC($$[$0]);
+        setLineC(this._$.first_line);
+        setColumnC(this._$.first_column);
+    
+break;
 }
 },
-table: [o($V0,$V1,{8:1,9:2,3:3,4:$V2}),{1:[3]},{2:[1,6],10:[1,5]},{2:[1,8],11:[1,7]},o($V3,[2,4],{5:9}),{1:[2,8]},{10:[1,10]},o($V4,$V1,{3:11,4:$V2}),o($V5,$V0),o([2,11,12,14],[2,1],{4:[1,12]}),{1:[2,9]},{2:[1,14],12:[1,13]},o($V3,[2,3]),o($V6,$V1,{3:15,4:$V2}),o($V5,$V4),{2:[1,17],13:16,14:[1,18]},o($V5,$V5),o($V5,[2,13]),o([2,4,7,16],$V7,{6:19}),{2:[1,21],4:$V8,7:$V9,15:20,16:[1,24]},o($V5,$V6),o($V5,[2,15]),o($Va,[2,5]),o($Va,[2,6]),o([2,4,7,18],$V7,{6:25}),{2:[1,27],4:$V8,7:$V9,17:26,18:[1,28]},o($V5,[2,16]),o($V5,[2,17]),o([2,4,7,10],$V7,{6:29}),o($V5,[2,18],{4:$V8,7:$V9})],
-defaultActions: {5:[2,8],10:[2,9]},
+table: [o([2,4,10],$V0,{7:1,8:2,3:3}),{1:[3]},{2:[1,5],9:[1,4]},{2:[1,7],4:$V1,10:[1,6]},{1:[2,6]},{9:[1,9]},o([2,4,11],$V0,{3:10}),o($V2,$V2),o([2,4,10,11,13],[2,1]),{1:[2,7]},{2:[1,12],4:$V1,11:[1,11]},o([2,4,13],$V0,{3:13}),o($V2,[2,10]),{2:[1,15],4:$V1,12:14,13:[1,16]},o($V2,[2,8]),o($V2,[2,11]),o([2,4,6,15],$V3,{5:17}),{2:[1,19],4:$V4,6:$V5,14:18,15:[1,22]},o($V2,[2,12]),o($V2,[2,13]),o($V6,[2,3]),o($V6,[2,4]),o([2,4,6,17],$V3,{5:23}),{2:[1,25],4:$V4,6:$V5,16:24,17:[1,26]},o($V2,[2,14]),o($V2,[2,15]),o([2,4,6,9],$V3,{5:27}),o($V2,[2,16],{4:$V4,6:$V5})],
+defaultActions: {4:[2,6],9:[2,7]},
 parseError: function parseError (str, hash) {
     if (hash.recoverable) {
         this.trace(str);
@@ -340,14 +411,111 @@ _handle_error:
     var ErrorSintactico = require("../../error/SyntaxError");
     //variables
     let estado=0;
-    let erroresLexicos = [];
-    let erroresSintacticos = [];
+    let erroresLexicos;
+    let erroresSintacticos;
+    //codigo Java
+    let lineJava=0;
+    let columnJava=0;
+    let codigoJava="";
+    //codigo C
+    let lineC = 0;
+    let columnC = 0;
+    let codigoC = "";
+    //codigo python
+    let linePython = 0;
+    let columnPython = 0;
+    let codigoPython = "";
+    let dirPaquete = "";
+    
+    module.exports.setErroresLexicos = function (errores){
+        erroresLexicos = errores;
+    }
 
-    function getErroresLexicos(){
+    module.exports.setErroresSintacticos = function (errores){
+        erroresSintacticos = errores;
+    }
+
+    module.exports.getPaquete = function (){
+        return dirPaquete;
+    }
+
+    function setCodigoPython(codigo){
+        codigoPython = codigo.join('');
+    }
+
+    function setLinePython(line){
+        linePython = line;
+    }
+
+    function setColumnPython(column){
+        columnPython = column;
+    }
+
+    function setCodigoC(codigo){
+        codigoC = codigo.join('');
+    }
+
+    function setLineC(linea){
+        lineC = linea;
+    }
+
+    function setColumnC(columna){
+        columnC = columna
+    }
+
+    function setCodigoJava(codigo){
+        codigoJava=codigo.join('');
+    }
+
+    function setLineJava(linea){
+        lineJava = linea;
+    }
+
+    function setColumnJava(column){
+        columnJava = column
+    }
+
+    module.exports.getCodigoJava = function (){
+        return codigoJava;
+    }
+
+    module.exports.getLineJava = function (){
+        return lineJava;
+    }
+
+    module.exports.getColumnJava = function (){
+        return columnJava;
+    }
+
+    module.exports.getCodigoC = function (){
+        return codigoC;
+    }
+
+    module.exports.getLineC = function (){
+        return lineC;
+    }
+
+    module.exports.getColumnC = function (){
+        return columnC;
+    }
+
+    module.exports.getCodigoPython = function (){
+        return codigoPython;
+    }
+
+    module.exports.getLinePython = function (){
+        return linePython;
+    }
+
+    module.exports.getColumnPython = function(){
+        return columnPython;
+    }
+
+    module.exports.getErroresLexicos = function (){
         return erroresLexicos;
     }
 
-    function getErroresSintacticos(){
+    module.exports.getErroresSintacticos = function (){
         return erroresSintacticos;
     }
 
@@ -363,7 +531,7 @@ _handle_error:
     function addSyntaxError(descripcion, token, line, column){
         try{
             let errorSintactico = new ErrorSintactico(descripcion, token, line, column);
-            erroresSintacticos.push(errroSintactico);
+            erroresSintacticos.push(errorSintactico);
         }catch(ex){
             console.log("ERROR FATAL EN addSyntaxError: "+ex);
         }
@@ -371,7 +539,7 @@ _handle_error:
     
     
 
-	
+    
 /* generated by jison-lex 0.3.4 */
 var lexer = (function(){
 var lexer = ({
@@ -703,54 +871,51 @@ switch($avoiding_name_collisions) {
 case 0:
     console.log("Paquete: "+yy_.yytext);
             if(estado==1){
-                return 7;
+                return 6;
             }else {                
-                return 11;
+                return 10;
             }
         
 break;
 case 1:
-                    console.log("Paqueteria: "+yy_.yytext); 
                     if(estado==1){
-                        return 7;
+                        return 6;
                     }else{
-                        return 12;
+                        return 11;
                     }
                 
 break;
 case 2:
     console.log(yy_.yytext);
     estado=1;
-    return 14;
+    return 13;
     
 break;
 case 3:
     console.log(yy_.yytext);
     estado=1;
-    return 16;
+    return 15;
     
 break;
 case 4:
     console.log(yy_.yytext);
     estado=1;
-    return 18;
+    return 17;
     
 break;
 case 5:return 4;
 break;
 case 6:
-        console.log("comentario: "+yy_.yytext)
             if(estado==1){
-                return 7;
+                return 6;
             }else{
                 /*ignore*/;
             }
         
 break;
 case 7:
-        console.log("comentario multiple: "+yy_.yytext)
             if(estado==1){
-                return 7;
+                return 6;
             }else{
                 /*ignore*/;
             }
@@ -758,14 +923,13 @@ case 7:
 break;
 case 8:
     if(estado==0){
-        this.addLexicalError(yy_.yytext, yy_.yylloc.first_line, yy_.yylloc.first_column);
+        addLexicalError(yy_.yytext, yy_.yylloc.first_line, yy_.yylloc.first_column);
     }else{
-        console.log("Chunk: "+yy_.yytext);
-        return 7;
+        return 6;
     }
 
 break;
-case 9:return 10;
+case 9:return 9;
 break;
 }
 },

@@ -1,14 +1,14 @@
 /*Parsea Java*/
 
 %{
-    let lexicalErrorsArray = [];
-    let syntaxErrors = [];
-    let estado = false;
-    let errorLinea = 0;
-    let errorColumna = 0;
-    /*let LexicalError = require('../error/LexicalError.js').default;
-    let SyntaxError = require('../error/SyntaxError.js').default;*/
-    let lexemaError = "";
+    //import
+    let ErrorLexico = require('../../../error/LexicalError.js');
+    let ErrorSintactico = require('../../../error/SyntaxError.js');
+    //Errores
+    let erroresLexicos = [];
+    let erroresSintacticos = [];
+
+    //Lineas extras
     let lineNumber = 0;
     let columnNumber=0;
 
@@ -25,19 +25,15 @@
     }
 
     function addLexicalError(lexema, linea, column){                        
-        if(estado){
-            /* let errorLexico = new LexicalError(lexema, linea+lineNumber, column+columnNumber);
-            lexicalErrorsArray.push(errorLexico);
-            lexemaError="";
-            errorLinea=0;
-            errorColumna=0;*/
-            estado=false;
-        }
+        let errorLexico = new ErrorLexico(lexema, linea, column);
+        erroresLexicos.push(errorLexico);
     }
 
-    function addSyntaxError(descripcion, linea, columna){
-        /*let errorSintactico = new SyntaxError(descripcion, linea+lineNumber, columna+columnNumber);
-        syntaxErrors.push(errorSintactico);*/
+    function addSyntaxError( descripcion, token, linea, columna){
+        let newLine = linea + lineNumber;
+        let newColumn = columna + columnNumber;
+        let errorSintactico = new ErrorSintactico(descripcion, token, newLine, newColumn);
+        erroresSintacticos.push(errorSintactico);
     }
 %}
 
@@ -46,9 +42,8 @@
 
 
 "package"  { 
-                return 'PACKAGE';       
+                return 'PACKAGE';
             }
-
 
 ">=" { 
             return 'MAYOR_IGUAL';       
@@ -59,7 +54,7 @@
 "!=" { 
     return 'DIFERENTE';               
             }
-"==" {return 'IGUAL_IGUAL';}
+"==" {return 'COMPARACION';}
 
 "&&" { 
                            return 'AND';       
@@ -281,13 +276,7 @@
 \s+                                 /*ignore*/;
 "//".*                              /*ignore*/;
 [/][*][^*]*[*]+([^/*][^*]*[*]+)*[/] /*ignore*/;
-.+   { 
-                console.log("ERROR EN "+yytext);
-                estado = true;
-               
-                errorLinea = yylloc.first_line;
-                errorColumna = yylloc.first_column;
-            }					
+.+   { addLexicalError(yytext, yylloc.first_line, yylloc.first_column);}					
 
 
 /lex
@@ -297,7 +286,7 @@
     %left 'PUBLIC' 'PRIVATE'
     %left 'OR'
     %left 'AND'    
-    %left 'MAYOR_IGUAL' 'MENOR_IGUAL' 'DIFERENTE' 'IGUAL_IGUAL' 'MAYOR' 'MENOR' 'IGUAL'
+    %left 'MAYOR_IGUAL' 'MENOR_IGUAL' 'DIFERENTE' 'COMPARACION' 'MAYOR' 'MENOR' 'IGUAL'
     %left 'NOT'
     %left 'SUMA' 'RESTA'
     %left 'POR' 'DIV' 'MOD'
@@ -314,15 +303,18 @@
 
 ini 
     : class_stmt ini
-        |EOF
+    | error ini {addSyntaxError("Se espera una clase de java", $1, this._$.first_line, this._$.first_column);}
+    | EOF
         ;
 
 concatenate_values
         :expresion concatenate_values_re
+        |expresion error {addSyntaxError("Se esperaba mas parametros o \')\'", $2, this._$.first_line, this._$.first_column);}
         ;
 
 concatenate_values_re
         :COMA expresion concatenate_values_re
+        |COMA error concatenate_values_re {addSyntaxError("Se esperaba una expresion", $2, this._$.first_line, this._$.first_column);}
         |CLOSE_PARENTHESIS
         ;
 
@@ -333,6 +325,8 @@ print
 
 print_stmt
         :print OPEN_PARENTHESIS concatenate_values
+        | print error {addSyntaxError("Se esperaba \'(\'", $2, this._$.first_line, this._$.first_column);}
+        | print OPEN_PARENTHESIS error {addSyntaxError("Error de parametros, agregar parametros o un cierre \')\'", $2, this._$.first_line, this._$.first_column);}
         ;
 
 
@@ -358,50 +352,50 @@ entry_stmt
 
 this_stmt
     : THIS DOT IDENTIFICADOR
-    | THIS error
-    | THIS DOT error
+    | THIS error {addSyntaxError("Agregar \'.\'", $2, this._$.first_line, this._$.first_column);}
+    | THIS DOT error {addSyntaxError("Se esperaba un identificador", $3, this._$.first_line, this._$.first_column);}
     | IDENTIFICADOR
     ;
 
 extends_re
     :EXTENDS IDENTIFICADOR
-    |%empty /*empty*/
+    |EXTENDS error {addSyntaxError("Se esperaba el nombre de otra clase a extender", $2, this._$.first_line, this._$.first_column);}
+    | /*empty*/
     ;
 
 class_stmt
         : PUBLIC CLASS IDENTIFICADOR OPEN_CURLY extends_re class_instructions 
-        | PUBLIC error  {addSyntaxError("Se esperaba CLASS cerca de "+$2,this._$.first_line,this._$.first_column);}
-        | PUBLIC CLASS error  {addSyntaxError("Se esperaba un Identificador",this._$.first_line,this._$.first_column);}
-        | PUBLIC CLASS IDENTIFICADOR error  {addSyntaxError("Apertura de declaracion no encontrada se esperaba \'{\' en "+$4,this._$.first_line,this._$.first_column);}
-        | error {addSyntaxError("Se esperaba una declaracion de clase en "+$1,this._$.first_line, this._$.first_column);}
+        | PUBLIC error  {addSyntaxError("Se esperaba \'class\'", $2, this._$.first_line, this._$.first_column);}
+        | PUBLIC CLASS error  {addSyntaxError("Agregar un identificador a la clase", $3, this._$.first_line, this._$.first_column);}
+        | PUBLIC CLASS IDENTIFICADOR error {addSyntaxError("Se esperaba {", $4, this._$.first_line, this._$.first_column);}
         ;
 
 class_instructions
         : class_instructions identifier class_instruction
-        | class_instructions identifier error  {addSyntaxError("declaracion esperada en "+$1,this._$.first_line, this._$.first_column);}
-        | error {addSyntaxError("declaracion no reconocida, agregar \'}\' en "+$1,this._$.first_line, this._$.first_column);}
+        | class_instructions identifier error {addSyntaxError("No es un miembro, agregar un miembro con modificador \'public\' o \'private\'", $3, this._$.first_line, this._$.first_column);}
+        | error {addSyntaxError("Se esperaba \'}\'", $1, this._$.first_line, this._$.first_column);}
         | CLOSE_CURLY 
         ;
 
 function_parameters
         : data_type IDENTIFICADOR function_parameters_re
-        | data_type error  {addSyntaxError("Se esperaba un identificador en "+$2,this._$.first_line, this._$.first_column);}
+        | data_type error {addSyntaxError("Agregar un identificador", $2, this._$.first_line, this._$.first_column);}
         | CLOSE_PARENTHESIS
         ;
 
 function_parameters_re
         : function_parameters_re COMA data_type IDENTIFICADOR 
-        | function_parameters_re COMA error  {addSyntaxError("Se esperaba un tipo de dato: int, char..."+$2,this._$.first_line, this._$.first_column);}
-        | function_parameters_re COMA data_type error {addSyntaxError("Se esperaba un identificador en "+$3,this._$.first_line, this._$.first_column);}
+        | function_parameters_re COMA error {addSyntaxError("Se esperaba un tipo mas identificador, ejemplo: \'int x\'", $3, this._$.first_line, this._$.first_column);}
+        | function_parameters_re COMA data_type error {addSyntaxError("Agregar un identificador", $4, this._$.first_line, this._$.first_column);}
         | CLOSE_PARENTHESIS
-        | error {addSyntaxError("Se esperaba \',\' o \')\' en "+$1,this._$.first_line, this._$.first_column);}
+        | error {addSyntaxError("Se esperaba \')\'", $1, this._$.first_line, this._$.first_column);}
         ;
 
 function_stmt
         :  IDENTIFICADOR OPEN_PARENTHESIS function_parameters OPEN_CURLY instructions
-        | IDENTIFICADOR error  {addSyntaxError("Identificador esperado en "+$1,this._$.first_line, this._$.first_column);}
-        | IDENTIFICADOR OPEN_PARENTHESIS error 
-        | IDENTIFICADOR OPEN_PARENTHESIS function_parameters error
+        | IDENTIFICADOR error  {addSyntaxError("Se esperaba \'(\'", $2, this._$.first_line, this._$.first_column);}
+        | IDENTIFICADOR OPEN_PARENTHESIS error {addSyntaxError("Se esperaba parametros o \')\'", $2, this._$.first_line, this._$.first_column);}
+        | IDENTIFICADOR OPEN_PARENTHESIS function_parameters error {addSyntaxError("No es una declaracion", $4, this._$.first_line, this._$.first_column);} 
         ;
 
 variable_stmt
@@ -410,32 +404,31 @@ variable_stmt
 
 variable_stmt_re
         : variable_stmt_re COMA IDENTIFICADOR asignacion_variable
-        | variable_stmt_re COMA error
+        | variable_stmt_re COMA error {addSyntaxError("Se esperaba un identificador", $3, this._$.first_line, this._$.first_column);}
         | COLON
         ;
 
 class_statements
         : variable_stmt
         | function_stmt
-        | error
+        | error {addSyntaxError("Se esperaba modificadores de la clase, pueden ser public o private", $1, this._$.first_line, this._$.first_column);}
         ;
 
 constructor_class
         : IDENTIFICADOR OPEN_PARENTHESIS function_parameters OPEN_CURLY instructions
-        | IDENTIFICADOR error
-        | IDENTIFICADOR OPEN_PARENTHESIS error
-        | IDENTIFICADOR OPEN_PARENTHESIS function_parameters error 
+        | IDENTIFICADOR error {addSyntaxError("Se esperaba \'(\'", $2, this._$.first_line, this._$.first_column);}
+        | IDENTIFICADOR OPEN_PARENTHESIS error {addSyntaxError("Se esperaban parametros o un cierre \')\'", $3, this._$.first_line, this._$.first_column);}
+        | IDENTIFICADOR OPEN_PARENTHESIS function_parameters error {addSyntaxError("Se esperaba \'}\'", $4, this._$.first_line, this._$.first_column);}
         ;
 
 class_instruction
         : data_type class_statements
         | constructor_class
-        | identifier error {addSyntaxError("Se esperaba un tipo de dato: int, char...",this._$.first_line, this._$.first_column);}
         ;
 
 instructions 
         : instruction instructions
-        | error instructions {addSyntaxError("Declaracion no reconocida, agregar declaracion o } en "+$1,this._$.first_line, this._$.first_column);}
+        | error instructions {addSyntaxError("Se esperaba una declaracion", $1, this._$.first_line, this._$.first_column);}
         | CLOSE_CURLY
         ;
 
@@ -446,23 +439,24 @@ instruction
         | switch_stmt
         | for_stmt
         | while_stmt
-        | do_stmt
+        | do_stmt COLON
+        | do_stmt error {addSyntaxError("Se esperaba \';\'", $2, this._$.first_line, this._$.first_column);}
         | metodo COLON
-        | metodo error {addSyntaxError("Se esperaba ;",this._$.first_line, this._$.first_column);}
+        | metodo error {addSyntaxError("Se esperaba \';\'", $2, this._$.first_line, this._$.first_column);}
         | print_stmt COLON
-        | print_stmt error {addSyntaxError("Se esperaba ;",this._$.first_line, this._$.first_column);}
+        | print_stmt error {addSyntaxError("Se esperaba \';\'", $2, this._$.first_line, this._$.first_column);}
         | CONTINUE COLON
-        | CONTINUE error {addSyntaxError("Se esperaba ;",this._$.first_line, this._$.first_column);}
+        | CONTINUE error {addSyntaxError("Se esperaba \';\'", $2, this._$.first_line, this._$.first_column);}
         | BREAK COLON
-        | BREAK error {addSyntaxError("Se esperaba ;",this._$.first_line, this._$.first_column);}
+        | BREAK error {addSyntaxError("Se esperaba \';\'", $2, this._$.first_line, this._$.first_column);}
         | RETURN COLON
-        | RETURN error {addSyntaxError("Se esperaba ;",this._$.first_line, this._$.first_column);}
+        | RETURN error {addSyntaxError("Se esperaba \';\'", $2, this._$.first_line, this._$.first_column);}
         ;
 
 stmt_enclusure
     : OPEN_CURLY instructions
     | instruction
-    | error {addSyntaxError("Se esperaba una declaraciones o { en"+$1,this._$.first_line, this._$.first_column);}
+    | error {addSyntaxError("Se esperaba una declaracion o \'{\'", $1, this._$.first_line, this._$.first_column);}
     ;
 /*Variable*/
 increm
@@ -473,7 +467,7 @@ increm
 valor_variable
     :expresion
     |entry_stmt
-    |error {addSyntaxError("Se esperaba un valor para asignar en "+$1,this._$.first_line, this._$.first_column);}
+    |error {addSyntaxError("Se esperaba una expresion o valor par asignar", $1, this._$.first_line, this._$.first_column);}
     ;
 
 metodo_asignacion
@@ -488,18 +482,18 @@ metodo_asignacion
 
 igualacion_re
     : metodo_asignacion valor_variable igualacion_re
-    | %empty /*empty*/
+    |  /*empty*/
     ;
 
 asignacion_variable
     : metodo_asignacion valor_variable igualacion_re
-    | %empty /*empty*/
+    |  /*empty*/
     ;
 
 asignacion
     : metodo_asignacion valor_variable igualacion_re
     | increm 
-    | %empty /*empty*/
+    |  /*empty*/
     ;
 
 asignacion_post
@@ -513,29 +507,29 @@ nombre_variables
 
 nombre_variables_re
     : nombre_variables_re COMA this_stmt asignacion_variable 
-    | nombre_variables_re COMA error  {addSyntaxError("Se esperaba un idetificador en "+$1,this._$.first_line, this._$.first_column);}
-    | error {addSyntaxError("Se esperaba \',\' o \';\' en "+$1,this._$.first_line, this._$.first_column);}
+    | nombre_variables_re COMA error  {addSyntaxError("Se esperaba una variable", $3, this._$.first_line, this._$.first_column);}
+    | error {addSyntaxError("Se esperaba \';\'", $1, this._$.first_line, this._$.first_column);}
     | COLON
     ;
 
 variable
     : data_type nombre_variables 
-    | data_type error
+    | data_type error {addSyntaxError("Se esperaba un identificador (variable) ", $2, this._$.first_line, this._$.first_column);}
     | this_stmt asignacion_post COLON
-    | this_stmt error   {addSyntaxError("Se esperaba una asignacion en "+$2,this._$.first_line, this._$.first_column);}
-    | this_stmt asignacion_post error
+    | this_stmt error  {addSyntaxError("Una asignacion era esperada", $2, this._$.first_line, this._$.first_column);} 
+    | this_stmt asignacion_post error {addSyntaxError("Se esperaba \';\'", $3, this._$.first_line, this._$.first_column);}
     ;
 /*End of Variable*/
 /*INIT of metodo*/
 parameters
     : expresion parameters_re
-    |error parameters
+    |error parameters {addSyntaxError("Se esperaba una expresion", $1, this._$.first_line, this._$.first_column);}
     |CLOSE_PARENTHESIS 
     ;
 
 parameters_re
     : COMA expresion parameters_re
-    |error parameters_re
+    |error parameters_re {addSyntaxError("Se esperaba una expresion", $1, this._$.first_line, this._$.first_column);}
     | CLOSE_PARENTHESIS 
     ;
 
@@ -548,7 +542,7 @@ expresion
     |expresion MAYOR expresion
     |expresion MAYOR_IGUAL expresion
     |expresion DIFERENTE expresion
-    |expresion IGUAL_IGUAL expresion
+    |expresion COMPARACION expresion
     |expresion SUMA expresion
     |expresion RESTA expresion
     |expresion POR expresion
@@ -584,12 +578,14 @@ metodo
 /*Init IF*/
 block_condition
     : expresion CLOSE_PARENTHESIS
-    | error CLOSE_PARENTHESIS {addSyntaxError("Se esperaba una condicion en "+$1,this._$.first_line, this._$.first_column);}
+    | expresion error {addSyntaxError("Se esperaba \')\'", $2, this._$.first_line, this._$.first_column);}
+    | error CLOSE_PARENTHESIS {addSyntaxError("Se esperaba una expresion", $1, this._$.first_line, this._$.first_column);}
     ;
 
 if_stmt
     : IF OPEN_PARENTHESIS block_condition stmt_enclusure
-    | IF error stmt_enclusure {addSyntaxError("Se esperaba una condicion en if",this._$.first_line, this._$.first_column);}
+    | IF error {addSyntaxError("Se esperaba \'(\'", $2, this._$.first_line, this._$.first_column);}
+    | IF OPEN_PARENTHESIS error {addSyntaxError("Se esperaba una condicion", $3, this._$.first_line, this._$.first_column);}
     ;
 
 else_stmt
@@ -601,14 +597,14 @@ else_stmt
 
 switch_instructions 
         : switch_instruction switch_instructions
-        | error {addSyntaxError("Se esperaba una declaracion o break en "+$1,this._$.first_line, this._$.first_column);}
+        | error switch_instructions {addSyntaxError("Se esperaba una declaracion", $1, this._$.first_line, this._$.first_column);}
         | BREAK COLON
-        | BREAK error {addSyntaxError("Se esperaba ; en "+$2,this._$.first_line, this._$.first_column);}
+        | BREAK error {addSyntaxError("Se esperaba \';\'", $2, this._$.first_line, this._$.first_column);}
         ;
 
 default_instructions
         : switch_instruction default_instructions
-        | error default_instructions {addSyntaxError("Se esperaba una declaracion o cierre con } en "+$1,this._$.first_line, this._$.first_column);}
+        | error default_instructions  {addSyntaxError("Se esperaba una declaracion", $1, this._$.first_line, this._$.first_column);}
         | CLOSE_CURLY
         ;
 
@@ -619,33 +615,33 @@ switch_instruction
         | switch_stmt
         | for_stmt
         | while_stmt
-        | do_stmt
+        | do_stmt COLON
+        | do_stmt error {addSyntaxError("Se esperaba \';\'", $2, this._$.first_line, this._$.first_column);}
         | metodo COLON
-        | metodo error
+        | metodo error {addSyntaxError("Se esperaba \';\'", $2, this._$.first_line, this._$.first_column);}
         |print_stmt COLON
-        | print_stmt error
+        | print_stmt error {addSyntaxError("Se esperaba \';\'", $2, this._$.first_line, this._$.first_column);}
         | CONTINUE COLON
-        | CONTINUE error
+        | CONTINUE error {addSyntaxError("Se esperaba \';\'", $2, this._$.first_line, this._$.first_column);}
         | RETURN COLON
-        | RETURN error {addSyntaxError("Se esperaba ;",this._$.first_line, this._$.first_column);}
+        | RETURN error  {addSyntaxError("Se esperaba \';\'", $2, this._$.first_line, this._$.first_column);}
         ;
 
 switch_stmt
     : SWITCH OPEN_PARENTHESIS IDENTIFICADOR CLOSE_PARENTHESIS OPEN_CURLY cases_stmt
-    | SWITCH error IDENTIFICADOR CLOSE_PARENTHESIS OPEN_CURLY cases_stmt {addSyntaxError("Se esperaba ( en switch cerca de "+$2,this._$.first_line, this._$.first_column);}
-    | SWITCH OPEN_PARENTHESIS error CLOSE_PARENTHESIS OPEN_CURLY cases_stmt {addSyntaxError("Se esperaba un identificador cerca de "+$3,this._$.first_line, this._$.first_column);}
-    | SWITCH OPEN_PARENTHESIS IDENTIFICADOR error OPEN_CURLY cases_stmt {addSyntaxError("Se esperaba \')\' cerca de "+$4,this._$.first_line, this._$.first_column);}
-    | SWITCH OPEN_PARENTHESIS IDENTIFICADOR CLOSE_PARENTHESIS error cases_stmt {addSyntaxError("Se esperaba \'{\' cerca de "+$5,this._$.first_line, this._$.first_column);}
-    | SWITCH error cases_stmt {addSyntaxError("Se esperaba un identificador en el switch cerca de "+$2,this._$.first_line, this._$.first_column);}
+    | SWITCH error {addSyntaxError("Se esperaba \'(\'", $2, this._$.first_line, this._$.first_column);}
+    | SWITCH OPEN_PARENTHESIS error {addSyntaxError("Se esperaba un identificador", $3, this._$.first_line, this._$.first_column);}
+    | SWITCH OPEN_PARENTHESIS IDENTIFICADOR error {addSyntaxError("Se esperaba \')\'", $4, this._$.first_line, this._$.first_column);}
+    | SWITCH OPEN_PARENTHESIS IDENTIFICADOR CLOSE_PARENTHESIS error cases_stmt {addSyntaxError("Se esperaba \'{\'", $5, this._$.first_line, this._$.first_column);} 
     ;
 
 cases_stmt
     : CASE expresion SEMI_COLON switch_instructions cases_stmt
-    | CASE error SEMI_COLON switch_instructions cases_stmt {addSyntaxError("Se esperaba un valor cerca de "+$2,this._$.first_line, this._$.first_column);}
-    | CASE expresion error switch_instructions cases_stmt {addSyntaxError("Se esperaba \':\' cerca de "+$3,this._$.first_line, this._$.first_column);}
+    | CASE error {addSyntaxError("Se esperaba una expresion", $2, this._$.first_line, this._$.first_column);}
+    | CASE expresion error  {addSyntaxError("Se esperaba \':\'", $3, this._$.first_line, this._$.first_column);}
     | DEFAULT SEMI_COLON default_instructions 
-    | DEFAULT error default_instructions {addSyntaxError("Se esperaba \':\' cerca de "+$2,this._$.first_line, this._$.first_column);}
-    | error cases_stmt {addSyntaxError("Se esperaba un caso o \'}\' cerca de "+$1,this._$.first_line, this._$.first_column);}
+    | DEFAULT error {addSyntaxError("Se esperaba \':\'", $2, this._$.first_line, this._$.first_column);}
+    | error cases_stmt {addSyntaxError("Se esperaba un caso o \'}\'", $1, this._$.first_line, this._$.first_column);}
     | CLOSE_CURLY
     ;
 /*End of Switch*/
@@ -655,8 +651,9 @@ declaraciones_re
     : COMA this_stmt  asignacion declaraciones_re
     | COMA metodo declaraciones_re
     | COMA print_stmt
-    | COMA error  asignacion declaraciones_re {addSyntaxError("Se esperaba un identificador cerca de "+$2,this._$.first_line, this._$.first_column);}
-    | error declaraciones_re {addSyntaxError("Se esperaba una coma o punto y coma cerca de "+$1,this._$.first_line, this._$.first_column);}
+    | COMA error {addSyntaxError("Se eperaba una declaracion", $2, this._$.first_line, this._$.first_column);} 
+    | COMA this_stm error {addSyntaxError("Se espera una asignacion", $3, this._$.first_line, this._$.first_column);}
+    | error  {addSyntaxError("Se esperaba \';\' u otra declaracion", $1, this._$.first_line, this._$.first_column);}
     | COLON
     ;
 
@@ -667,12 +664,10 @@ declaraciones
 declaraciones_post
     : declaraciones
     | metodo declaraciones_re
-    | error declaraciones_re {addSyntaxError("Se esperaba una declaracion cerca de "+$1,this._$.first_line, this._$.first_column);}
     ;
 
 declaracion_for
     : data_type declaraciones
-    | data_type error COLON {addSyntaxError("Se esperaba una declaracion cerca de "+$2,this._$.first_line, this._$.first_column);}
     | declaraciones_post
     ;
 for_accion
@@ -681,23 +676,24 @@ for_accion
 
 for_stmt
     : FOR OPEN_PARENTHESIS for_inicio stmt_enclusure
-    | FOR error for_inicio stmt_enclusure {addSyntaxError("Se esperaba ( en "+$2,this._$.first_line, this._$.first_column);}
+    | FOR error {addSyntaxError("Se esperaba \'(\'", $2, this._$.first_line, this._$.first_column);}
+    | FOR OPEN_PARENTHESIS error {addSyntaxError("No se reconocieron los parametros de for", $3, this._$.first_line, this._$.first_column);}
     ;
 
 for_inicio
     : declaracion_for for_condition
+    | declaracion_for error {addSyntaxError("Una condicion era esperada", $2, this._$.first_line, this._$.first_column);}
     ;
 
 for_condition
     : expresion COLON for_asignacion
-    | error COLON for_asignacion {addSyntaxError("Se esperaba una condicion",this._$.first_line, this._$.first_column);}
-    | expresion error for_asignacion {addSyntaxError("Se esperaba \';\' cerca de "+$2,this._$.first_line, this._$.first_column);}
+    | expresion error {addSyntaxError("Se esperaba \';\'", $2, this._$.first_line, this._$.first_column);}
+    | expresion COLON error {addSyntaxError("Se esperaba una accion del for", $3, this._$.first_line, this._$.first_column);}
     ;
 
 for_asignacion
     : for_accion CLOSE_PARENTHESIS 
-    | error CLOSE_PARENTHESIS {addSyntaxError("Se esperaba una accion cerca de "+$1,this._$.first_line, this._$.first_column);}
-    | for_accion error {addSyntaxError("Se esperaba \')\' cerca de "+$2,this._$.first_line, this._$.first_column);}
+    | for_accion error {addSyntaxError("Se esperaba \'(\'", $2, this._$.first_line, this._$.first_column);}
     ;
 
 
@@ -706,8 +702,8 @@ for_asignacion
 
 while_stmt
     : WHILE OPEN_PARENTHESIS block_condition stmt_enclusure
-    |WHILE error block_condition stmt_enclusure {addSyntaxError("Se esperaba \'(\' cerca de "+$2,this._$.first_line, this._$.first_column);}
-    | WHILE OPEN_PARENTHESIS error stmt_enclusure {addSyntaxError("Se esperaba una condicion cerca de "+$3,this._$.first_line, this._$.first_column);}
+    |WHILE error block_condition stmt_enclusure {addSyntaxError("Se esperaba \'(\'", $2, this._$.first_line, this._$.first_column);}
+    | WHILE OPEN_PARENTHESIS error stmt_enclusure {addSyntaxError("Se esperaba una condicion", $3, this._$.first_line, this._$.first_column);}
     ;
 /*End of While*/
 
@@ -715,14 +711,14 @@ while_stmt
 
 do_stmt
     : DO stmt_enclusure while_do
+    | DO stmt_enclusure error {addSyntaxError("Agregar un while", $3, this._$.first_line, this._$.first_column);}
     ;
 
 while_do
-    : WHILE OPEN_PARENTHESIS block_condition COLON
-    | error OPEN_PARENTHESIS block_condition COLON {addSyntaxError("Se esperaba un while cerca de "+$1,this._$.first_line, this._$.first_column);}
-    | WHILE error block_condition COLON {addSyntaxError("Se esperaba \'(\' cerca de "+$2,this._$.first_line, this._$.first_column);}
-    | WHILE OPEN_PARENTHESIS error COLON {addSyntaxError("Se esperaba una condicion cerca de "+$3,this._$.first_line, this._$.first_column);}
-    | error COLON {addSyntaxError("Se esperaba un while cerca de "+$1,this._$.first_line, this._$.first_column);}
+    : WHILE OPEN_PARENTHESIS block_condition 
+    | WHILE error {addSyntaxError("Se esperaba \'(\'", $2, this._$.first_line, this._$.first_column);}
+    | WHILE OPEN_PARENTHESIS error {addSyntaxError("Se esperaba una condicion", $3, this._$.first_line, this._$.first_column);}
+
     ;
 
 /*End of DoWhile*/

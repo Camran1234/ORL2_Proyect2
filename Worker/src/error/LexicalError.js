@@ -1,6 +1,6 @@
-import Error from './Error.js';
+var Error = require('./Error');
 
-export default class LexicalError extends Error{
+class LexicalError extends Error{
 
     constructor(lexema, linea, columna){
         super(linea, columna,"Error Lexico");
@@ -14,5 +14,6 @@ export default class LexicalError extends Error{
     getLexema(){
         return this.lexema;
     }
-
 }
+
+module.exports = LexicalError

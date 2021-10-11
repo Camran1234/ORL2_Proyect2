@@ -1,6 +1,6 @@
 
-import Error from './Error'
-export default class SyntaxError extends Error{
+var Error = require('./Error');
+class SyntaxError extends Error{
 
     constructor(descripcion, token,  linea, columna){
         super(linea, columna, "Error Sintactico");
@@ -15,6 +15,6 @@ export default class SyntaxError extends Error{
     getToken(){
         return this.token;
     }
-
-
 }
+
+module.exports = SyntaxError;

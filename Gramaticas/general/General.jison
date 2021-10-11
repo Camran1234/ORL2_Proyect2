@@ -5,14 +5,111 @@
     var ErrorSintactico = require("../../error/SyntaxError");
     //variables
     let estado=0;
-    let erroresLexicos = [];
-    let erroresSintacticos = [];
+    let erroresLexicos;
+    let erroresSintacticos;
+    //codigo Java
+    let lineJava=0;
+    let columnJava=0;
+    let codigoJava="";
+    //codigo C
+    let lineC = 0;
+    let columnC = 0;
+    let codigoC = "";
+    //codigo python
+    let linePython = 0;
+    let columnPython = 0;
+    let codigoPython = "";
+    let dirPaquete = "";
+    
+    module.exports.setErroresLexicos = function (errores){
+        erroresLexicos = errores;
+    }
 
-    function getErroresLexicos(){
+    module.exports.setErroresSintacticos = function (errores){
+        erroresSintacticos = errores;
+    }
+
+    module.exports.getPaquete = function (){
+        return dirPaquete;
+    }
+
+    function setCodigoPython(codigo){
+        codigoPython = codigo.join('');
+    }
+
+    function setLinePython(line){
+        linePython = line;
+    }
+
+    function setColumnPython(column){
+        columnPython = column;
+    }
+
+    function setCodigoC(codigo){
+        codigoC = codigo.join('');
+    }
+
+    function setLineC(linea){
+        lineC = linea;
+    }
+
+    function setColumnC(columna){
+        columnC = columna
+    }
+
+    function setCodigoJava(codigo){
+        codigoJava=codigo.join('');
+    }
+
+    function setLineJava(linea){
+        lineJava = linea;
+    }
+
+    function setColumnJava(column){
+        columnJava = column
+    }
+
+    module.exports.getCodigoJava = function (){
+        return codigoJava;
+    }
+
+    module.exports.getLineJava = function (){
+        return lineJava;
+    }
+
+    module.exports.getColumnJava = function (){
+        return columnJava;
+    }
+
+    module.exports.getCodigoC = function (){
+        return codigoC;
+    }
+
+    module.exports.getLineC = function (){
+        return lineC;
+    }
+
+    module.exports.getColumnC = function (){
+        return columnC;
+    }
+
+    module.exports.getCodigoPython = function (){
+        return codigoPython;
+    }
+
+    module.exports.getLinePython = function (){
+        return linePython;
+    }
+
+    module.exports.getColumnPython = function(){
+        return columnPython;
+    }
+
+    module.exports.getErroresLexicos = function (){
         return erroresLexicos;
     }
 
-    function getErroresSintacticos(){
+    module.exports.getErroresSintacticos = function (){
         return erroresSintacticos;
     }
 
@@ -28,7 +125,7 @@
     function addSyntaxError(descripcion, token, line, column){
         try{
             let errorSintactico = new ErrorSintactico(descripcion, token, line, column);
-            erroresSintacticos.push(errroSintactico);
+            erroresSintacticos.push(errorSintactico);
         }catch(ex){
             console.log("ERROR FATAL EN addSyntaxError: "+ex);
         }
@@ -55,7 +152,6 @@ block_commentary [/][*][^*]*[*]+([^/*][^*]*[*]+)*[/]
             }
         }
 {paqueteria}    {
-                    console.log("Paqueteria: "+yytext); 
                     if(estado==1){
                         return 'CHUNK';
                     }else{
@@ -79,7 +175,6 @@ block_commentary [/][*][^*]*[*]+([^/*][^*]*[*]+)*[/]
     }
 \s  return 'SPACE';
 {commentary}  {
-        console.log("comentario: "+yytext)
             if(estado==1){
                 return 'CHUNK';
             }else{
@@ -87,7 +182,6 @@ block_commentary [/][*][^*]*[*]+([^/*][^*]*[*]+)*[/]
             }
         }
 {block_commentary}  {
-        console.log("comentario multiple: "+yytext)
             if(estado==1){
                 return 'CHUNK';
             }else{
@@ -96,9 +190,8 @@ block_commentary [/][*][^*]*[*]+([^/*][^*]*[*]+)*[/]
         }
 {chunk} {
     if(estado==0){
-        this.addLexicalError(yytext, yylloc.first_line, yylloc.first_column);
+        addLexicalError(yytext, yylloc.first_line, yylloc.first_column);
     }else{
-        console.log("Chunk: "+yytext);
         return 'CHUNK';
     }
 }
@@ -108,7 +201,7 @@ block_commentary [/][*][^*]*[*]+([^/*][^*]*[*]+)*[/]
 
 
 %{
-	
+    
 %}
 
 %start ini
@@ -116,42 +209,67 @@ block_commentary [/][*][^*]*[*]+([^/*][^*]*[*]+)*[/]
 %% /* Definición de la gramática */
 
 space_stmt
-    :SPACE space_stmt_re
-    |%empty
+    :space_stmt SPACE {
+        console.log("ESPACIO");
+        $1.push($2.toString());
+        $$=$1
+    }
+    |/*empty*/ {
+        console.log("EMPTY");
+        $$ = [];
+    }
     ;
 
-space_stmt_re
-    :space_stmt_re SPACE
-    |%empty
-    ;
 texto
-    :texto CHUNK
-    |texto SPACE
-    |%empty /*empty*/
+    :texto CHUNK {
+        $1.push($2.toString());
+        $$ = $1;
+    }
+    |texto SPACE {
+        $1.push($2.toString());
+        $$ = $1;
+    }
+    | /*empty*/ {
+        console.log("Vacio");
+        $$=[];
+        }
     ;
 
 ini
-	:paqueteria EOF
-    |paqueteria error EOF {} 
+	:paqueteria EOF {console.log("ALGO");}
+    |paqueteria error EOF {addSyntaxError("Se esperaba el final del archivo", $2, this._$.first_line, this._$.first_column);} 
 	;
 
 paqueteria
-    : space_stmt PAQUETE space_stmt PAQUETERIA space_stmt condicional_py
-    | space_stmt error
-    | space_stmt PAQUETE space_stmt error
-    | space_stmt PAQUETE space_stmt PAQUETERIA space_stmt error
+    : space_stmt PAQUETE space_stmt PAQUETERIA space_stmt condicional_py {this.dirPaquete = $4.toString();}
+    | space_stmt error {addSyntaxError("Paqueteria no encontrada, falta agregar \'paqueteria\'",$2, this._$.first_line, this._$.first_column);}
+    | space_stmt PAQUETE space_stmt error {addSyntaxError("direccion de paquete no encontrada",$4, this._$.first_line, this._$.first_column);}
+    | space_stmt PAQUETE space_stmt PAQUETERIA space_stmt error {addSyntaxError("Se esperaba el codigo python, agregar \'%%PY\' para leer el codigo",$6, this._$.first_line, this._$.first_column);}
     ;
 
 condicional_py
-    :PY texto condicional_java
-    |PY texto error
+    :PY texto condicional_java {
+        setCodigoPython($2);
+        setLinePython(this._$.first_line);
+        setColumnPython(this._$.first_column);
+    }
+    |PY texto error {addSyntaxError("Se esperaba el codigo JAVA, agregar \'%%JAVA\'", $3, this._$.first_line, this._$.first_column);}
     ;
 
 condicional_java
-    :JAVA texto condicional_c
-    |JAVA texto error
+    :JAVA texto condicional_c {
+        console.log("INICIANDO AQUI");
+        setCodigoJava($2);
+        setLineJava(this._$.first_line);
+        setColumnJava(this._$.first_column);
+    }
+    |JAVA texto error {addSyntaxError("Se esperaba el codigo C, agregar \'%%PROGRAMA\'",$3, this._$.first_line, this._$.first_column);}
     ;
 
 condicional_c
-    :PROGRAMA texto
+    :PROGRAMA texto{
+        setCodigoC($2);
+        setLineC(this._$.first_line);
+        setColumnC(this._$.first_column);
+    }
     ;

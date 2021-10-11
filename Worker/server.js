@@ -17,6 +17,7 @@ app.post('/parse', function (req, res) {
     console.log('Codigo recibido: '+codigo);
     let resultado = "false";
     let parser = new Parser();
+    parser.parse(codigo);
     //Mensaje donde enviaremos la respuesta
     // Website you wish to allow to connect
     let jsonAnswer = {
