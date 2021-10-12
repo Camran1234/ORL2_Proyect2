@@ -1,12 +1,12 @@
 var TIPO_INSTRUCCION = require('./Instrucciones').TIPO_INSTRUCCION;
 var TIPO_SWITCH = require('./Instrucciones').TIPO_SWITCH;
-var TIPO_VISIBILIDAD = require('./Instrucciones'.TIPO_VISIBILIDAD);
-var TIPO_ENTRADA = require('./Instrucciones').TIPO_ENTRADA;
-function nuevaOperacion(operadorL, operadorR, operador){
+
+function nuevaOperacion(operadorL, operadorR, operador, lenguaje){
     return{
         operadorL: operadorL,
         operadorR: operadorR,
-        operador: operador
+        operador: operador,
+        lenguaje:lenguaje
     }
 }
 
@@ -19,8 +19,8 @@ const instrucionesApi = {
      * @param {*} operador 
      * @returns 
      */
-    operacionAritmetica: function(operadorL, operadorR, operador){
-        return nuevaOperacion(operadorL, operadorR, operador);
+    operacionAritmetica: function(operadorL, operadorR, operador, lenguaje){
+        return nuevaOperacion(operadorL, operadorR, operador, lenguaje);
     },
 
     /**
@@ -29,8 +29,8 @@ const instrucionesApi = {
      * @param {*} operador 
      * @returns 
      */
-    operacionUnaria: function(operadorL, operador){
-        return nuevaOperacion(operadorL, undefined, operador);
+    operacionUnaria: function(operadorL, operador, lenguaje){
+        return nuevaOperacion(operadorL, undefined, operador, lenguaje);
     },
 
     /**
@@ -39,10 +39,11 @@ const instrucionesApi = {
      * @param {*} tipo 
      * @returns 
      */
-    nuevoValor: function(valor, tipo){
+    nuevoValor: function(valor, tipo, lenguaje){
         return {
             valor: valor,
-            tipo: tipo
+            tipo: tipo,
+            lenguaje:lenguaje
         }
     },
 
@@ -51,10 +52,11 @@ const instrucionesApi = {
      * @param {*} id
      * @param {*} tipo 
      */
-    nuevoParametro: function(id, tipo){
+    nuevoParametro: function(id, tipo, lenguaje){
         return {
             id: id,
-            tipo: tipo
+            tipo: tipo,
+            lenguaje:lenguaje
         }
     },
 
@@ -66,12 +68,15 @@ const instrucionesApi = {
      * @param {*} paqueteria 
      * @returns 
      */
-    nuevaClase: function(id, instrucciones, paqueteria){
+    nuevaClase: function(visibilidad, id, idExtension, instrucciones, paqueteria, lenguaje){
         return {
             id: id,
+            extension:idExtension,
             rol: TIPO_INSTRUCCION.CLASE,
+            visibilidad:visibilidad,
             instrucciones: instrucciones,
-            paqueteria: paqueteria
+            paqueteria: paqueteria,
+            lenguaje:lenguaje
         }
     },
     /**
@@ -82,12 +87,14 @@ const instrucionesApi = {
      * @param {*} parametros 
      * @returns
      */
-    nuevaFuncion: function(id, instrucciones, parametros){
+    nuevaFuncion: function(visibilidad, id, instrucciones, parametros, lenguaje){
         return {
             id:id,
             rol: TIPO_INSTRUCCION.FUNCION,
             instrucciones: instrucciones,
-            parametros: parametros
+            parametros: parametros,
+            visibilidad:visibilidad,
+            lenguaje:lenguaje
         }
     },
     /**
@@ -95,11 +102,13 @@ const instrucionesApi = {
      * @param {*} identificador 
      * @param {*} tipo 
      */
-    nuevaDeclaracion: function (id, tipo) {
+    nuevaDeclaracion: function (visibilidad, id, tipo, lenguaje) {
         return {
             id:id,
+            visibilidad:visibilidad,
             rol:TIPO_INSTRUCCION.DECLARACION,
-            tipo:tipo
+            tipo:tipo,
+            lenguaje:lenguaje
         }
     },
     /**
@@ -108,11 +117,12 @@ const instrucionesApi = {
      * @param {*} expresion 
      * @returns 
      */
-    nuevaAsignacion: function(id, expresion){
+    nuevaAsignacion: function(id, expresion, lenguaje){
         return {
             id: id,
             rol:TIPO_INSTRUCCION.ASIGNACION,
-            expresion: expresion
+            expresion: expresion,
+            lenguaje:lenguaje
         }
     },
     /**
@@ -124,12 +134,13 @@ const instrucionesApi = {
      * @param {*} expresion 
      * @returns 
      */
-    nuevaAsignacion_O: function(id, operador, expresion){
+    nuevaAsignacion_O: function(id, operador, expresion, lenguaje){
         return {
             id:id,
             rol:TIPO_INSTRUCCION.ASIGNACION_O,
             operador: operador,
-            expresion: expresion
+            expresion: expresion,
+            lenguaje:lenguaje
         }
     },
 
@@ -139,11 +150,12 @@ const instrucionesApi = {
      * @param {*} instrucciones 
      * @returns 
      */
-    nuevoIf: function(expresion, instrucciones){
+    nuevoIf: function(expresion, instrucciones, lenguaje){
         return {
             condicion: expresion,
             instrucciones: instrucciones,
-            rol:TIPO_INSTRUCCION.IF
+            rol:TIPO_INSTRUCCION.IF,
+            lenguaje:lenguaje
         }
     },
     /**
@@ -153,12 +165,13 @@ const instrucionesApi = {
      * @param {*} instrucciones 
      * @param {*} if_father 
      */
-    nuevoElse: function(expresion, instrucciones, if_father){
+    nuevoElse: function(expresion, instrucciones, if_father, lenguaje){
         return {
             condicion:expresion,
             instrucciones:instrucciones,
             if:if_father,
-            rol: TIPO_INSTRUCCION.ELSE
+            rol: TIPO_INSTRUCCION.ELSE,
+            lenguaje:lenguaje
         }
     },
 
@@ -169,11 +182,12 @@ const instrucionesApi = {
      * @param {*} cases 
      * @returns 
      */
-    nuevoSwitch:function(id, cases){
+    nuevoSwitch:function(id, cases, lenguaje){
         return {
             id: id,
             cases:cases,
-            rol:TIPO_INSTRUCCION.SWITCH
+            rol:TIPO_INSTRUCCION.SWITCH,
+            lenguaje:lenguaje
         }
     },
 
@@ -183,11 +197,12 @@ const instrucionesApi = {
      * @param {*} instrucciones 
      * @returns 
      */
-    nuevoCase: function(expresion, instrucciones){
+    nuevoCase: function(expresion, instrucciones, lenguaje){
         return {
             condicion:expresion,
             instrucciones: instrucciones,
-            rol: TIPO_SWITCH.CASE
+            rol: TIPO_SWITCH.CASE,
+            lenguaje:lenguaje
         }
     },
     /**
@@ -195,10 +210,11 @@ const instrucionesApi = {
      * @param {*} instrucciones 
      * @returns 
      */
-    nuevoDefault: function(instrucciones){
+    nuevoDefault: function(instrucciones, lenguaje){
         return{
             instrucciones:instrucciones,
-            rol: TIPO_SWITCH.DEFAULT
+            rol: TIPO_SWITCH.DEFAULT,
+            lenguaje:lenguaje
         }
     },
     /**
@@ -211,13 +227,14 @@ const instrucionesApi = {
      * @param {*} instrucciones 
      * @returns 
      */
-    nuevoFor: function(valor_inicial, expresion, accion_post, instrucciones){
+    nuevoFor: function(valor_inicial, expresion, accion_post, instrucciones, lenguaje){
         return{
             valor_inicial:valor_inicial,
             condicion: expresion,
             accion_post: accion_post,
             instrucciones:instrucciones,
-            rol: TIPO_INSTRUCCION.FOR
+            rol: TIPO_INSTRUCCION.FOR,
+            lenguaje:lenguaje
         }
     },
 
@@ -228,11 +245,12 @@ const instrucionesApi = {
      * @param {*} instrucciones 
      * @returns 
      */
-    nuevoWhile: function(expresion, instrucciones){
+    nuevoWhile: function(expresion, instrucciones, lenguaje){
         return{
             condicion: expresion,
             instrucciones:instrucciones,
-            rol: TIPO_INSTRUCCION.WHILE
+            rol: TIPO_INSTRUCCION.WHILE,
+            lenguaje:lenguaje
         }
     },
     /**
@@ -242,11 +260,12 @@ const instrucionesApi = {
      * @param {*} while_ 
      * @returns 
      */
-    nuevoDoWhile: function(instrucciones, condicion){
+    nuevoDoWhile: function(instrucciones, condicion, lenguaje){
         return{
             instrucciones: instrucciones,
             condicion:condicion, 
-            rol:TIPO_INSTRUCCION.DO
+            rol:TIPO_INSTRUCCION.DO,
+            lenguaje:lenguaje
         }
     },
     /**
@@ -254,12 +273,47 @@ const instrucionesApi = {
      * @param {*} parametros 
      * @returns 
      */
-    nuevoImprimir: function(parametros){
+    nuevoImprimir: function(parametros, lenguaje){
         return{
             parametros:parametros,
-            rol:TIPO_INSTRUCCION.IMPRIMIR
+            rol:TIPO_INSTRUCCION.IMPRIMIR,
+            lenguaje:lenguaje
         }
     },
 
+    nuevoContinue: function(){
+        return{
+            rol: TIPO_INSTRUCCION.CONTINUE
+        }
+    },
 
+    nuevoBreak: function(){
+        return{
+            rol: TIPO_INSTRUCCION.BREAK
+        }
+    },
+
+    nuevoReturn: function(expresion, lenguaje){
+        return{
+            rol: TIPO_INSTRUCCION.RETURN,
+            expresion: expresion,
+            lenguaje:lenguaje
+        }
+    },
+    nuevoMetodo_stmt: function(metodo, lenguaje){
+        return{
+            rol:TIPO_INSTRUCCION.METODO,
+            id:id,
+            metodo:metodo,
+            lenguaje:lenguaje
+        }
+    },
+    nuevoMetodo_exp: function(id, parametros, lenguaje){
+        return {
+            rol: TIPO_VALOR,
+            id:id,
+            parametros:parametros,
+            lenguaje:lenguaje
+        }
+    }
 }

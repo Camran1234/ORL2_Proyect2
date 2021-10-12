@@ -12,6 +12,9 @@
     let lineNumber=0;
     let columnNumber=0;
 
+    //control indentacion
+
+
     function getErroresLexico(){
         return erroresLexicos;
     }
@@ -94,7 +97,7 @@
                         }else if(estado==2){
                             yytext = yytext.substr(3,yyleng-6);
                             estado=2;
-                        console.log(yytext);
+                            console.log(yytext);
                             return'LIT_CADENA';
                         }else{
                             indentation=0;
@@ -372,6 +375,93 @@ console.log(yytext); return'IDENTIFICADOR';
 <<EOF>>  return'EOF';
 /lex
 %{
+    const TIPO_VISIBILIDAD = require('../../../api/Instrucciones').TIPO_VISIBILIDAD;
+    const TIPO_LENGUAJE = require('../../../api/Instrucciones').TIPO_LENGUAJE);
+    const TIPO_DATO = requie('../../../api/Instrucciones').TIPO_DATO;
+    const TIPO_VALOR = require('../../../api/Instrucciones').TIPO_VALOR;
+    const TIPO_OPERACION = require('../../../api/Instrucciones').TIPO_OPERACION;
+    const TIPO_INSTRUCCION = require('../../../api/Instrucciones').TIPO_INSTRUCCION;
+    const TIPO_SWITCH = require('../../../api/Instrucciones').TIPO_SWITCH;
+    const instruccionesApi = require('../../../api.InstruccionesApi').instruccionesApi;
+    const TIPO_PRINT = require('../../../api.InstruccionesApi').TIPO_PRINT;
+    const lenguaje = TIPO_LENGUAJE.PYTHON;
+    let indentacionAcumulada=0;
+    let indentacionActual=[];
+    let instruccionAcumulada = [];
+
+    function agregarInstruccionAcumulada(stmt){
+        if(stmt.rol == TIPO_INSTRUCCION.IF ||
+        stmt.rol == TIPO_INSTRUCCION.WHILE ||
+        stmt.rol == TIPO_INSTRUCCION.FOR ||
+        stmt.rol == TIPO_INSTRUCCION.WHILE){
+            instruccionAcumulada[instruccionAcumulada.length-1].push(stmt);            
+            instruccionAcumulada.push(stmt);
+        }else if(stmt.rol == TIPO_INSTRUCCION.ELSE){
+            let size = instruccionAcumulada[instruccionAcumulada.length-1].instrucciones.length-1;
+            if(instruccionAcumulada[instruccionAcumulada.length-1].instrucciones[size] == TIPO_INSTRUCCION.IF){
+                stmt.if = instruccionAcumulada[instruccionAcumulada.length-1];
+                instruccionAcumulada[instruccionAcumulada.length-1].push(stmt);
+                instruccionAcumulada.push(stmt);
+            }else if(instruccionAcumulada[instruccionAcumulada.length-1].instrucciones[size] == TIPO_INSTRUCCION.ELSE){
+                stmt.if = instruccionAcumulada[instruccionAcumulada.length-1].if;
+                instruccionAcumulada[instruccionAcumulada.length-1].push(stmt);
+                instruccionAcumulada.push(stmt);
+            }else{
+                addSyntaxError("Se esperaba un if antes de else",stmt.rol, this._$.first_line, this._$.first_column);
+            }
+        }else{
+            instruccionAcumulada[instruccionAcumulada.length-1].push(stmt);
+        }
+    }
+
+    function agregarInstrucciones(stmt, arreglo){
+        if(indentacionActual.length==0){
+            if(indentacionAcumulada==0){
+                addSyntaxError("Bloque de indentacion esperado para la declaracion", stmt.rol, this._$.first_line, this._$.first_column);
+            }else{
+                indentacionActual.push(indentacionAcumulada);
+                agregarInstruccionAcumulada(stmt);
+            }
+        }else {
+            if(indentacionAcumulada==0){
+                addSyntaxError("Error de indentacion: Bloque de indentacion esperado para la declaracion", stmt.rol, this._$.first_line, this._$.first_column);
+            }else if(indentacionAcumulada > indentacionActual[indentacionActual.length-1]){
+                indentacionActual.push(indentacionAcumulada);
+                agregarInstruccionAcumulada(stmt);
+            }else if(indentacionAcumulada < indentacionActual[indentacionActual.length-1]){
+                let aux = [];
+                //creamos una copia
+                for(let index=0; index<indentacionActual.length; index++){
+                    aux.push(indentacionActual[index]);
+                }
+                //Manejamos y buscamos la nueva indentacion
+                let flag = false;
+                let intruccionesEliminadas=0;
+                for(let index=indentacionActual.length-1; index>=0; index--){
+                    if(indentacionAcumulada==indentacionActual[index]){
+                        flag=true;
+                        break;
+                    }else{  
+                        aux.pop();
+                        instruccionesEliminadas++;
+                    }
+                }
+                if(flag){
+                    indentacionActual = aux;
+                    for(let index=0; index<instruccionesEliminadas; index++){
+                        instruccionAcumulada.pop();
+                    }
+                    agregarInstruccionAcumulada(stmt);
+                }else{
+                    addSyntaxError("Error de indentacion: se requiere un bloque de indentacion del mismo nivel que las demas declaraciones",stmt.rol, this._$.first_line, this._$.first_column);
+                }
+            }else if(indentacionAcumulada == indentacionActual[indentacionActual.length-1]){
+                agregarInstruccionAcumulada(stmt);
+            }
+        }
+        indentacionAcumulada=0;
+        return arreglo;
+    }
 
 %}
     
@@ -394,57 +484,67 @@ console.log(yytext); return'IDENTIFICADOR';
 /*Manejaremos solo expresiones*/
 
 input
-    :INPUT OPEN_PARENTHESIS CLOSE_PARENTHESIS
+    :INPUT OPEN_PARENTHESIS CLOSE_PARENTHESIS {$$=TIPO_VALOR.INPUT;}
     |INPUT error {addSyntaxError("Se esperaba \'(\'",$2,this._$.first_line, this._$.first_column);}
     |INPUT OPEN_PARENTHESIS error {addSyntaxError("Se esperaba \')\'",$3,this._$.first_line, this._$.first_column);}
     ;
 
 expresion
-    :expresion AND expresion
-    |expresion OR expresion
-    |NOT expresion
-    |expresion MAYOR expresion
-    |expresion MAYOR_IGUAL expresion
-    |expresion MENOR expresion
-    |expresion MENOR_IGUAL expresion
-    |expresion DIFERENTE expresion
-    |expresion COMPARACION expresion
-    |expresion SUMA expresion
-    |expresion RESTA expresion
-    |expresion POR expresion
-    |expresion DIV expresion
-    |expresion MOD expresion
-    |expresion POW expresion
-    |RESTA expresion %prec UMINUS
-    |input
-    |LIT_ENTERO
-    |LIT_DECIMAL
-    |LIT_CADENA
-    |LIT_TRUE
-    |LIT_FALSE
-    |IDENTIFICADOR
-    |OPEN_PARENTHESIS expresion CLOSE_PARENTHESIS
+    :expresion AND expresion {$$=instruccionesApi.operacionAritmetica($1,$3, TIPO_OEPRACION.AND, lenguaje);}
+    |expresion OR expresion {$$=instruccionesApi.operacionAritmetica($1,$3, TIPO_OPERACION.OR, lenguaje);}
+    |NOT expresion {$$=instruccionesApi.operacionUnaria($2, undefined, TIPO_OEPRACION.NOT, lenguaje);}
+    |expresion MAYOR expresion {$$=instruccionesApi.operacionAritmetica($1,$3,TIPO_OPERACION.MAYOR, lenguaje );}
+    |expresion MAYOR_IGUAL expresion {$$=instruccionesApi.operacionAritmetica($1,$3,TIPO_OPERACION.MAYOR_IGUAL, lenguaje );}
+    |expresion MENOR expresion {$$=instruccionesApi.operacionAritmetica($1,$3,TIPO_OPERACION.MENOR, lenguaje );}
+    |expresion MENOR_IGUAL expresion {$$=instruccionesApi.operacionAritmetica($1,$3,TIPO_OPERACION.MENOR_IGUAL, lenguaje );}
+    |expresion DIFERENTE expresion {$$=instruccionesApi.operacionAritmetica($1,$3,TIPO_OPERACION.DIFERENTE, lenguaje );}
+    |expresion COMPARACION expresion {$$=instruccionesApi.operacionAritmetica($1,$3,TIPO_OPERACION.COMPARACION, lenguaje );}
+    |expresion SUMA expresion {$$=instruccionesApi.operacionAritmetica($1,$3,TIPO_OPERACION.SUMA, lenguaje );}
+    |expresion RESTA expresion {$$=instruccionesApi.operacionAritmetica($1,$3,TIPO_OPERACION.RESTA, lenguaje );}
+    |expresion POR expresion  {$$= instruccionesApi.operacionAritmetica($1,$3, TIPO_OPERACION.MULTIPLICACION, lenguaje);}
+    |expresion DIV expresion {$$=instruccionesApi.operacionAritmetica($1,$3, TIPO_OPERACION.DIV, lenguaje);}
+    |expresion MOD expresion {$$=instruccionesApi.operacionAritmetica($1,$3, TIPO_OPERACION.MOD, lenguaje);}
+    |expresion POW expresion {$$=instruccionesApi.operacionAritmetica($1, $3, TIPO_OPERACION.POW, lenguaje);}
+    |RESTA expresion %prec UMINUS {$$=instruccionesApi.operacionUnaria($2, undefined, TIPO_OPERACION.RESTA, lenguaje);}
+    |input {$$=instruccionesApi.nuevoValor("input()",$1, lenguaje);}
+    |LIT_ENTERO {$$=instruccionesApi.nuevoValor(parseInt($1.toString()), TIPO_VALOR.ENTERO, lenguaje);}
+    |LIT_DECIMAL {$$=instruccionesApi.nuevoValor(parseFloat($1.toString()),TIPO_VALOR.DECIMAL, lenguaje);}
+    |LIT_CADENA {$$=instruccionesApi.nuevoValor($1.toString(), TIPO_VALOR.CADENA, lenguaje);}
+    |LIT_TRUE {$$=instruccionesApi.nuevoValor($1.toString(), TIPO_VALOR.BOOLEAN, lenguaje);}
+    |LIT_FALSE {$$=instruccionesApi.nuevoValor($1.toString(), TIPO_VALOR.BOOLEAN, lenguaje);}
+    |IDENTIFICADOR {$$=instruccionesApi.nuevoValor($1.toString(), TIPO_VALOR.IDENTIFICADOR, lenguaje);}
+    |OPEN_PARENTHESIS expresion CLOSE_PARENTHESIS {$$=$2;}
     ;
 
 ini
-    : statements EOF
+    : statements EOF {
+        return $1;
+    }
     | ini error {addSyntaxError("Se esperaba una funcion",$2,this._$.first_line, this._$.first_column);}
     ;
 
 /*Funcion*/
 parameters
-    : IDENTIFICADOR parameters_re
-    |  /*empty*/
+    : IDENTIFICADOR parameters_re {
+        $2.push(instruccionesApi.nuevoParametro($1, TIPO_DATO.ANY, TIPO_LENGUAJE.PYTHON));
+        $$=$2;
+    }
+    |  /*empty*/ {$$=[];}
     ;
 
 parameters_re
-    : parameters_re COMA  IDENTIFICADOR
-    |parameters_re error {addSyntaxError("Se esperaba \')\' u otro parametro",$2,this._$.first_line, this._$.first_column);}
-    | /*empty*/
+    : parameters_re COMA  IDENTIFICADOR {
+        $1.push(instruccionesApi.nuevoParametro($3, TIPO_DATO.ANY, TIPO_LENGUAJE.PYTHON));
+        $$=$1;
+    }
+    |parameters_re error {addSyntaxError("Se esperaba \')\' u otro parametro",$2,this._$.first_line, this._$.first_column); $$=$1;}
+    | /*empty*/ {$$=[];}
     ;
 
 function_stmt
-    :DEF IDENTIFICADOR OPEN_PARENTHESIS parameters CLOSE_PARENTHESIS SEMI_COLON SPACE 
+    :DEF IDENTIFICADOR OPEN_PARENTHESIS parameters CLOSE_PARENTHESIS SEMI_COLON SPACE{
+        $$ = instruccionesApi.nuevaFuncion(TIPO_VISIBILIDAD.PUBLIC, $2, [], $4, TIPO_LENGUAJE.PYTHON);
+    } 
     |DEF error {addSyntaxError("Se esperaba un identificador",$2,this._$.first_line, this._$.first_column);}
     |DEF IDENTIFICADOR error {addSyntaxError("Se esperaba \'(\'",$3,this._$.first_line, this._$.first_column);}
     |DEF IDENTIFICADOR OPEN_PARENTHESIS parameters CLOSE_PARENTHESIS error {addSyntaxError("Se esperaba \':\'",$6,this._$.first_line, this._$.first_column);}
@@ -457,44 +557,66 @@ function_stmt
 
 
 statements
-    : statements statement 
-    | statements function_stmt
-    | statements SPACE
-    | statements INDENTATION
-    | statements error {addSyntaxError("Se esperaba una funcion",$2,this._$.first_line, this._$.first_column);}
-    | /*empty*/
+    : statements statement {
+        agregarInstrucciones($2, $1);
+        $$=$1;
+    }
+    | statements function_stmt{
+        if(indentacionAcumulada==0){
+            instruccionAcumulada = [];
+            instruccionAcumulada.push($2);
+            $1.push($2);
+        }else{
+            addSyntaxError("Indentacion no esperada, la funcion no lleva indentacion","def "+$2.id,this._$.first_line, this._$.first_column);
+        }
+        indentacionAcumulada=0;
+        $$=$1;
+    }
+    | statements SPACE {indentacionAcumulada=0;$$=$1;}
+    | statements INDENTATION {indentacionAcumulada+=$2;$$=$1;}
+    | statements error {addSyntaxError("Se esperaba una funcion",$2,this._$.first_line, this._$.first_column);$$=$1;}
+    | /*empty*/ {$$=[];}
     ;
 
 statement
-    : var_stmt
-    | if_stmt
-    | for_stmt
-    | while_stmt
-    | print_stmt 
-    | CONTINUE SPACE
+    : var_stmt {$$=$1;}
+    | if_stmt {$$=$1;}
+    | for_stmt {$$=$1;}
+    | while_stmt {$$=$1;}
+    | print_stmt  {$$=$1;}
+    | CONTINUE SPACE {$$=instruccionesApi.nuevoContinue();}
     | CONTINUE error {addSyntaxError("Se esperaba salto de linea",$2,this._$.first_line, this._$.first_column);}
-    | BREAK SPACE
+    | BREAK SPACE {$$=instruccionesApi.nuevoBreak();}
     | BREAK error {addSyntaxError("Se esperaba un salto de linea",$2,this._$.first_line, this._$.first_column);}
+    | RETURN expresion SPACE {$$=instruccionesApi.nuevoReturn($2, TIPO_LENGUAJE.PYTHON);}
     ;
 /*End of Declaraciones*/
 
 /*Print statement*/
 print_parameter
-    : expresion print_parameter_re
+    : expresion print_parameter_re{
+        $2.push($1);
+        $$ = $2;
+    }
     ;
 
 print_parameter_re
-    : print_parameter_re COMA expresion 
-    |  /*empty*/
+    : print_parameter_re COMA expresion {
+        $1.push($3);
+        $$ = $1;
+    }
+    |  /*empty*/ {$$=[];}
     ;
 
 print_method
-    :PRINT
-    |PRINTLN
+    :PRINT {$$=TIPO_PRINT.PRINT;}
+    |PRINTLN {$$=TIPO_PRINT.PRINTLN;}
     ;
 
 print_stmt
-    : print_method  OPEN_PARENTHESIS print_parameter CLOSE_PARENTHESIS SPACE
+    : print_method  OPEN_PARENTHESIS print_parameter CLOSE_PARENTHESIS SPACE{
+        $$= instruccionesApi.nuevoImprimir($3, TIPO_LENGUAJE.PYTHON);
+    }
     | print_method error {addSyntaxError("Se esperaba \'(\'",$2,this._$.first_line, this._$.first_column);}
     | print_method OPEN_PARENTHESIS error {addSyntaxError("Se esperaba una cadena",$3,this._$.first_line, this._$.first_column);}
     | print_method OPEN_PARENTHESIS print_parameter error {addSyntaxError("Se esperaba \')\'",$4,this._$.first_line, this._$.first_column);}
@@ -504,15 +626,19 @@ print_stmt
 
 /*If statement*/
 if_stmt
-    : IF expresion SEMI_COLON SPACE
+    : IF expresion SEMI_COLON SPACE{
+        $$ = instruccionesApi.nuevoIf($2, undefined, TIPO_LENGUAJE.PYTHON);
+    }
     | IF error {addSyntaxError("Se esperaba una condicion",$2,this._$.first_line, this._$.first_column);}
     | IF expresion error {addSyntaxError("Se esperaba \':\'",$3,this._$.first_line, this._$.first_column);}
     | IF expresion SEMI_COLON error {addSyntaxError("Se esperaba un salto de linea",$4,this._$.first_line, this._$.first_column);}
-    | ELIF expresion SEMI_COLON SPACE
+    | ELIF expresion SEMI_COLON SPACE{
+        $$ = instruccionesApi.nuevoElse($2, undefined, undefined, TIPO_LENGUAJE.PYTHON);
+    }
     | ELIF error {addSyntaxError("Se esperaba una condicion",$2,this._$.first_line, this._$.first_column);}
     | ELIF expresion error {addSyntaxError("Se esperaba \':\'",$3,this._$.first_line, this._$.first_column);}
     | ELIF expresion SEMI_COLON error {addSyntaxError("Se esperaba un salto de linea",$4,this._$.first_line, this._$.first_column);}
-    | ELSE SEMI_COLON SPACE
+    | ELSE SEMI_COLON SPACE{$$=instruccionesApi.nuevoElse(undefined, undefined, undefined, TIPO_LENGUAJE.PYTHON);}
     | ELSE error {addSyntaxError("Se esperaba \':\'",$2,this._$.first_line, this._$.first_column);}
     | ELSE SEMI_COLON error {addSyntaxError("Se esperaba un salto de linea",$3,this._$.first_line, this._$.first_column);}
     ;
@@ -520,23 +646,36 @@ if_stmt
 
 /*For statement*/
 for_parameters
-    :expresion for_parameters_re
+    :expresion for_parameters_re{
+        $2.push($1);
+        $$=$2;
+    }
     ;
 
 for_parameters_re
-    : for_parameters_re COMA expresion
+    : for_parameters_re COMA expresion {
+        $1.push($3);
+        $$=$1;
+    }
     | for_parameters_re error {addSyntaxError("Se esperaba \')\' u otra parametro",$2,this._$.first_line, this._$.first_column);}
-    |  /*empty*/
+    |  /*empty*/ {$$=[];}
     ;
 
 rango
-    :RANGE OPEN_PARENTHESIS for_parameters CLOSE_PARENTHESIS
-    |RANGE error {addSyntaxError("Se esperaba \'(\'",$2,this._$.first_line, this._$.first_column);}
+    :RANGE OPEN_PARENTHESIS for_parameters CLOSE_PARENTHESIS{
+        $$ = $3;
+    }
+    |RANGE error {addSyntaxError("Se esperaba indicar un rango",$2,this._$.first_line, this._$.first_column);}
     |RANGE OPEN_PARENTHESIS error {addSyntaxError("Se esperaba indicar un rango",$3,this._$.first_line, this._$.first_column);}
     ;
 
 for_stmt
-    : FOR IDENTIFICADOR IN rango SEMI_COLON SPACE
+    : FOR IDENTIFICADOR IN rango SEMI_COLON SPACE{
+        let valor_inicial = instruccionesApi.nuevaDeclaracion(TIPO_VISIBILIDAD.PUBLIC, $2, TIPO_DATO.INT, TIPO_LENGUAJE.PYTHON);
+        let valor_accion = instruccionesApi.nuevoValor(parseInt("1"),TIPO_VALOR.ENTERO, TIPO_LENGUAJE.PYTHON);
+        let accion_post = instruccionesApi.nuevaAsignacion_O($2,TIPO_OPERACION.INCREMENTO,valor_accion,TIPO_LENGUAJE.PYTHON);
+        $$ = instruccionesApi.nuevoFor(valor_inicial, $4, accion_post, undefined, TIPO_LENGUAJE.PYTHON);
+    }
     | FOR error {addSyntaxError("Se esperaba un identificador",$2,this._$.first_line, this._$.first_column);}
     | FOR IDENTIFICADOR error {addSyntaxError("Se esperaba la palabra reservada \'in\'",$3,this._$.first_line, this._$.first_column);}
     | FOR IDENTIFICADOR IN error {addSyntaxError("Se esperaba un rango",$4,this._$.first_line, this._$.first_column);} 
@@ -547,7 +686,7 @@ for_stmt
 
 /*While statement*/
 while_stmt
-    : WHILE expresion SEMI_COLON SPACE
+    : WHILE expresion SEMI_COLON SPACE{$$=instruccionesApi.nuevoWhile($2, undefined, TIPO_LENGUAJE.PYTHON);}
     | WHILE error {addSyntaxError("Se esperaba una condicion",$2,this._$.first_line, this._$.first_column);}
     | WHILE expresion error {addSyntaxError("Se esperaba \':\'",$3,this._$.first_line, this._$.first_column);}
     | WHILE expresion SEMI_COLON error {addSyntaxError("Se esperaba un salto de linea",$4,this._$.first_line, this._$.first_column);}
@@ -555,37 +694,75 @@ while_stmt
 /*End of statement*/
 /*Variable statement*/
 igualaciones
-    : IGUAL
-    | O_MAS
-    | O_RESTA
-    | O_POR
-    | O_DIV
-    | O_POW
-    | O_MOD
+    : IGUAL {$$=TIPO_OPERACION.IGUAL;}
+    | O_MAS {$$=TIPO_OPERACION.SUMA;}
+    | O_RESTA {$$=TIPO_OPERACION.RESTA;}
+    | O_POR {$$=TIPO_OPERACION.MULTIPLICACION;}
+    | O_DIV {$$=TIPO_OPERACION.DIVISION;}
+    | O_POW {$$=TIPO_OPERACION.POW;}
+    | O_MOD {$$=TIPO_OPERACION.MOD;}
     ;
 
 nombre_variables
-    : IDENTIFICADOR nombre_variables_re
+    : IDENTIFICADOR nombre_variables_re{
+        $2.push($1);
+        $$=$2;
+    }
     ;
 
 nombre_variables_re
-    : nombre_variables_re COMA IDENTIFICADOR
-    |  /*empty*/
+    : nombre_variables_re COMA IDENTIFICADOR {
+        $1.push($3);
+        $$=$1;
+    }
+    |  /*empty*/ {$$=[];}
+    ;
+
+expresiones
+    :expresion expresiones_re{
+        $2.push($1);
+        $$=$2;
+    }
+    ;
+expresiones_re
+    :expresiones_re COMA expresion {
+        $1.push($3);
+        $$=$1;
+    }
+    |/*empty*/{$$=[];}
     ;
 
 asignacion
-    : igualaciones expresion asignacion_re
+    : igualaciones expresiones asignacion_re{
+        let nuevaIgualacion = instruccionesApi.nuevaAsignacion_O(undefined, $1, $2, TIPO_LENGUAJE.PYTHON);
+        $3.push(nuevaIgualacion);
+        $$=$3;
+    }
     | igualaciones error {addSyntaxError("Se esperaba una asignacion",$2,this._$.first_line, this._$.first_column);}
     ;
 
 asignacion_re
-    : asignacion_re igualaciones expresion 
+    : asignacion_re igualaciones expresiones {
+        let nuevaIgualacion = instruccionesApi.nuevaAsignacion_O(undefined, $2,$3,TIPO_LENGUAJE.PYTHON);
+        $1.push(nuevaIgualacion);
+        $$=$1;
+    }
     | asignacion_re error {addSyntaxError("Se esperaba un salto de linea",$2,this._$.first_line, this._$.first_column);}
-    |  /*empty*/
+    |asignacion_re igualaciones error {addSyntaxError("Se esperaba un valor para asignar",$3,this._$.first_line, this._$.first_column);}
+    |  /*empty*/ {$$=[];}
     ;
 
 var_stmt
-    : nombre_variables asignacion SPACE
+    : nombre_variables asignacion SPACE{
+        //Vienen solo identificadores
+        let nombres = $1;
+        //Vienen objetos asignaciones
+        let asignaciones = $2;
+        for(let index=0; index<asignaciones.length; index++){
+            asignaciones[index].id = nombres;
+        }
+        $$=asignaciones;
+    }
     | nombre_variables error {addSyntaxError("Se esperaba un salto de linea",$2,this._$.first_line, this._$.first_column);}
     ;
 /*End of statement*/

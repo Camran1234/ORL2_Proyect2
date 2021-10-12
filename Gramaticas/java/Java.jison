@@ -281,7 +281,14 @@
 
 /lex
 %{
-    
+    const TIPO_VISIBLIDAD = require('../../../api/Instrucciones').TIPO_VISIBLIDAD;
+    const TIPO_LENGUAJE = require('../../../api/Instrucciones').TIPO_LENGUAJE);
+    const TIPO_DATO = requie('../../../api/Instrucciones').TIPO_DATO;
+    const TIPO_VALOR = require('../../../api/Instrucciones').TIPO_VALOR;
+    const TIPO_OPERACION = require('../../../api/Instrucciones').TIPO_OPERACION;
+    const TIPO_INSTRUCCION = require('../../../api/Instrucciones').TIPO_INSTRUCCION;
+    const TIPO_SWITCH = require('../../../api/Instrucciones').TIPO_SWITCH;
+    const instruccionesApi = require('../../../api.InstruccionesApi').instruccionesApi;
 %}
     %left 'PUBLIC' 'PRIVATE'
     %left 'OR'

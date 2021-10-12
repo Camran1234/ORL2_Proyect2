@@ -15,16 +15,21 @@ const TIPO_LENGUAJE = {
     PYTHON = 'PYTHON',
     C = 'C'
 }
-
+/**
+ * Para identificadores y funciones
+ */
 const TIPO_DATO = {
     INT = 'INT',
     FLOAT = 'FLOAT',
     CHAR = 'CHAR',
     STRING = 'STRING',
     BOOLEAN = 'BOOLEAN',
-    VOID = 'VOID'     
+    VOID = 'VOID',
+    ANY= 'ANY'  
 }
-
+/**
+ * Para literales
+ */
 const TIPO_VALOR = {
     ENTERO: 'ENTERO',
     DECIMAL: 'DECIMAL',
@@ -32,11 +37,21 @@ const TIPO_VALOR = {
     CARACTER: 'CARACTER',
     BOOLEAN: 'BOOLEAN',
     IDENTIFICADOR: 'IDENTIFICADOR',
-    METODO: 'METODO'
+    METODO: 'METODO',
+    INPUT_INT: 'INPUT_INT',
+    INPUT_FLOAT: 'INPUT_FLOAT',
+    INPUT_CHAR: 'INPUT_CHAR',
+    INPUT: 'INPUT'
+}
+
+const TIPO_PRINT = {
+    PRINT: 'PRINT',
+    PRINTLN: 'PRINTLN'
 }
 
 const TIPO_OPERACION = {
     //Operaciones aritmeticas
+    IGUAL:'IGUAL',
     SUMA: 'SUMA',
     RESTA: 'RESTA',
     MULTIPLICACION: 'MULTIPLICACION',
