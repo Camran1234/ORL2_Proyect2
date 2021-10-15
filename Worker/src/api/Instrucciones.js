@@ -1,31 +1,33 @@
 const TIPO_VISIBILIDAD = {
-    PUBLIC = 'PUBLIC',
-    PRIVATE = 'PRIVATE'
+    PUBLIC : 'PUBLIC',
+    PRIVATE : 'PRIVATE',
+    LOCAL : 'LOCAL',
+    CONST : 'CONST'
 }
 
 const LIBRERIAS = {
-    LIB_PY = 'LIB_PY',
-    LIB_JAVA = 'LIB_JAVA',
-    PY = 'PY',
-    JAVA = 'JAVA'
+    LIB_PY : 'LIB_PY',
+    LIB_JAVA : 'LIB_JAVA',
+    PY : 'PY',
+    JAVA : 'JAVA'
 }
 
 const TIPO_LENGUAJE = {
-    JAVA = 'JAVA',
-    PYTHON = 'PYTHON',
-    C = 'C'
+    JAVA : 'JAVA',
+    PYTHON : 'PYTHON',
+    C : 'C'
 }
 /**
  * Para identificadores y funciones
  */
 const TIPO_DATO = {
-    INT = 'INT',
-    FLOAT = 'FLOAT',
-    CHAR = 'CHAR',
-    STRING = 'STRING',
-    BOOLEAN = 'BOOLEAN',
-    VOID = 'VOID',
-    ANY= 'ANY'  
+    INT : 'INT',
+    FLOAT : 'FLOAT',
+    CHAR : 'CHAR',
+    STRING : 'STRING',
+    BOOLEAN : 'BOOLEAN',
+    VOID : 'VOID',
+    ANY: 'ANY'  
 }
 /**
  * Para literales
@@ -37,6 +39,8 @@ const TIPO_VALOR = {
     CARACTER: 'CARACTER',
     BOOLEAN: 'BOOLEAN',
     IDENTIFICADOR: 'IDENTIFICADOR',
+    PUNTERO_IDENTIFICADOR: 'PUNTERO_IDENTIFICADOR',
+    THIS_IDENTIFICADOR: 'THIS_IDENTIFICADOR',
     METODO: 'METODO',
     INPUT_INT: 'INPUT_INT',
     INPUT_FLOAT: 'INPUT_FLOAT',
@@ -76,27 +80,43 @@ const TIPO_OPERACION = {
 }
 
 const TIPO_INSTRUCCION = {
-    DECLARACION = 'DECLARACION',
-    FUNCION = 'FUNCION',
-    CLASE = 'CLASE',
-    ASIGNACION = 'ASIGNACION',
-    ASIGNACION_O = 'ASIGNACION_0',
-    IF = 'IF',
-    ELSE = 'ELSE',
-    SWITCH = 'SWITCH',
-    FOR = 'FOR',
-    WHILE = 'WHILE',
-    DO = 'DO',
+    DECLARACION : 'DECLARACION',
+    INCLUDE : 'INCLUDE',
+    FUNCION : 'FUNCION',
+    MAIN : 'MAIN',
+    CONSTRUCTOR : 'CONSTRUCTOR',
+    CLASE : 'CLASE',
+    ASIGNACION : 'ASIGNACION',
+    ASIGNACION_O : 'ASIGNACION_0',
+    VARIABLE : 'VARIABLE',
+    IF : 'IF',
+    ELSE : 'ELSE',
+    SWITCH : 'SWITCH',
+    FOR : 'FOR',
+    WHILE : 'WHILE',
+    DO : 'DO',
+    CLEAN : 'CLEAN',
+    GETCH : 'GETCH',
     //PENDIENTE METODO
-    IMPRIMIR = 'IMPRIMIR',
-    CONTINUE = 'CONTINUE',
-    BREAK = 'BREAK',
-    RETURN = 'RETURN',
-    METODO = 'METODO'
+    IMPRIMIR : 'IMPRIMIR',
+    CONTINUE : 'CONTINUE',
+    BREAK : 'BREAK',
+    RETURN : 'RETURN',
+    METODO : 'METODO',
+    SCAN : 'SCAN'
 }
 
 const TIPO_SWITCH = {
-    CASE = 'CASE',
-    DEFAULT = 'DEFAULT'
+    CASE : 'CASE',
+    DEFAULT : 'DEFAULT'
 }
 
+module.exports.TIPO_OPERACION = TIPO_OPERACION;
+module.exports.TIPO_VISIBILIDAD =  TIPO_VISIBILIDAD;
+module.exports.LIBRERIAS = LIBRERIAS;
+module.exports.TIPO_LENGUAJE = TIPO_LENGUAJE;
+module.exports.TIPO_DATO = TIPO_DATO;
+module.exports.TIPO_VALOR =TIPO_VALOR ;
+module.exports.TIPO_PRINT = TIPO_PRINT;
+module.exports.TIPO_INSTRUCCION = TIPO_INSTRUCCION;
+module.exports.TIPO_SWITCH = TIPO_SWITCH;

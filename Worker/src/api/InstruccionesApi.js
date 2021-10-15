@@ -1,16 +1,18 @@
 var TIPO_INSTRUCCION = require('./Instrucciones').TIPO_INSTRUCCION;
 var TIPO_SWITCH = require('./Instrucciones').TIPO_SWITCH;
 
-function nuevaOperacion(operadorL, operadorR, operador, lenguaje){
+function nuevaOperacion(operadorL, operadorR, operador, lenguaje, linea, columna){
     return{
         operadorL: operadorL,
         operadorR: operadorR,
         operador: operador,
-        lenguaje:lenguaje
+        lenguaje:lenguaje,
+        linea: linea,
+        columna: columna
     }
 }
 
-const instrucionesApi = {
+const instruccionesApi = {
 
     /**
      *  Genera una operacion Binaria entre dos expresiones
@@ -19,8 +21,8 @@ const instrucionesApi = {
      * @param {*} operador 
      * @returns 
      */
-    operacionAritmetica: function(operadorL, operadorR, operador, lenguaje){
-        return nuevaOperacion(operadorL, operadorR, operador, lenguaje);
+    operacionAritmetica: function(operadorL, operadorR, operador, lenguaje, linea, columna){
+        return nuevaOperacion(operadorL, operadorR, operador, lenguaje, linea, columna);
     },
 
     /**
@@ -29,8 +31,8 @@ const instrucionesApi = {
      * @param {*} operador 
      * @returns 
      */
-    operacionUnaria: function(operadorL, operador, lenguaje){
-        return nuevaOperacion(operadorL, undefined, operador, lenguaje);
+    operacionUnaria: function(operadorL, operador, lenguaje, linea, columna){
+        return nuevaOperacion(operadorL, undefined, operador, lenguaje, linea, columna);
     },
 
     /**
@@ -39,24 +41,40 @@ const instrucionesApi = {
      * @param {*} tipo 
      * @returns 
      */
-    nuevoValor: function(valor, tipo, lenguaje){
+    nuevoValor: function(valor,magnitud, tipo, lenguaje,linea, columna){
         return {
             valor: valor,
+            magnitud:magnitud,
             tipo: tipo,
-            lenguaje:lenguaje
+            lenguaje:lenguaje,
+            linea: linea,
+            columna: columna
         }
-    },
+    }, 
+
+    nuevoInclude: function(paqueteria, lenguaje, linea, columna) {
+        return {
+            paqueteria:paqueteria,
+            lenguaje:lenguaje,
+            linea:linea,
+            columna:columna,
+            rol: TIPO_INSTRUCCION.INCLUDE
+        }
+    }
+    ,
 
     /**
      * Genera un nuevo parametro para indicarle a la funcion
      * @param {*} id
      * @param {*} tipo 
      */
-    nuevoParametro: function(id, tipo, lenguaje){
+    nuevoParametro: function(id, tipo, lenguaje,linea, columna){
         return {
             id: id,
             tipo: tipo,
-            lenguaje:lenguaje
+            lenguaje:lenguaje,
+            linea: linea, 
+            columna:columna
         }
     },
 
@@ -68,7 +86,10 @@ const instrucionesApi = {
      * @param {*} paqueteria 
      * @returns 
      */
-    nuevaClase: function(visibilidad, id, idExtension, instrucciones, paqueteria, lenguaje){
+    nuevaClase: function(visibilidad, id, idExtension, instrucciones, paqueteria, lenguaje,linea, columna){
+        if(instrucciones == undefined){
+            instrucciones = [];
+        }
         return {
             id: id,
             extension:idExtension,
@@ -76,7 +97,25 @@ const instrucionesApi = {
             visibilidad:visibilidad,
             instrucciones: instrucciones,
             paqueteria: paqueteria,
-            lenguaje:lenguaje
+            lenguaje:lenguaje,
+            linea:linea,
+            columna:columna
+        }
+    },
+
+    nuevoConstructor: function(visibilidad, id, instrucciones, parametros, lenguaje,linea, columna){
+        if(instrucciones == undefined){
+            instrucciones = [];
+        }
+        return{
+            id:id,
+            rol: TIPO_INSTRUCCION.CONSTRUCTOR,
+            visibilidad: visibilidad, 
+            instrucciones: instrucciones,
+            parametros: parametros,
+            lenguaje:lenguaje,
+            linea:linea, 
+            columna:columna
         }
     },
     /**
@@ -87,42 +126,61 @@ const instrucionesApi = {
      * @param {*} parametros 
      * @returns
      */
-    nuevaFuncion: function(visibilidad, id, instrucciones, parametros, lenguaje){
+    nuevaFuncion: function(visibilidad, id, tipo, instrucciones, parametros, lenguaje,linea, columna){
+        if(instrucciones == undefined){
+            instrucciones = [];
+        }
         return {
             id:id,
             rol: TIPO_INSTRUCCION.FUNCION,
+            tipo: tipo,
             instrucciones: instrucciones,
             parametros: parametros,
             visibilidad:visibilidad,
-            lenguaje:lenguaje
+            lenguaje:lenguaje,
+            linea:linea,
+            columna:columna
         }
     },
+
+    nuevoMain: function(instrucciones, lenguaje, linea, columna){
+        if(instrucciones == undefined){
+            instrucciones = [];
+        }
+        return {
+            instrucciones: instrucciones,
+            lenguaje:lenguaje,
+            linea:linea,
+            columna:columna,
+            rol:TIPO_INSTRUCCION.MAIN
+        }
+    }
+    ,
     /**
      * Genera una una nueva declaracion
      * @param {*} identificador 
      * @param {*} tipo 
      */
-    nuevaDeclaracion: function (visibilidad, id, tipo, lenguaje) {
+    nuevaDeclaracion: function (visibilidad, id, magnitud,  tipo, lenguaje,linea, columna) {
         return {
             id:id,
             visibilidad:visibilidad,
+            magnitud: magnitud,
             rol:TIPO_INSTRUCCION.DECLARACION,
             tipo:tipo,
-            lenguaje:lenguaje
+            lenguaje:lenguaje,
+            linea:linea, 
+            columna:columna
         }
     },
-    /**
-     * Genera una nueva asignacion para agregarle la expresion al id
-     * @param {*} id 
-     * @param {*} expresion 
-     * @returns 
-     */
-    nuevaAsignacion: function(id, expresion, lenguaje){
+    
+    nuevaVariable: function(arreglo, lenguaje,linea, columna){
         return {
-            id: id,
-            rol:TIPO_INSTRUCCION.ASIGNACION,
-            expresion: expresion,
-            lenguaje:lenguaje
+            rol:TIPO_INSTRUCCION.VARIABLE,
+            arreglo: arreglo,
+            lenguaje:lenguaje,
+            linea: linea, 
+            columna:columna
         }
     },
     /**
@@ -134,13 +192,16 @@ const instrucionesApi = {
      * @param {*} expresion 
      * @returns 
      */
-    nuevaAsignacion_O: function(id, operador, expresion, lenguaje){
+    nuevaAsignacion_O: function(id,magnitud,  operador, expresion, lenguaje,linea, columna){
         return {
             id:id,
+            magnitud: magnitud,
             rol:TIPO_INSTRUCCION.ASIGNACION_O,
             operador: operador,
             expresion: expresion,
-            lenguaje:lenguaje
+            lenguaje:lenguaje,
+            linea: linea,
+            columna:columna
         }
     },
 
@@ -150,12 +211,17 @@ const instrucionesApi = {
      * @param {*} instrucciones 
      * @returns 
      */
-    nuevoIf: function(expresion, instrucciones, lenguaje){
+    nuevoIf: function(expresion, instrucciones, lenguaje,linea, columna){
+        if(instrucciones == undefined){
+            instrucciones = [];
+        }
         return {
             condicion: expresion,
             instrucciones: instrucciones,
             rol:TIPO_INSTRUCCION.IF,
-            lenguaje:lenguaje
+            lenguaje:lenguaje,
+            linea:linea,
+            columna:columna
         }
     },
     /**
@@ -165,13 +231,18 @@ const instrucionesApi = {
      * @param {*} instrucciones 
      * @param {*} if_father 
      */
-    nuevoElse: function(expresion, instrucciones, if_father, lenguaje){
+    nuevoElse: function(expresion, instrucciones, if_father, lenguaje,linea, columna){
+        if(instrucciones == undefined){
+            instrucciones = [];
+        }
         return {
             condicion:expresion,
             instrucciones:instrucciones,
             if:if_father,
             rol: TIPO_INSTRUCCION.ELSE,
-            lenguaje:lenguaje
+            lenguaje:lenguaje,
+            linea:linea, 
+            columna:columna
         }
     },
 
@@ -182,12 +253,14 @@ const instrucionesApi = {
      * @param {*} cases 
      * @returns 
      */
-    nuevoSwitch:function(id, cases, lenguaje){
+    nuevoSwitch:function(id, cases, lenguaje, linea, columna){
         return {
             id: id,
             cases:cases,
             rol:TIPO_INSTRUCCION.SWITCH,
-            lenguaje:lenguaje
+            lenguaje:lenguaje,
+            linea:linea,
+            columna:columna
         }
     },
 
@@ -197,12 +270,17 @@ const instrucionesApi = {
      * @param {*} instrucciones 
      * @returns 
      */
-    nuevoCase: function(expresion, instrucciones, lenguaje){
+    nuevoCase: function(expresion, instrucciones, lenguaje, linea, columna){
+        if(instrucciones == undefined){
+            instrucciones = [];
+        }
         return {
             condicion:expresion,
             instrucciones: instrucciones,
             rol: TIPO_SWITCH.CASE,
-            lenguaje:lenguaje
+            lenguaje:lenguaje,
+            linea:linea,
+            columna:columna
         }
     },
     /**
@@ -210,11 +288,16 @@ const instrucionesApi = {
      * @param {*} instrucciones 
      * @returns 
      */
-    nuevoDefault: function(instrucciones, lenguaje){
+    nuevoDefault: function(instrucciones, lenguaje, linea, columna){
+        if(instrucciones == undefined){
+            instrucciones = [];
+        }
         return{
             instrucciones:instrucciones,
             rol: TIPO_SWITCH.DEFAULT,
-            lenguaje:lenguaje
+            lenguaje:lenguaje,
+            linea:linea,
+            columna:columna
         }
     },
     /**
@@ -227,14 +310,19 @@ const instrucionesApi = {
      * @param {*} instrucciones 
      * @returns 
      */
-    nuevoFor: function(valor_inicial, expresion, accion_post, instrucciones, lenguaje){
+    nuevoFor: function(valor_inicial, expresion, accion_post, instrucciones, lenguaje, linea, columna){
+        if(instrucciones == undefined){
+            instrucciones = [];
+        }
         return{
             valor_inicial:valor_inicial,
             condicion: expresion,
             accion_post: accion_post,
             instrucciones:instrucciones,
             rol: TIPO_INSTRUCCION.FOR,
-            lenguaje:lenguaje
+            lenguaje:lenguaje,
+            linea:linea,
+            columna:columna
         }
     },
 
@@ -245,12 +333,17 @@ const instrucionesApi = {
      * @param {*} instrucciones 
      * @returns 
      */
-    nuevoWhile: function(expresion, instrucciones, lenguaje){
+    nuevoWhile: function(expresion, instrucciones, lenguaje, linea, columna){
+        if(instrucciones == undefined){
+            instrucciones = [];
+        }
         return{
             condicion: expresion,
             instrucciones:instrucciones,
             rol: TIPO_INSTRUCCION.WHILE,
-            lenguaje:lenguaje
+            lenguaje:lenguaje,
+            linea:linea,
+            columna:columna
         }
     },
     /**
@@ -260,12 +353,17 @@ const instrucionesApi = {
      * @param {*} while_ 
      * @returns 
      */
-    nuevoDoWhile: function(instrucciones, condicion, lenguaje){
+    nuevoDoWhile: function(instrucciones, condicion, lenguaje, linea, columna){
+        if(instrucciones == undefined){
+            instrucciones = [];
+        }
         return{
             instrucciones: instrucciones,
             condicion:condicion, 
             rol:TIPO_INSTRUCCION.DO,
-            lenguaje:lenguaje
+            lenguaje:lenguaje,
+            linea:linea,
+            columna:columna
         }
     },
     /**
@@ -273,47 +371,88 @@ const instrucionesApi = {
      * @param {*} parametros 
      * @returns 
      */
-    nuevoImprimir: function(parametros, lenguaje){
+    nuevoImprimir: function(parametros, lenguaje, linea, columna){
         return{
             parametros:parametros,
             rol:TIPO_INSTRUCCION.IMPRIMIR,
-            lenguaje:lenguaje
+            lenguaje:lenguaje,
+            linea:linea,
+            columna:columna
         }
     },
 
-    nuevoContinue: function(){
+    nuevoScan: function(id, cadena, lenguaje, linea, columna){
+        return {
+            id:id,
+            cadena:cadena,
+            lenguaje:lenguaje,
+            linea:linea,
+            columna:columna,
+            rol:TIPO_INSTRUCCION.SCAN
+        }
+    },
+
+    nuevoContinue: function(linea, columna){
         return{
-            rol: TIPO_INSTRUCCION.CONTINUE
+            rol: TIPO_INSTRUCCION.CONTINUE,
+            linea:linea,
+            columna:columna
         }
     },
 
-    nuevoBreak: function(){
+    nuevoBreak: function(linea, columna){
         return{
-            rol: TIPO_INSTRUCCION.BREAK
+            rol: TIPO_INSTRUCCION.BREAK,
+            linea:linea,
+            columna:columna
         }
     },
 
-    nuevoReturn: function(expresion, lenguaje){
+    nuevoClean: function(linea, columna){
+        return {
+            rol : TIPO_INSTRUCCION.CLEAN,
+            linea:linea, 
+            columna:columna
+        }
+    },
+
+    nuevoGetch: function(linea, columna){
+        return{
+            rol: TIPO_INSTRUCCION.GETCH,
+            linea:linea, 
+            columna:columna
+        }
+    },
+
+    nuevoReturn: function(expresion, lenguaje, linea, columna){
         return{
             rol: TIPO_INSTRUCCION.RETURN,
             expresion: expresion,
-            lenguaje:lenguaje
+            lenguaje:lenguaje,
+            linea:linea,
+            columna:columna
         }
     },
-    nuevoMetodo_stmt: function(metodo, lenguaje){
+    nuevoMetodo_stmt: function(metodo, lenguaje, linea, columna){
         return{
             rol:TIPO_INSTRUCCION.METODO,
             id:id,
             metodo:metodo,
-            lenguaje:lenguaje
+            lenguaje:lenguaje,
+            linea:linea,
+            columna:columna
         }
     },
-    nuevoMetodo_exp: function(id, parametros, lenguaje){
+    nuevoMetodo: function(id, parametros, lenguaje, linea, columna){
         return {
-            rol: TIPO_VALOR,
+            rol: TIPO_INSTRUCCION.METODO,
             id:id,
             parametros:parametros,
-            lenguaje:lenguaje
+            lenguaje:lenguaje,
+            linea:linea,
+            columna:columna
         }
     }
 }
+
+module.exports.instruccionesApi = instruccionesApi;

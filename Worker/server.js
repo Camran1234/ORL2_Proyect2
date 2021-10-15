@@ -2,7 +2,6 @@ const express = require('express')
 const bodyParser = require('body-parser');
 const app = express();
 const cors = require('cors');
-var Parser = require('./src/parser/Parser');
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json()); 
 app.use(cors());
@@ -14,8 +13,8 @@ app.post('/parse', function (req, res) {
     answer = [];
     errores = [];
     let codigo  = req.body.codigo;
-    console.log('Codigo recibido: '+codigo);
     let resultado = "false";
+    let Parser = require('./src/parser/Parser');
     let parser = new Parser();
     parser.parse(codigo);
     //Mensaje donde enviaremos la respuesta
@@ -25,7 +24,8 @@ app.post('/parse', function (req, res) {
     };
     let respuesta = JSON.stringify(jsonAnswer);
     respuesta= JSON.parse(respuesta);
-    res.send(respuesta);
+    res.status(500).send(respuesta);
+    res.end();
   });
 
 app.post('/obtenerErrores', function (req, res){

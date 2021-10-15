@@ -2,39 +2,53 @@
 
 %{
     //import
-    let ErrorLexico = require('../../../error/LexicalError.js');
-    let ErrorSintactico = require('../../../error/SyntaxError.js');
+    var ErrorLexico = require('../../../error/LexicalError.js');
+    var ErrorSintactico = require('../../../error/SyntaxError.js');
     //Errores
-    let erroresLexicos = [];
-    let erroresSintacticos = [];
+    var erroresLexicos = [];
+    var erroresSintacticos = [];
 
     //Lineas extras
-    let lineNumber = 0;
-    let columnNumber=0;
+    var lineNumber = 0;
+    var columnNumber=0;
 
-    function setLineNumber(line){
-        this.lineNumber=line;
+    module.exports.setLineNumber = function(line){
+        lineNumber = line;
     }
 
-    function setColumnNumber(column){
-        this.columnNumber=column;
+    module.exports.setColumnNumber = function(column){
+        columnNumber=column;
+    }
+
+    module.exports.setErroresLexicos = function(errors){
+        erroresLexicos = errors;
+    }
+
+    module.exports.setErroresSintacticos = function(errors){
+        erroresSintacticos = errors;
     }
 
     function getLexicalErrors(){
         return lexicalErrorsArray;
     }
 
-    function addLexicalError(lexema, linea, column){                        
-        let errorLexico = new ErrorLexico(lexema, linea, column);
-        erroresLexicos.push(errorLexico);
+    function addLexicalError(lexema, linea, column){   
+        try{
+            var errorLexico = new ErrorLexico(lexema, linea, column);
+            erroresLexicos.push(errorLexico);
+        }catch(ex){
+            console.log(ex);
+        }                  
     }
 
-    function addSyntaxError( descripcion, token, linea, columna){
-        let newLine = linea + lineNumber;
-        let newColumn = columna + columnNumber;
-        let errorSintactico = new ErrorSintactico(descripcion, token, newLine, newColumn);
-        erroresSintacticos.push(errorSintactico);
-    }
+    function addSyntaxError(descripcion, token, line, column){
+		try{
+			var errorSintactico = new ErrorSintactico(descripcion, token, line, column);
+			erroresSintacticos.push(errorSintactico);
+		}catch(ex){
+			console.log(ex);
+		}
+	}
 %}
 
 %lex
@@ -276,19 +290,60 @@
 \s+                                 /*ignore*/;
 "//".*                              /*ignore*/;
 [/][*][^*]*[*]+([^/*][^*]*[*]+)*[/] /*ignore*/;
-.+   { addLexicalError(yytext, yylloc.first_line, yylloc.first_column);}					
+.+   { addLexicalError(yytext, linea(yylloc.first_line), columna(yylloc.first_column));}					
 
 
 /lex
 %{
-    const TIPO_VISIBLIDAD = require('../../../api/Instrucciones').TIPO_VISIBLIDAD;
-    const TIPO_LENGUAJE = require('../../../api/Instrucciones').TIPO_LENGUAJE);
-    const TIPO_DATO = requie('../../../api/Instrucciones').TIPO_DATO;
+    const TIPO_VISIBILIDAD = require('../../../api/Instrucciones').TIPO_VISIBILIDAD;
+    const TIPO_LENGUAJE = require('../../../api/Instrucciones').TIPO_LENGUAJE;
+    const TIPO_DATO = require('../../../api/Instrucciones').TIPO_DATO;
     const TIPO_VALOR = require('../../../api/Instrucciones').TIPO_VALOR;
     const TIPO_OPERACION = require('../../../api/Instrucciones').TIPO_OPERACION;
     const TIPO_INSTRUCCION = require('../../../api/Instrucciones').TIPO_INSTRUCCION;
-    const TIPO_SWITCH = require('../../../api/Instrucciones').TIPO_SWITCH;
-    const instruccionesApi = require('../../../api.InstruccionesApi').instruccionesApi;
+    const TIPO_PRINT = require('../../../api/Instrucciones').TIPO_PRINT;
+    const instruccionesApi = require('../../../api/InstruccionesApi').instruccionesApi;
+    const lenguaje = TIPO_LENGUAJE.JAVA;
+
+    function reversaArreglo(arreglo){
+        var aux = [];
+        for(var index=arreglo.length; index>=0; index--){
+            aux.push(arreglo[index]);
+        }
+        return aux;
+    }
+
+    function checkInstruction(stmt, arreglo){
+        var flag = true;
+        if(stmt.rol == TIPO_INSTRUCCION.ELSE){
+            if(arreglo.length>=1){
+                if(arreglo[arreglo.length-1].rol == TIPO_INSTRUCCION.IF ||
+                arreglo[arreglo.length-1].rol == TIPO_INSTRUCCION.ELSE){
+                    if(arreglo[arreglo.length-1].rol == TIPO_INSTRUCCION.IF){
+                        stmt.if = arreglo[arreglo.length-1];
+                    }else{
+                        if(arreglo[arreglo.length-1].if != null){
+                            stmt.if = arreglo[arreglo.length-1].if;
+                        }else{
+                            flag=false;
+                            addSyntaxError("Se esperaba un else o if antes", stmt.rol, stmt.linea, stmt.columna);
+                        }
+                    }
+                }
+            }
+        }
+        if(flag){
+            arreglo.push(stmt);
+        }
+    }
+
+   function linea(linea){
+        return linea + lineNumber;
+    }
+
+    function columna(column){
+        return column + columnNumber;
+    }
 %}
     %left 'PUBLIC' 'PRIVATE'
     %left 'OR'
@@ -303,404 +358,625 @@
     
     
 
-%start ini
+%start init_java
 
 %% 
 /*Definicion de la gramatica*/
 
+init_java
+    : ini EOF {return reversaArreglo($1);}
+    ;
+
 ini 
-    : class_stmt ini
-    | error ini {addSyntaxError("Se espera una clase de java", $1, this._$.first_line, this._$.first_column);}
-    | EOF
+    : class_stmt ini {
+        $2.push($1);
+        $$=$2;
+    }
+    | error ini {addSyntaxError("Se espera una clase de java", $1, linea(this._$.first_line), columna(this._$.first_column));$$=$2;}
+    | /*empty*/ {$$=[];}
         ;
 
 concatenate_values
-        :expresion concatenate_values_re
-        |expresion error {addSyntaxError("Se esperaba mas parametros o \')\'", $2, this._$.first_line, this._$.first_column);}
+        :expresion concatenate_values_re{{
+            $2.push($1);
+            $$= reversaArreglo($2);
+        }}
+        |expresion error {addSyntaxError("Se esperaba mas parametros o \')\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
         ;
 
 concatenate_values_re
-        :COMA expresion concatenate_values_re
-        |COMA error concatenate_values_re {addSyntaxError("Se esperaba una expresion", $2, this._$.first_line, this._$.first_column);}
-        |CLOSE_PARENTHESIS
+        :COMA expresion concatenate_values_re{
+            $3.push($2);
+            $$=$3;
+        }
+        |COMA error concatenate_values_re {addSyntaxError("Se esperaba una expresion", $2, linea(this._$.first_line), columna(this._$.first_column));$$=$3;}
+        |CLOSE_PARENTHESIS {$$=[];}
         ;
 
 print
-        :PRINT
-        |PRINTLN
+        :PRINT {$$=TIPO_PRINT.PRINT;}
+        |PRINTLN {$$=TIPO_PRINT.PRINTLN;}
         ;
 
 print_stmt
-        :print OPEN_PARENTHESIS concatenate_values
-        | print error {addSyntaxError("Se esperaba \'(\'", $2, this._$.first_line, this._$.first_column);}
-        | print OPEN_PARENTHESIS error {addSyntaxError("Error de parametros, agregar parametros o un cierre \')\'", $2, this._$.first_line, this._$.first_column);}
+        :print OPEN_PARENTHESIS concatenate_values{
+            $$ = instruccionesApi.nuevoImprimir($3, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+        }
+        | print error {addSyntaxError("Se esperaba \'(\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
+        | print OPEN_PARENTHESIS error {addSyntaxError("Error de parametros, agregar parametros o un cierre \')\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
         ;
 
 
 identifier
-        : PUBLIC 
-        | PRIVATE
+        : PUBLIC {$$=TIPO_VISIBILIDAD.PUBLIC;}
+        | PRIVATE {$$=TIPO_VISIBILIDAD.PRIVATE;}
         ;
 data_type
-        : INT
-        | STRING
-        | CHAR
-        | BOOLEAN
-        | FLOAT
-        | DOUBLE
-        | VOID
+        : INT {$$=TIPO_DATO.INT;}
+        | STRING {$$=TIPO_DATO.STRING;}
+        | CHAR {$$=TIPO_DATO.CHAR;}
+        | BOOLEAN {$$=TIPO_DATO.BOOLEAN;}
+        | FLOAT {$$=TIPO_DATO.FLOAT;}
+        | DOUBLE {$$=TIPO_DATO.FLOAT;}
+        | VOID  {$$=TIPO_DATO.VOID;}
         ;
 
 entry_stmt
-    : INTINPUT
-    | FLOATINPUT
-    | CHARINPUT
+    : INTINPUT {$$=TIPO_VALOR.INPUT_INT;}
+    | FLOATINPUT    {$$=TIPO_VALOR.INPUT_FLOAT;}
+    | CHARINPUT {$$=TIPO_VALOR.INPUT_CHAR;}
     ;
 
 this_stmt
-    : THIS DOT IDENTIFICADOR
-    | THIS error {addSyntaxError("Agregar \'.\'", $2, this._$.first_line, this._$.first_column);}
-    | THIS DOT error {addSyntaxError("Se esperaba un identificador", $3, this._$.first_line, this._$.first_column);}
-    | IDENTIFICADOR
+    : THIS DOT IDENTIFICADOR {$$=instruccionesApi.nuevoValor($3,null, TIPO_VALOR.THIS_IDENTIFICADOR,lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+    | THIS error {addSyntaxError("Agregar \'.\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
+    | THIS DOT error {addSyntaxError("Se esperaba un identificador", $3, linea(this._$.first_line), columna(this._$.first_column));}
+    | IDENTIFICADOR {$$=instruccionesApi.nuevoValor($1,null, TIPO_VALOR.IDENTIFICADOR,lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
     ;
 
 extends_re
-    :EXTENDS IDENTIFICADOR
-    |EXTENDS error {addSyntaxError("Se esperaba el nombre de otra clase a extender", $2, this._$.first_line, this._$.first_column);}
-    | /*empty*/
+    :EXTENDS IDENTIFICADOR {$$=$2;}
+    |EXTENDS error {addSyntaxError("Se esperaba el nombre de otra clase a extender", $2, linea(this._$.first_line), columna(this._$.first_column));}
+    | /*empty*/ {$$=null;}
     ;
 
 class_stmt
-        : PUBLIC CLASS IDENTIFICADOR OPEN_CURLY extends_re class_instructions 
-        | PUBLIC error  {addSyntaxError("Se esperaba \'class\'", $2, this._$.first_line, this._$.first_column);}
-        | PUBLIC CLASS error  {addSyntaxError("Agregar un identificador a la clase", $3, this._$.first_line, this._$.first_column);}
-        | PUBLIC CLASS IDENTIFICADOR error {addSyntaxError("Se esperaba {", $4, this._$.first_line, this._$.first_column);}
+        : PUBLIC CLASS IDENTIFICADOR extends_re OPEN_CURLY class_instructions {
+            $$ = instruccionesApi.nuevaClase(TIPO_VISIBILIDAD.PUBLIC, $3, $5,reversaArreglo($6), null, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+        }
+        | PUBLIC error  {addSyntaxError("Se esperaba \'class\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
+        | PUBLIC CLASS error  {addSyntaxError("Agregar un identificador a la clase", $3, linea(this._$.first_line), columna(this._$.first_column));}
+        | PUBLIC CLASS IDENTIFICADOR extends_re error {addSyntaxError("Se esperaba {", $4, linea(this._$.first_line), columna(this._$.first_column));}
         ;
 
 class_instructions
-        : class_instructions identifier class_instruction
-        | class_instructions identifier error {addSyntaxError("No es un miembro, agregar un miembro con modificador \'public\' o \'private\'", $3, this._$.first_line, this._$.first_column);}
-        | error {addSyntaxError("Se esperaba \'}\'", $1, this._$.first_line, this._$.first_column);}
-        | CLOSE_CURLY 
+        :  identifier class_instruction class_instructions{
+            for(var index=0; index<$2.length; index++){
+                if($2[index].rol == TIPO_INSTRUCCION.FUNCION ||
+                $2[index].rol == TIPO_INSTRUCCION.DECLARACION){
+                    $2[index].visibilidad = $1;
+                }
+                $3.push($2[index]);
+            }
+            $$=$3;
+        
+        }
+        |  identifier error class_instructions {
+            addSyntaxError("No es un miembro, agregar un miembro con modificador \'public\' o \'private\'", $3, linea(this._$.first_line), columna(this._$.first_column));
+            $$=$3;
+        }
+        |  error  class_instructions{
+            
+            addSyntaxError("Se esperaba una variable o funcion", $1, linea(this._$.first_line),columna(this._$.first_column));
+        }
+        | CLOSE_CURLY  {$$=[];}
         ;
 
 function_parameters
-        : data_type IDENTIFICADOR function_parameters_re
-        | data_type error {addSyntaxError("Agregar un identificador", $2, this._$.first_line, this._$.first_column);}
-        | CLOSE_PARENTHESIS
+        : data_type IDENTIFICADOR function_parameters_re{
+            var parametro = instruccionesApi.nuevoParametro($2, $1, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+            $3.push(parametro);
+            $$=reversaArreglo($3);
+        }
+        | data_type error {addSyntaxError("Agregar un identificador", $2, linea(this._$.first_line), columna(this._$.first_column));}
+        | CLOSE_PARENTHESIS {$$=[];}
         ;
 
 function_parameters_re
-        : function_parameters_re COMA data_type IDENTIFICADOR 
-        | function_parameters_re COMA error {addSyntaxError("Se esperaba un tipo mas identificador, ejemplo: \'int x\'", $3, this._$.first_line, this._$.first_column);}
-        | function_parameters_re COMA data_type error {addSyntaxError("Agregar un identificador", $4, this._$.first_line, this._$.first_column);}
-        | CLOSE_PARENTHESIS
-        | error {addSyntaxError("Se esperaba \')\'", $1, this._$.first_line, this._$.first_column);}
+        :  COMA data_type IDENTIFICADOR function_parameters_re {
+            var parametro2 = instruccionesApi.nuevoParametro($3, $2, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+            $4.push(parametro2);
+            $$= $4;
+        }
+        |  COMA error function_parameters_re {addSyntaxError("Se esperaba un tipo mas identificador, ejemplo: \'int x\'", $3, linea(this._$.first_line), columna(this._$.first_column));$$=$3;}
+        |  COMA data_type error  function_parameters_re{addSyntaxError("Agregar un identificador", $4, linea(this._$.first_line), columna(this._$.first_column));$$=$4;}
+        | CLOSE_PARENTHESIS{
+            $$=[];
+        }
+        | error function_parameters_re {addSyntaxError("Se esperaba \')\'", $1, linea(this._$.first_line), columna(this._$.first_column));$$=$2;}
         ;
 
 function_stmt
-        :  IDENTIFICADOR OPEN_PARENTHESIS function_parameters OPEN_CURLY instructions
-        | IDENTIFICADOR error  {addSyntaxError("Se esperaba \'(\'", $2, this._$.first_line, this._$.first_column);}
-        | IDENTIFICADOR OPEN_PARENTHESIS error {addSyntaxError("Se esperaba parametros o \')\'", $2, this._$.first_line, this._$.first_column);}
-        | IDENTIFICADOR OPEN_PARENTHESIS function_parameters error {addSyntaxError("No es una declaracion", $4, this._$.first_line, this._$.first_column);} 
+        :  IDENTIFICADOR OPEN_PARENTHESIS function_parameters OPEN_CURLY instructions{
+            var funcion = instruccionesApi.nuevaFuncion(null, $1,null, reversaArreglo($5), $3, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+            var arreglo = [];
+            arreglo.push(funcion);
+            $$ = arreglo
+        }
+        | IDENTIFICADOR error  {addSyntaxError("Se esperaba \'(\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
+        | IDENTIFICADOR OPEN_PARENTHESIS error {addSyntaxError("Se esperaba parametros o \')\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
+        | IDENTIFICADOR OPEN_PARENTHESIS function_parameters error {addSyntaxError("No es una declaracion", $4, linea(this._$.first_line), columna(this._$.first_column));} 
         ;
 
 variable_stmt
-        : IDENTIFICADOR asignacion_variable variable_stmt_re
+        : IDENTIFICADOR asignacion_variable variable_stmt_re{
+            var id = instruccionesApi.nuevoValor($1,null, TIPO_VALOR.IDENTIFICADOR,lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+            for(var index=0; index<$2.length; index++){
+                $2[index].id= id;
+                $3.push($2[index]);
+            }
+            $3.push(instruccionesApi.nuevaDeclaracion(null, id,[], null, lenguaje, linea(this._$.first_line), columna(this._$.first_column)));
+            $$=reversaArreglo($3);
+        }
         ;
 
 variable_stmt_re
-        : variable_stmt_re COMA IDENTIFICADOR asignacion_variable
-        | variable_stmt_re COMA error {addSyntaxError("Se esperaba un identificador", $3, this._$.first_line, this._$.first_column);}
-        | COLON
+        :  COMA IDENTIFICADOR asignacion_variable variable_stmt_re{
+            var id = instruccionesApi.nuevoValor($2,null, TIPO_VALOR.IDENTIFICADOR,lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+            for(var index=0; index<$3.length; index++){
+                $3[index].id = id;
+                $4.push($3[index]);
+            }
+            $4.push(instruccionesApi.nuevaDeclaracion(null, id,[], null, lenguaje, linea(this._$.first_line), columna(this._$.first_column)));
+            $$=$4;
+        }
+        |  COMA error variable_stmt_re {addSyntaxError("Se esperaba un identificador", $3, linea(this._$.first_line), columna(this._$.first_column)); $$=$3;}
+        | COLON {$$=[];}
         ;
 
 class_statements
-        : variable_stmt
-        | function_stmt
-        | error {addSyntaxError("Se esperaba modificadores de la clase, pueden ser public o private", $1, this._$.first_line, this._$.first_column);}
+        : variable_stmt {$$=$1;}
+        | function_stmt {$$=$1;}
+        | error {addSyntaxError("Se esperaba modificadores de la clase, pueden ser public o private", $1, linea(this._$.first_line), columna(this._$.first_column));}
         ;
 
 constructor_class
-        : IDENTIFICADOR OPEN_PARENTHESIS function_parameters OPEN_CURLY instructions
-        | IDENTIFICADOR error {addSyntaxError("Se esperaba \'(\'", $2, this._$.first_line, this._$.first_column);}
-        | IDENTIFICADOR OPEN_PARENTHESIS error {addSyntaxError("Se esperaban parametros o un cierre \')\'", $3, this._$.first_line, this._$.first_column);}
-        | IDENTIFICADOR OPEN_PARENTHESIS function_parameters error {addSyntaxError("Se esperaba \'}\'", $4, this._$.first_line, this._$.first_column);}
+        : IDENTIFICADOR OPEN_PARENTHESIS function_parameters OPEN_CURLY instructions{
+            $$ = instruccionesApi.nuevoConstructor(null, $1, reversaArreglo($5), $3, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+        }
+        | IDENTIFICADOR error {addSyntaxError("Se esperaba \'(\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
+        | IDENTIFICADOR OPEN_PARENTHESIS error {addSyntaxError("Se esperaban parametros o un cierre \')\'", $3, linea(this._$.first_line), columna(this._$.first_column));}
+        | IDENTIFICADOR OPEN_PARENTHESIS function_parameters error {addSyntaxError("Se esperaba \'}\'", $4, linea(this._$.first_line), columna(this._$.first_column));}
         ;
 
 class_instruction
-        : data_type class_statements
-        | constructor_class
+        : data_type class_statements{
+            for(var index=0; index< $2.length; index++){
+                if($2[index].rol == TIPO_INSTRUCCION.FUNCION ||
+                $2[index].rol == TIPO_INSTRUCCION.DECLARACION){
+                    $2[index].tipo = $1;
+                }
+            }
+            var arreglo;
+            
+            if($2[0].rol == TIPO_INSTRUCCION.FUNCION){
+                arreglo = $2[0];
+            }else if($2[0].rol == TIPO_INSTRUCCION.DECLARACION ||
+            $2[0].rol == TIPO_INSTRUCCION.ASIGNACION_O){
+                var aux = $2;
+                arreglo = instruccionesApi.nuevaVariable(aux, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+            }            
+            $$=arreglo;
+        }
+        | constructor_class{$$=$1;}
         ;
 
 instructions 
-        : instruction instructions
-        | error instructions {addSyntaxError("Se esperaba una declaracion", $1, this._$.first_line, this._$.first_column);}
-        | CLOSE_CURLY
+        : instruction instructions{
+            checkInstruction($1, $2);
+            $$=$2;
+        }
+        | error instructions {addSyntaxError("Se esperaba una declaracion", $1, linea(this._$.first_line), columna(this._$.first_column));}
+        | CLOSE_CURLY{
+            $$=[];
+        }
         ;
 
 instruction
-        : variable
-        | if_stmt
-        | else_stmt
-        | switch_stmt
-        | for_stmt
-        | while_stmt
-        | do_stmt COLON
-        | do_stmt error {addSyntaxError("Se esperaba \';\'", $2, this._$.first_line, this._$.first_column);}
-        | metodo COLON
-        | metodo error {addSyntaxError("Se esperaba \';\'", $2, this._$.first_line, this._$.first_column);}
-        | print_stmt COLON
-        | print_stmt error {addSyntaxError("Se esperaba \';\'", $2, this._$.first_line, this._$.first_column);}
-        | CONTINUE COLON
-        | CONTINUE error {addSyntaxError("Se esperaba \';\'", $2, this._$.first_line, this._$.first_column);}
-        | BREAK COLON
-        | BREAK error {addSyntaxError("Se esperaba \';\'", $2, this._$.first_line, this._$.first_column);}
-        | RETURN COLON
-        | RETURN error {addSyntaxError("Se esperaba \';\'", $2, this._$.first_line, this._$.first_column);}
+        : variable  {$$=$1;}
+        | if_stmt   {$$=$1;}
+        | else_stmt {$$=$1;}
+        | switch_stmt {$$=$1;}
+        | for_stmt  {$$=$1;}
+        | while_stmt    {$$=$1;}
+        | do_stmt COLON {$$=$1;}
+        | do_stmt error {addSyntaxError("Se esperaba \';\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
+        | metodo COLON {$$=$1;}
+        | metodo error {addSyntaxError("Se esperaba \';\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
+        | print_stmt COLON  {$$=$1;}
+        | print_stmt error {addSyntaxError("Se esperaba \';\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
+        | CONTINUE COLON    {$$=instruccionesApi.nuevoContinue(linea(this._$.first_line), columna(this._$.first_column));}
+        | CONTINUE error {addSyntaxError("Se esperaba \';\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
+        | BREAK COLON   {$$=instruccionesApi.nuevoBreak(linea(this._$.first_line), columna(this._$.first_column));}
+        | BREAK error {addSyntaxError("Se esperaba \';\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
+        | RETURN expresion COLON  {$$=instruccionesApi.nuevoReturn($2, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+        | RETURN expresion error {addSyntaxError("Se esperaba \';\'", $3, linea(this._$.first_line), columna(this._$.first_column));}
+        | RETURN error {addSyntaxError("Se esperaba un valor a retornar", $2, linea(this._$.first_line), columna(this._$.first_column));}
         ;
 
 stmt_enclusure
-    : OPEN_CURLY instructions
-    | instruction
-    | error {addSyntaxError("Se esperaba una declaracion o \'{\'", $1, this._$.first_line, this._$.first_column);}
+    : OPEN_CURLY instructions {$$=reversaArreglo($5);}
+    | instruction {$$=$1;}
+    | error {addSyntaxError("Se esperaba una declaracion o \'{\'", $1, linea(this._$.first_line), columna(this._$.first_column));}
     ;
 /*Variable*/
 increm
-    : INCREMENTO
-    | DECREMENTO
+    : INCREMENTO {$$=TIPO_OPERACION.INCREMENTO;}
+    | DECREMENTO    {$$=TIPO_OPERACION.DECREMENTO;}
     ;
 
 valor_variable
-    :expresion
-    |entry_stmt
-    |error {addSyntaxError("Se esperaba una expresion o valor par asignar", $1, this._$.first_line, this._$.first_column);}
+    :expresion {$$=$1;}
+    |entry_stmt {$$=$1;}
+    |error {addSyntaxError("Se esperaba una expresion o valor par asignar", $1, linea(this._$.first_line), columna(this._$.first_column));}
     ;
 
 metodo_asignacion
-    :IGUAL
-    | O_MAS
-    | O_MENOS
-    | O_POR
-    | O_DIV
-    | O_MOD
-    | O_POW
+    :IGUAL {$$=TIPO_OPERACION.IGUAL;}
+    | O_MAS {$$=TIPO_OPERACION.SUMA;}
+    | O_MENOS   {$$=TIPO_OPERACION.RESTA;}
+    | O_POR {$$=TIPO_OPERACION.MULTIPLICACION;}
+    | O_DIV {$$=TIPO_OPERACION.DIVISION;}
+    | O_MOD {$$=TIPO_OPERACION.MOD;}
+    | O_POW {$$=TIPO_OPERACION.POW;}
     ;
 
 igualacion_re
-    : metodo_asignacion valor_variable igualacion_re
-    |  /*empty*/
+    : metodo_asignacion valor_variable igualacion_re{
+        var valorAsignado = instruccionesApi.nuevaAsignacion_O(null,[], $1, $2, lenguaje, linea(this._$.first_line), columna(this._$.first_column)  );
+        $3.push(valorAsignado);
+        $$=$3;
+    }
+    |  /*empty*/ {$$=[];}
     ;
 
 asignacion_variable
-    : metodo_asignacion valor_variable igualacion_re
-    |  /*empty*/
+    : metodo_asignacion valor_variable igualacion_re{
+        $3.push(instruccionesApi.nuevaAsignacion_O(null,[], $1, $2, lenguaje, linea(this._$.first_line), columna(this._$.first_column)));
+        $$=reversaArreglo($3);
+    }
+    |  /*empty*/ {$$=[];}
     ;
 
 asignacion
-    : metodo_asignacion valor_variable igualacion_re
-    | increm 
-    |  /*empty*/
+    : metodo_asignacion valor_variable igualacion_re{
+        $3.push(instruccionesApi.nuevaAsignacion_O(null,[], $1, $2, lenguaje, linea(this._$.first_line), columna(this._$.first_column)));
+        $$ = reversaArreglo($3);
+    }
+    | increm {
+        var arreglo = [];
+        arreglo.push(instruccionesApi.nuevaAsignacion_O(null,[], $1, null, lenguaje, linea(this._$.first_line), columna(this._$.first_column)));
+        $$ = arreglo;
+    }
+    |  /*empty*/ {$$=[];}
     ;
 
 asignacion_post
-    : metodo_asignacion valor_variable igualacion_re
-    | increm 
+    : metodo_asignacion valor_variable igualacion_re{
+        $3.push(instruccionesApi.nuevaAsignacion_O(null,[], $1, $2, lenguaje, linea(this._$.first_line), columna(this._$.first_column)));
+        $$ = reversaArreglo($3);
+    }
+    | increm {
+        var expresion = instruccionesApi.nuevoValor("1",null,TIPO_VALOR.ENTERO, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+        var arreglo = [];
+        arreglo.push(instruccionesApi.nuevaAsignacion_O(null,[], $1, expresion, lenguaje, linea(this._$.first_line), columna(this._$.first_column)));
+        $$ = arreglo;
+    }
     ;
 
 nombre_variables
-    : this_stmt asignacion_variable nombre_variables_re
+    : this_stmt asignacion_variable nombre_variables_re{
+        for(var index=0; index<$2.length; index++){
+            $2[index].id = $1;
+            $3.push($2[index]);
+        }
+        $3.push(instruccionesApi.nuevaDeclaracion(null, $1,[],null, lenguaje, linea(this._$.first_line), columna(this._$.first_column)));
+        $$=reversaArreglo($3);
+    }
     ;
 
 nombre_variables_re
-    : nombre_variables_re COMA this_stmt asignacion_variable 
-    | nombre_variables_re COMA error  {addSyntaxError("Se esperaba una variable", $3, this._$.first_line, this._$.first_column);}
-    | error {addSyntaxError("Se esperaba \';\'", $1, this._$.first_line, this._$.first_column);}
-    | COLON
+    :  COMA this_stmt asignacion_variable nombre_variables_re {
+        for(var index=0; index<$3.length; index++){
+            $3[index].id = $2;
+            $4.push($3[index]);
+        }
+        $4.push(instruccionesApi.nuevaDeclaracion(null, id,[], null, lenguaje, linea(this._$.first_line), columna(this._$.first_column)));
+        $$=$4;
+    }
+    |  COMA error nombre_variables_re  {addSyntaxError("Se esperaba una variable", $2, linea(this._$.first_line), columna(this._$.first_column));$$=$3;}
+    | error {addSyntaxError("Se esperaba \';\'", $1, linea(this._$.first_line), columna(this._$.first_column));}
+    | COLON {$$=[];}
     ;
 
 variable
-    : data_type nombre_variables 
-    | data_type error {addSyntaxError("Se esperaba un identificador (variable) ", $2, this._$.first_line, this._$.first_column);}
-    | this_stmt asignacion_post COLON
-    | this_stmt error  {addSyntaxError("Una asignacion era esperada", $2, this._$.first_line, this._$.first_column);} 
-    | this_stmt asignacion_post error {addSyntaxError("Se esperaba \';\'", $3, this._$.first_line, this._$.first_column);}
+    : data_type nombre_variables {
+        for(var index=0; index<$2.length; index++){
+            if($2[index].rol == TIPO_INSTRUCCION.DECLARACION){
+                $2[index].tipo = $1;
+                $2[index].visibilidad = TIPO_VISIBILIDAD.LOCAL;
+            }
+        }
+        $$= instruccionesApi.nuevaVariable($2, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+    }
+    | data_type error {addSyntaxError("Se esperaba un identificador (variable) ", $2, linea(this._$.first_line), columna(this._$.first_column));}
+    | this_stmt asignacion_post COLON{
+        for(var index=0; index<$2.length; index++){
+            $2[index].id = $1;
+        }
+        $$ = instruccionesApi.nuevaVariable($2, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+    }     
+    | this_stmt error  {addSyntaxError("Una asignacion era esperada", $2, linea(this._$.first_line), columna(this._$.first_column));} 
+    | this_stmt asignacion_post error {addSyntaxError("Se esperaba \';\'", $3, linea(this._$.first_line), columna(this._$.first_column));}
     ;
 /*End of Variable*/
 /*INIT of metodo*/
 parameters
-    : expresion parameters_re
-    |error parameters {addSyntaxError("Se esperaba una expresion", $1, this._$.first_line, this._$.first_column);}
-    |CLOSE_PARENTHESIS 
+    : expresion parameters_re{
+        $2.push($1);
+        $$=reversaArreglo($2);
+    }
+    |error parameters {addSyntaxError("Se esperaba una expresion", $1, linea(this._$.first_line), columna(this._$.first_column));}
+    |CLOSE_PARENTHESIS {$$=[];}
     ;
 
 parameters_re
-    : COMA expresion parameters_re
-    |error parameters_re {addSyntaxError("Se esperaba una expresion", $1, this._$.first_line, this._$.first_column);}
-    | CLOSE_PARENTHESIS 
+    : COMA expresion parameters_re {
+        $3.push($2);
+        $$=$3;
+    }
+    |error parameters_re {addSyntaxError("Se esperaba una expresion", $1, linea(this._$.first_line), columna(this._$.first_column));}
+    | CLOSE_PARENTHESIS {$$=[];}
     ;
 
 expresion
-    :expresion AND expresion
-    |expresion OR expresion
-    |NOT expresion 
-    |expresion MENOR expresion
-    |expresion MENOR_IGUAL expresion
-    |expresion MAYOR expresion
-    |expresion MAYOR_IGUAL expresion
-    |expresion DIFERENTE expresion
-    |expresion COMPARACION expresion
-    |expresion SUMA expresion
-    |expresion RESTA expresion
-    |expresion POR expresion
-    |expresion DIV expresion
-    |expresion MOD expresion
-    |expresion POW expresion
-    |OPEN_PARENTHESIS expresion CLOSE_PARENTHESIS
-    |ENTERO
-    |DECIMAL
-    |RESTA expresion %prec UMINUS
-    |this_stmt accion_increm
-    |this_stmt
-    |CADENA
-    |CARACTER
-    |booleanos
-    |metodo
+    :expresion AND expresion    {$$=instruccionesApi.operacionAritmetica($1,$3, TIPO_OPERACION.AND, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+    |expresion OR expresion {$$=instruccionesApi.operacionAritmetica($1, $3, TIPO_OPERACION.OR, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+    |NOT expresion  {$$=instruccionesApi.operacionUnaria($2, TIPO_OPERACION.NOT, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+    |expresion MENOR expresion  {$$=instruccionesApi.operacionAritmetica($1,$3, TIPO_OPERACION.MENOR, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+    |expresion MENOR_IGUAL expresion    {$$=instruccionesApi.operacionAritmetica($1,$3, TIPO_OPERACION.MENOR_IGUAL, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+    |expresion MAYOR expresion  {$$=instruccionesApi.operacionAritmetica($1,$3, TIPO_OPERACION.MAYOR, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+    |expresion MAYOR_IGUAL expresion    {$$=instruccionesApi.operacionAritmetica($1,$3, TIPO_OPERACION.MAYOR_IGUAL, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+    |expresion DIFERENTE expresion {$$=instruccionesApi.operacionAritmetica($1,$3, TIPO_OPERACION.DIFERENTE, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+    |expresion COMPARACION expresion    {$$=instruccionesApi.operacionAritmetica($1,$3,TIPO_OPERACION.COMPARACION, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+    |expresion SUMA expresion   {$$=instruccionesApi.operacionAritmetica($1,$3, TIPO_OPERACION.SUMA, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+    |expresion RESTA expresion  {$$=instruccionesApi.operacionAritmetica($1, $3, TIPO_OPERACION.RESTA, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+    |expresion POR expresion    {$$=instruccionesApi.operacionAritmetica($1,$3, TIPO_OPERACION.MULTIPLICACION, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+    |expresion DIV expresion    {$$=instruccionesApi.operacionAritmetica($1,$3,TIPO_OPERACION.DIVISION, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+    |expresion MOD expresion    {$$=instruccionesApi.operacionAritmetica($1,$3,TIPO_OPERACION.MOD, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+    |expresion POW expresion {$$=instruccionesApi.operacionAritmetica($1, $3, TIPO_OPERACION.POW, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+    |OPEN_PARENTHESIS expresion CLOSE_PARENTHESIS {$$=$2;}
+    |ENTERO     {$$=instruccionesApi.nuevoValor($1,null, TIPO_VALOR.ENTERO, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+    |DECIMAL    {$$=instruccionesApi.nuevoValor($1,null, TIPO_VALOR.DECIMAL, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+    |RESTA expresion %prec UMINUS   {$$=instruccionesApi.operacionUnaria($2, TIPO_OPERACION.RESTA, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+    |this_stmt accion_increm {$$=instruccionesApi.operacionUnaria($1, $2, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+    |this_stmt  {$$=$1;}
+    |CADENA {$$=instruccionesApi.nuevoValor($1,null, TIPO_VALOR.CADENA, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+    |CARACTER {$$=instruccionesApi.nuevoValor($1,null, TIPO_VALOR.CARACTER, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+    |booleanos {$$=instruccionesApi.nuevoValor($1,null, TIPO_VALOR.BOOLEAN, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+    |metodo {$$=instruccionesApi.nuevoValor($1,null, TIPO_VALOR.METODO, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
     ;
 
 booleanos
-    :TRUE
-    |FALSE
+    :TRUE {$$="true";}
+    |FALSE {$$="false";}
     ;
 
 accion_increm
-    : INCREMENTO
-    | DECREMENTO
+    : INCREMENTO {$$=TIPO_OPERACION.INCREMENTO;}
+    | DECREMENTO    {$$=TIPO_OPERACION.DECREMENTO;}
     ;
 
 metodo
-    : IDENTIFICADOR OPEN_PARENTHESIS parameters 
+    : IDENTIFICADOR OPEN_PARENTHESIS parameters {
+        var newMetodo = instruccionesApi.nuevoMetodo($1, $3, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+        $$= newMetodo;
+    }
     ;
 /*End of Metodo*/
 /*Init IF*/
 block_condition
-    : expresion CLOSE_PARENTHESIS
-    | expresion error {addSyntaxError("Se esperaba \')\'", $2, this._$.first_line, this._$.first_column);}
-    | error CLOSE_PARENTHESIS {addSyntaxError("Se esperaba una expresion", $1, this._$.first_line, this._$.first_column);}
+    : expresion CLOSE_PARENTHESIS {$$=$2;}
+    | expresion error {addSyntaxError("Se esperaba \')\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
+    | error CLOSE_PARENTHESIS {addSyntaxError("Se esperaba una expresion", $1, linea(this._$.first_line), columna(this._$.first_column));}
     ;
 
 if_stmt
-    : IF OPEN_PARENTHESIS block_condition stmt_enclusure
-    | IF error {addSyntaxError("Se esperaba \'(\'", $2, this._$.first_line, this._$.first_column);}
-    | IF OPEN_PARENTHESIS error {addSyntaxError("Se esperaba una condicion", $3, this._$.first_line, this._$.first_column);}
+    : IF OPEN_PARENTHESIS block_condition stmt_enclusure {
+        $$ = instruccionesApi.nuevoIf($3, $4, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+    }
+    | IF error {addSyntaxError("Se esperaba \'(\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
+    | IF OPEN_PARENTHESIS error {addSyntaxError("Se esperaba una condicion", $3, linea(this._$.first_line), columna(this._$.first_column));}
     ;
 
 else_stmt
-    : ELSE stmt_enclusure 
+    : ELSE stmt_enclusure {
+        var else_stmt = instruccionesApi.nuevoElse(null, null, null, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+        if(!Array.isArray($2)){
+            if($2.rol == TIPO_INSTRUCCION.IF){
+                else_stmt.condicion = $2.condicion;
+            }
+            else_stmt.instrucciones = $2.instrucciones;
+        }else{
+            else_stmt.instrucciones = $2;
+        }
+        $$=else_stmt;
+    }
     ;
 
 /*End of IF*/
 /*Init of Switch*/
 
 switch_instructions 
-        : switch_instruction switch_instructions
-        | error switch_instructions {addSyntaxError("Se esperaba una declaracion", $1, this._$.first_line, this._$.first_column);}
-        | BREAK COLON
-        | BREAK error {addSyntaxError("Se esperaba \';\'", $2, this._$.first_line, this._$.first_column);}
+        : switch_instruction switch_instructions{
+            checkInstruction($1, $2);
+            $$=$2;
+        }
+        | error switch_instructions {addSyntaxError("Se esperaba una declaracion", $1, linea(this._$.first_line), columna(this._$.first_column));$$=$2;}
+        | BREAK COLON {
+            $$=[];
+        }
+        | BREAK error {addSyntaxError("Se esperaba \';\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
         ;
 
 default_instructions
-        : switch_instruction default_instructions
-        | error default_instructions  {addSyntaxError("Se esperaba una declaracion", $1, this._$.first_line, this._$.first_column);}
-        | CLOSE_CURLY
+        : switch_instruction default_instructions{
+            checkInstruction($1, $2);
+            $$=$2;
+        }
+        | error default_instructions  {addSyntaxError("Se esperaba una declaracion", $1, linea(this._$.first_line), columna(this._$.first_column));$$=$2;}
+        | CLOSE_CURLY{
+            $$=[];
+        }
         ;
 
 switch_instruction
-        : variable
-        | if_stmt
-        | else_stmt
-        | switch_stmt
-        | for_stmt
-        | while_stmt
-        | do_stmt COLON
-        | do_stmt error {addSyntaxError("Se esperaba \';\'", $2, this._$.first_line, this._$.first_column);}
-        | metodo COLON
-        | metodo error {addSyntaxError("Se esperaba \';\'", $2, this._$.first_line, this._$.first_column);}
-        |print_stmt COLON
-        | print_stmt error {addSyntaxError("Se esperaba \';\'", $2, this._$.first_line, this._$.first_column);}
-        | CONTINUE COLON
-        | CONTINUE error {addSyntaxError("Se esperaba \';\'", $2, this._$.first_line, this._$.first_column);}
-        | RETURN COLON
-        | RETURN error  {addSyntaxError("Se esperaba \';\'", $2, this._$.first_line, this._$.first_column);}
+        : variable {$$=$1;}
+        | if_stmt {$$=$1;}
+        | else_stmt {$$=$1;}
+        | switch_stmt {$$=$1;}
+        | for_stmt {$$=$1;}
+        | while_stmt {$$=$1;}
+        | do_stmt COLON {$$=$1;}
+        | do_stmt error {addSyntaxError("Se esperaba \';\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
+        | metodo COLON {$$=$1;}
+        | metodo error {addSyntaxError("Se esperaba \';\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
+        |print_stmt COLON {$$=$1;}
+        | print_stmt error {addSyntaxError("Se esperaba \';\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
+        | CONTINUE COLON {$$=instruccionesApi.nuevoContinue(linea(this._$.first_line), columna(this._$.first_column));}
+        | CONTINUE error {addSyntaxError("Se esperaba \';\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
+        | RETURN expresion COLON  {$$=instruccionesApi.nuevoReturn($2, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+        | RETURN error   {addSyntaxError("Se esperaba un valor para retornar", $2, linea(this._$.first_line), columna(this._$.first_column));}
+        |RETURN expresion error {addSyntaxError("Se esperaba \';\'", $3, linea(this._$.first_line), columna(this._$.first_column));}
         ;
 
 switch_stmt
-    : SWITCH OPEN_PARENTHESIS IDENTIFICADOR CLOSE_PARENTHESIS OPEN_CURLY cases_stmt
-    | SWITCH error {addSyntaxError("Se esperaba \'(\'", $2, this._$.first_line, this._$.first_column);}
-    | SWITCH OPEN_PARENTHESIS error {addSyntaxError("Se esperaba un identificador", $3, this._$.first_line, this._$.first_column);}
-    | SWITCH OPEN_PARENTHESIS IDENTIFICADOR error {addSyntaxError("Se esperaba \')\'", $4, this._$.first_line, this._$.first_column);}
-    | SWITCH OPEN_PARENTHESIS IDENTIFICADOR CLOSE_PARENTHESIS error cases_stmt {addSyntaxError("Se esperaba \'{\'", $5, this._$.first_line, this._$.first_column);} 
+    : SWITCH OPEN_PARENTHESIS IDENTIFICADOR CLOSE_PARENTHESIS OPEN_CURLY cases_stmt{
+        $$=instruccionesApi.nuevoSwitch($3, reversaArreglo($6), lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+    }
+    | SWITCH error {addSyntaxError("Se esperaba \'(\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
+    | SWITCH OPEN_PARENTHESIS error {addSyntaxError("Se esperaba un identificador", $3, linea(this._$.first_line), columna(this._$.first_column));}
+    | SWITCH OPEN_PARENTHESIS IDENTIFICADOR error {addSyntaxError("Se esperaba \')\'", $4, linea(this._$.first_line), columna(this._$.first_column));}
+    | SWITCH OPEN_PARENTHESIS IDENTIFICADOR CLOSE_PARENTHESIS error cases_stmt {addSyntaxError("Se esperaba \'{\'", $5, linea(this._$.first_line), columna(this._$.first_column));} 
     ;
 
 cases_stmt
-    : CASE expresion SEMI_COLON switch_instructions cases_stmt
-    | CASE error {addSyntaxError("Se esperaba una expresion", $2, this._$.first_line, this._$.first_column);}
-    | CASE expresion error  {addSyntaxError("Se esperaba \':\'", $3, this._$.first_line, this._$.first_column);}
-    | DEFAULT SEMI_COLON default_instructions 
-    | DEFAULT error {addSyntaxError("Se esperaba \':\'", $2, this._$.first_line, this._$.first_column);}
-    | error cases_stmt {addSyntaxError("Se esperaba un caso o \'}\'", $1, this._$.first_line, this._$.first_column);}
-    | CLOSE_CURLY
+    : CASE expresion SEMI_COLON switch_instructions cases_stmt{
+        $5.push(instruccionesApi.nuevoCase($2, reversaArreglo($4), lenguaje, linea(this._$.first_line), columna(this._$.first_column)));
+        $$= $5;
+    }
+    | CASE error cases_stmt {addSyntaxError("Se esperaba una expresion", $2, linea(this._$.first_line), columna(this._$.first_column));$$=$3;}
+    | CASE expresion error cases_stmt  {addSyntaxError("Se esperaba \':\'", $3, linea(this._$.first_line), columna(this._$.first_column));$$=$4;}
+    | DEFAULT SEMI_COLON default_instructions CLOSE_CURLY {
+        var arreglo = [];
+        arreglo.push(instruccionesApi.nuevoDefault(reversaArreglo($3), lenguaje, linea(this._$.first_line), columna(this._$.first_column)));
+        $$=arreglo;
+    }
+    | DEFAULT error {addSyntaxError("Se esperaba \':\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
+    | DEFAULT SEMI_COLON default_instructions error {addSyntaxError("Se esperaba \'}\'", $4, linea(this._$.first_line), columna(this._$.first_column));}
+    | error cases_stmt {addSyntaxError("Se esperaba un caso o \'}\'", $1, linea(this._$.first_line), columna(this._$.first_column));$$=$2;}
+    | CLOSE_CURLY {$$=[];}
     ;
 /*End of Switch*/
 /*Init For*/
 
-declaraciones_re
-    : COMA this_stmt  asignacion declaraciones_re
-    | COMA metodo declaraciones_re
-    | COMA print_stmt
-    | COMA error {addSyntaxError("Se eperaba una declaracion", $2, this._$.first_line, this._$.first_column);} 
-    | COMA this_stm error {addSyntaxError("Se espera una asignacion", $3, this._$.first_line, this._$.first_column);}
-    | error  {addSyntaxError("Se esperaba \';\' u otra declaracion", $1, this._$.first_line, this._$.first_column);}
-    | COLON
+
+this_asignacion
+    :   this_stmt asignacion {
+            for(var index=0; index<$2.length; index++){
+                $2[index].id = $1;
+            }
+            $$ = $2;
+        }
     ;
 
-declaraciones
-    : this_stmt asignacion declaraciones_re
+for_accion
+    : this_asignacion {$$=$1;}
+    | metodo {$$=$1;}
+    | print_stmt {$$=$1;}
     ;
 
 declaraciones_post
-    : declaraciones
-    | metodo declaraciones_re
+    : for_accion declaraciones_post_re{
+        $2.push($1);
+        $$=reversaArreglo($2);
+    }
+    ;
+
+declaraciones_post_re
+    : COMA for_accion declaraciones_post_re{
+        $3.push($2);
+        $$=$3;
+    }
+    | COMA error declaraciones_post_re {
+        addSyntaxError("Se esperaba una accion", ", "+$2, linea(this._$.first_line), columna(this._$.first_column));
+        $$=$3;
+        }
+    |error declaraciones_post_re {addSyntaxError("Se esperaba \';\'", $1, linea(this._$.first_line), columna(this._$.first_column));$$=$2;}
+    | COLON {$$=[];}
     ;
 
 declaracion_for
-    : data_type declaraciones
-    | declaraciones_post
-    ;
-for_accion
-    : declaraciones_post 
+    : data_type this_stmt asignacion declaracion_for_re{
+        for(var index=0; index<$2.length; index++){
+                $2[index].id = $1;
+            }
+        $2.push(instruccionesApi.nuevaDeclaracion(TIPO_VISIBILIDAD.LOCAL, $2,[], $1, lenguaje, linea(this._$.first_line), columna(this._$.first_column)));            
+        $$ = reversaArreglo($2);
+    }
+    | data_type error {addSyntaxError("Se esperaba un identificador", $2, linea(this._$.first_line), columna(this._$.first_column));}
+    | this_asignacion declaracion_for_re {$2.push($1); $$=reversaArreglo($2);}
     ;
 
+declaracion_for_re
+    : COMA  this_asignacion declaracion_for_re{
+        $3.push($2);
+        $$=$3;
+    }
+    | COMA error declaracion_for_re{
+        addSyntaxError("Se esperaba una expresion", $2, linea(this._$.first_line), columna(this._$.first_column));
+        $$=$3;
+    }
+    | error {addSyntaxError("Se esperaba \';\'", $1, linea(this._$.first_line), columna(this._$.first_column));}
+    | COLON {$$=[];}
+    ;
+
+
+
 for_stmt
-    : FOR OPEN_PARENTHESIS for_inicio stmt_enclusure
-    | FOR error {addSyntaxError("Se esperaba \'(\'", $2, this._$.first_line, this._$.first_column);}
-    | FOR OPEN_PARENTHESIS error {addSyntaxError("No se reconocieron los parametros de for", $3, this._$.first_line, this._$.first_column);}
+    : FOR OPEN_PARENTHESIS for_inicio for_condition for_asignacion stmt_enclusure{
+        $$= instruccionesApi.nuevoVor($3, $4, $5, $6, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+    }
+    | FOR error {addSyntaxError("Se esperaba \'(\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
+    | FOR OPEN_PARENTHESIS error {addSyntaxError("Se esperaba una asignacion", $3, linea(this._$.first_line), columna(this._$.first_column));}
+    | FOR OPEN_PARENTHESIS for_inicio error {addSyntaxError("Se esperaba una condicion", $4, linea(this._$.first_line), columna(this._$.first_column));}
+    | FOR OPEN_PARENTHESIS for_inicio for_condition error {addSyntaxError("Se esperaba una asignacion o accion", $5, linea(this._$.first_line), columna(this._$.first_column));}
     ;
 
 for_inicio
-    : declaracion_for for_condition
-    | declaracion_for error {addSyntaxError("Una condicion era esperada", $2, this._$.first_line, this._$.first_column);}
+    : declaracion_for {$$=$1;}
+    //| declaracion_for error {addSyntaxError("Una condicion era esperada", $2, linea(this._$.first_line), columna(this._$.first_column));}
     ;
 
 for_condition
-    : expresion COLON for_asignacion
-    | expresion error {addSyntaxError("Se esperaba \';\'", $2, this._$.first_line, this._$.first_column);}
-    | expresion COLON error {addSyntaxError("Se esperaba una accion del for", $3, this._$.first_line, this._$.first_column);}
+    : expresion COLON {$$=$1;}
+    | expresion error {addSyntaxError("Se esperaba \';\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
+    //| expresion COLON error {addSyntaxError("Se esperaba una accion del for", $3, linea(this._$.first_line), columna(this._$.first_column));}
     ;
 
 for_asignacion
-    : for_accion CLOSE_PARENTHESIS 
-    | for_accion error {addSyntaxError("Se esperaba \'(\'", $2, this._$.first_line, this._$.first_column);}
+    : declaraciones_post CLOSE_PARENTHESIS {$$=$1;}
+    | declaraciones_post error {addSyntaxError("Se esperaba \'(\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
     ;
 
 
@@ -708,23 +984,27 @@ for_asignacion
 /*Init of While*/
 
 while_stmt
-    : WHILE OPEN_PARENTHESIS block_condition stmt_enclusure
-    |WHILE error block_condition stmt_enclusure {addSyntaxError("Se esperaba \'(\'", $2, this._$.first_line, this._$.first_column);}
-    | WHILE OPEN_PARENTHESIS error stmt_enclusure {addSyntaxError("Se esperaba una condicion", $3, this._$.first_line, this._$.first_column);}
+    : WHILE OPEN_PARENTHESIS block_condition stmt_enclusure{
+        $$ = instruccionesApi.nuevoWhile($3, $4, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+    }
+    |WHILE error block_condition stmt_enclusure {addSyntaxError("Se esperaba \'(\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
+    | WHILE OPEN_PARENTHESIS error stmt_enclusure {addSyntaxError("Se esperaba una condicion", $3, linea(this._$.first_line), columna(this._$.first_column));}
     ;
 /*End of While*/
 
 /*Init of DoWhile*/
 
 do_stmt
-    : DO stmt_enclusure while_do
-    | DO stmt_enclusure error {addSyntaxError("Agregar un while", $3, this._$.first_line, this._$.first_column);}
+    : DO stmt_enclusure while_do{
+        $$ = instruccionesApi.nuevoDoWhile($2, $3, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+    }
+    | DO stmt_enclusure error {addSyntaxError("Agregar un while", $3, linea(this._$.first_line), columna(this._$.first_column));}
     ;
 
 while_do
-    : WHILE OPEN_PARENTHESIS block_condition 
-    | WHILE error {addSyntaxError("Se esperaba \'(\'", $2, this._$.first_line, this._$.first_column);}
-    | WHILE OPEN_PARENTHESIS error {addSyntaxError("Se esperaba una condicion", $3, this._$.first_line, this._$.first_column);}
+    : WHILE OPEN_PARENTHESIS block_condition {$$=$3;}
+    | WHILE error {addSyntaxError("Se esperaba \'(\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
+    | WHILE OPEN_PARENTHESIS error {addSyntaxError("Se esperaba una condicion", $3, linea(this._$.first_line), columna(this._$.first_column));}
 
     ;
 

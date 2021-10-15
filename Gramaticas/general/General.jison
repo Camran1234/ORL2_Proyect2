@@ -201,7 +201,21 @@ block_commentary [/][*][^*]*[*]+([^/*][^*]*[*]+)*[/]
 
 
 %{
-    
+    function containLine(arreglo){
+        let resultado = 0;
+        for(let index=0; index<arreglo.length; index++){
+            if(arreglo[index] == "\n"){
+                resultado++;
+                break;
+            }else if(arreglo[index] == " " || arreglo[index] == "\t"){
+                /*Ignore*/
+            }else{
+                /*For text*/
+                break;
+            }
+        }
+        return resultado;
+    }
 %}
 
 %start ini
@@ -210,12 +224,10 @@ block_commentary [/][*][^*]*[*]+([^/*][^*]*[*]+)*[/]
 
 space_stmt
     :space_stmt SPACE {
-        console.log("ESPACIO");
         $1.push($2.toString());
         $$=$1
     }
     |/*empty*/ {
-        console.log("EMPTY");
         $$ = [];
     }
     ;
@@ -230,18 +242,17 @@ texto
         $$ = $1;
     }
     | /*empty*/ {
-        console.log("Vacio");
         $$=[];
-        }
+    }
     ;
 
 ini
-	:paqueteria EOF {console.log("ALGO");}
+	:paqueteria EOF 
     |paqueteria error EOF {addSyntaxError("Se esperaba el final del archivo", $2, this._$.first_line, this._$.first_column);} 
 	;
 
 paqueteria
-    : space_stmt PAQUETE space_stmt PAQUETERIA space_stmt condicional_py {this.dirPaquete = $4.toString();}
+    : space_stmt PAQUETE space_stmt PAQUETERIA space_stmt condicional_py {dirPaquete = $4.toString();}
     | space_stmt error {addSyntaxError("Paqueteria no encontrada, falta agregar \'paqueteria\'",$2, this._$.first_line, this._$.first_column);}
     | space_stmt PAQUETE space_stmt error {addSyntaxError("direccion de paquete no encontrada",$4, this._$.first_line, this._$.first_column);}
     | space_stmt PAQUETE space_stmt PAQUETERIA space_stmt error {addSyntaxError("Se esperaba el codigo python, agregar \'%%PY\' para leer el codigo",$6, this._$.first_line, this._$.first_column);}
@@ -250,7 +261,7 @@ paqueteria
 condicional_py
     :PY texto condicional_java {
         setCodigoPython($2);
-        setLinePython(this._$.first_line);
+        setLinePython(this._$.first_line+containLine($2));
         setColumnPython(this._$.first_column);
     }
     |PY texto error {addSyntaxError("Se esperaba el codigo JAVA, agregar \'%%JAVA\'", $3, this._$.first_line, this._$.first_column);}
@@ -260,7 +271,7 @@ condicional_java
     :JAVA texto condicional_c {
         console.log("INICIANDO AQUI");
         setCodigoJava($2);
-        setLineJava(this._$.first_line);
+        setLineJava(this._$.first_line+containLine($2));
         setColumnJava(this._$.first_column);
     }
     |JAVA texto error {addSyntaxError("Se esperaba el codigo C, agregar \'%%PROGRAMA\'",$3, this._$.first_line, this._$.first_column);}
@@ -269,7 +280,7 @@ condicional_java
 condicional_c
     :PROGRAMA texto{
         setCodigoC($2);
-        setLineC(this._$.first_line);
+        setLineC(this._$.first_line+containLine($2));
         setColumnC(this._$.first_column);
     }
     ;
