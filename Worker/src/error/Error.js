@@ -16,5 +16,10 @@ class Error{
     getType(){
         return this.tipo;
     }
+
+    toObject(){
+        
+    }
+
 }
 module.exports = Error;

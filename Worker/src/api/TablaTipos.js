@@ -7,63 +7,54 @@
     5.-boolean (manejar como 1 o 0)
 
 */ 
-
-function crearSimbolo(id, tipo, ambito, longitud, esArreglo, rol) {
+var ErrorSemantico = require('../error/SemanticError');
+function crearTipo(visibilidad, id, tipo, ambito,posMemoria, longitud, esArreglo, rol, paquete) {
     return {
+        visibilidad:visibilidad,
         id: id,
         tipo: tipo,
-        posMemoria: 0,
+        posMemoria: posMemoria,
         ambito: ambito,
         longitud: longitud,
         esArreglo: esArreglo,
-        rol: rol
+        rol: rol,
+        paquete:paquete
     }
 }
 
-class TablaSimbolo{
+class TablaTipos{
 
     constructor(){
         this.posMemoria = 0;
-        this.simbolos = [];
-        this.erroresSemanticos = [];
+        this.tipos = [];
     }
 
-    constructor(simbolos){
-        this.posMemoria = 0;
-        this.simbolos = simbolos;
-        this.erroresSemanticos = [];
-    }
-
-    agregar(simbolo){
-        let flag=false;
-        for(let index=this.simbolos.length-1; index>=0; index--){
-            let simboloLocal = this.simbolos[index];
-            if(simboloLocal.id == simbolo.id){
-                flag=true;
-                break;
-            }
+    agregarTipo(visibilidad, id, tipo, ambito, longitud, esArreglo, rol, paquete, linea, columna){
+        let simboloLocal = buscar(id, ambito, paquete);
+        let tipo_ = crearTipo(visibilidad, id, tipo, ambito, this.posMemoria, longitud, esArreglo, rol, paquete);
+        if(simboloLocal == null){
+            this.tipos.push(tipo_);
+        }else{
+            tipo_ = new ErrorSemantico("Ya existe el identificador del paquete: "+paquete+", dentro del ambito: "+ambito, id,linea, columna);
         }
-        if(!flag){
-            this.simbolos.push(simbolo);
-        }
+        this.posMemoria++;
+        return tipo_;
     }
 
-    buscar(id){
-        for(let index=this.simbolos.length-1; index>=0; index--){
-            let simboloLocal = this.simbolos[index];
-            if(simboloLocal.id == id){
+    buscar(id, ambito, paquete){
+        for(let index=this.tipos.length-1; index>=0; index--){
+            let simboloLocal = this.tipos[index];
+            if(simboloLocal.id == id
+                && simboloLocal.ambito == ambito
+                && simboloLocal.paquete == paquete){
                 return simboloLocal;
             }
         }
         return null;
     }
 
-    getErroresSemanticos(){
-        return this.erroresSemanticos;
-    }
-
-    getSimbolos(){
-        return this.simbolos;
+    getTipos(){
+        return this.tipos;
     }
 
     getMemoriaUtilizada(){
@@ -74,6 +65,6 @@ class TablaSimbolo{
 }
 
 module.exports = {
-    crearSimbolo,
-    TablaSimbolo
+    crearTipo,
+    TablaTipos
 }

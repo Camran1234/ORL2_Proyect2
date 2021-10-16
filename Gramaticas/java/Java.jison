@@ -52,9 +52,13 @@
 %}
 
 %lex
+commentary "//".*
+block_commentary [/][*][^*]*[*]+([^/*][^*]*[*]+)*[/]	
 %%
 
-
+\s+                                 /*ignore*/;
+{commentary}          /*ignore*/;
+{block_commentary} /*ignore*/;
 "package"  { 
                 return 'PACKAGE';
             }
@@ -287,9 +291,6 @@
 "." { return 'DOT'; }
 
 <<EOF>> return 'EOF';
-\s+                                 /*ignore*/;
-"//".*                              /*ignore*/;
-[/][*][^*]*[*]+([^/*][^*]*[*]+)*[/] /*ignore*/;
 .+   { addLexicalError(yytext, linea(yylloc.first_line), columna(yylloc.first_column));}					
 
 
@@ -307,34 +308,10 @@
 
     function reversaArreglo(arreglo){
         var aux = [];
-        for(var index=arreglo.length; index>=0; index--){
+        for(var index=arreglo.length-1; index>=0; index--){
             aux.push(arreglo[index]);
         }
         return aux;
-    }
-
-    function checkInstruction(stmt, arreglo){
-        var flag = true;
-        if(stmt.rol == TIPO_INSTRUCCION.ELSE){
-            if(arreglo.length>=1){
-                if(arreglo[arreglo.length-1].rol == TIPO_INSTRUCCION.IF ||
-                arreglo[arreglo.length-1].rol == TIPO_INSTRUCCION.ELSE){
-                    if(arreglo[arreglo.length-1].rol == TIPO_INSTRUCCION.IF){
-                        stmt.if = arreglo[arreglo.length-1];
-                    }else{
-                        if(arreglo[arreglo.length-1].if != null){
-                            stmt.if = arreglo[arreglo.length-1].if;
-                        }else{
-                            flag=false;
-                            addSyntaxError("Se esperaba un else o if antes", stmt.rol, stmt.linea, stmt.columna);
-                        }
-                    }
-                }
-            }
-        }
-        if(flag){
-            arreglo.push(stmt);
-        }
     }
 
    function linea(linea){
@@ -442,7 +419,7 @@ extends_re
 
 class_stmt
         : PUBLIC CLASS IDENTIFICADOR extends_re OPEN_CURLY class_instructions {
-            $$ = instruccionesApi.nuevaClase(TIPO_VISIBILIDAD.PUBLIC, $3, $5,reversaArreglo($6), null, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+            $$ = instruccionesApi.nuevaClase(TIPO_VISIBILIDAD.PUBLIC, $3, $4,reversaArreglo($6), null, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
         }
         | PUBLIC error  {addSyntaxError("Se esperaba \'class\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
         | PUBLIC CLASS error  {addSyntaxError("Agregar un identificador a la clase", $3, linea(this._$.first_line), columna(this._$.first_column));}
@@ -451,23 +428,17 @@ class_stmt
 
 class_instructions
         :  identifier class_instruction class_instructions{
-            for(var index=0; index<$2.length; index++){
-                if($2[index].rol == TIPO_INSTRUCCION.FUNCION ||
-                $2[index].rol == TIPO_INSTRUCCION.DECLARACION){
-                    $2[index].visibilidad = $1;
-                }
-                $3.push($2[index]);
-            }
-            $$=$3;
-        
+            $2.visibilidad = $1;
+            $3.push($2);
+            $$=$3;        
         }
         |  identifier error class_instructions {
             addSyntaxError("No es un miembro, agregar un miembro con modificador \'public\' o \'private\'", $3, linea(this._$.first_line), columna(this._$.first_column));
             $$=$3;
         }
         |  error  class_instructions{
-            
             addSyntaxError("Se esperaba una variable o funcion", $1, linea(this._$.first_line),columna(this._$.first_column));
+            $$=$2;
         }
         | CLOSE_CURLY  {$$=[];}
         ;
@@ -497,11 +468,8 @@ function_parameters_re
         ;
 
 function_stmt
-        :  IDENTIFICADOR OPEN_PARENTHESIS function_parameters OPEN_CURLY instructions{
-            var funcion = instruccionesApi.nuevaFuncion(null, $1,null, reversaArreglo($5), $3, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
-            var arreglo = [];
-            arreglo.push(funcion);
-            $$ = arreglo
+        :  IDENTIFICADOR OPEN_PARENTHESIS function_parameters OPEN_CURLY instructions {            
+            $$ = instruccionesApi.nuevaFuncion(null, $1,null, reversaArreglo($5), $3, lenguaje, linea(this._$.first_line), columna(this._$.first_column))
         }
         | IDENTIFICADOR error  {addSyntaxError("Se esperaba \'(\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
         | IDENTIFICADOR OPEN_PARENTHESIS error {addSyntaxError("Se esperaba parametros o \')\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
@@ -535,7 +503,7 @@ variable_stmt_re
         ;
 
 class_statements
-        : variable_stmt {$$=$1;}
+        : variable_stmt {$$=instruccionesApi.nuevaVariable($1, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
         | function_stmt {$$=$1;}
         | error {addSyntaxError("Se esperaba modificadores de la clase, pueden ser public o private", $1, linea(this._$.first_line), columna(this._$.first_column));}
         ;
@@ -557,26 +525,17 @@ class_instruction
                     $2[index].tipo = $1;
                 }
             }
-            var arreglo;
-            
-            if($2[0].rol == TIPO_INSTRUCCION.FUNCION){
-                arreglo = $2[0];
-            }else if($2[0].rol == TIPO_INSTRUCCION.DECLARACION ||
-            $2[0].rol == TIPO_INSTRUCCION.ASIGNACION_O){
-                var aux = $2;
-                arreglo = instruccionesApi.nuevaVariable(aux, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
-            }            
-            $$=arreglo;
+            $$=$2;
         }
         | constructor_class{$$=$1;}
         ;
 
 instructions 
         : instruction instructions{
-            checkInstruction($1, $2);
+            $2.push($1);
             $$=$2;
         }
-        | error instructions {addSyntaxError("Se esperaba una declaracion", $1, linea(this._$.first_line), columna(this._$.first_column));}
+        | error instructions {addSyntaxError("Se esperaba una declaracion", $1, linea(this._$.first_line), columna(this._$.first_column));$$=$2;}
         | CLOSE_CURLY{
             $$=[];
         }
@@ -605,7 +564,7 @@ instruction
         ;
 
 stmt_enclusure
-    : OPEN_CURLY instructions {$$=reversaArreglo($5);}
+    : OPEN_CURLY instructions {$$=reversaArreglo($2);}
     | instruction {$$=$1;}
     | error {addSyntaxError("Se esperaba una declaracion o \'{\'", $1, linea(this._$.first_line), columna(this._$.first_column));}
     ;
@@ -786,7 +745,7 @@ metodo
 /*End of Metodo*/
 /*Init IF*/
 block_condition
-    : expresion CLOSE_PARENTHESIS {$$=$2;}
+    : expresion CLOSE_PARENTHESIS {$$=$1;}
     | expresion error {addSyntaxError("Se esperaba \')\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
     | error CLOSE_PARENTHESIS {addSyntaxError("Se esperaba una expresion", $1, linea(this._$.first_line), columna(this._$.first_column));}
     ;
@@ -801,16 +760,18 @@ if_stmt
 
 else_stmt
     : ELSE stmt_enclusure {
-        var else_stmt = instruccionesApi.nuevoElse(null, null, null, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+        var else_ = instruccionesApi.nuevoElse(null, null, null, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
         if(!Array.isArray($2)){
             if($2.rol == TIPO_INSTRUCCION.IF){
-                else_stmt.condicion = $2.condicion;
+                else_.condicion = $2.condicion;
+                else_.instrucciones = $2.instrucciones;
+            }else{
+                console.log("ERROR EN ELSE_STMT");
             }
-            else_stmt.instrucciones = $2.instrucciones;
         }else{
-            else_stmt.instrucciones = $2;
+            else_.instrucciones = $2;
         }
-        $$=else_stmt;
+        $$=else_;
     }
     ;
 
@@ -819,7 +780,7 @@ else_stmt
 
 switch_instructions 
         : switch_instruction switch_instructions{
-            checkInstruction($1, $2);
+            $2.push($1);
             $$=$2;
         }
         | error switch_instructions {addSyntaxError("Se esperaba una declaracion", $1, linea(this._$.first_line), columna(this._$.first_column));$$=$2;}
@@ -831,7 +792,7 @@ switch_instructions
 
 default_instructions
         : switch_instruction default_instructions{
-            checkInstruction($1, $2);
+            $2.push($1);
             $$=$2;
         }
         | error default_instructions  {addSyntaxError("Se esperaba una declaracion", $1, linea(this._$.first_line), columna(this._$.first_column));$$=$2;}

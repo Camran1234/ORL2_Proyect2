@@ -2,12 +2,55 @@
 class Parser{
     constructor(){
         console.log("limpieza");
-        this.errores = [];
         this.resultados = [];
         this.erroresLexicos = [];
         this.erroresSintacticos = [];
+        this.erroresSemanticos = [];
+        this.astC = null;
+        this.astJava = null;
+        this.astPython=null;
+        this.dirPaquete = "";
     }
 
+    haveErrores(){
+        if(this.erroresLexicos.length == 0 && this.erroresSintacticos.length ==0){
+            return false;
+        }
+        return true;
+    }
+
+    getErrores(){
+        let errores = [];
+        for(let index=0; index<this.erroresLexicos.length; index++){
+            errores.push(this.erroresLexicos[index].toError());
+        }
+        for (let index=0; index<this.erroresSintacticos.length; index++){
+            errores.push(this.erroresSintacticos[index].toError());
+        }
+
+        return errores;
+    }
+
+    push(ast, array){
+        for(let index=0; index<ast.length; index++){
+            array.push(ast[index]);
+        }
+        return array;
+    }
+
+    procesarAST(astC, astJava, astPython, paqueteria){
+        if(!this.haveErrores()){
+            let ast = [];
+            this.push(astC, ast);
+            this.push(astJava, ast);
+            this.push(astPython, ast);
+            let Procesador = require('./Procesador');
+            let procesador = new Procesador();
+            procesador.procesar(astPython, paqueteria, 0, "global");
+            procesador.procesar(astJava, paqueteria, 0, "global");
+            procesador.procesar(astC, paqueteria, 0, "global");
+        }
+    }
 
     parse(codigo){
         try{
@@ -21,6 +64,8 @@ class Parser{
             generalParser.setErroresLexicos(erroresLexicos);
             generalParser.setErroresSintacticos(erroresSintacticos);
             generalParser.parse(codigo);
+            //
+            let dirPaquete = generalParser.getPaquete();
             //java
             let lineJava = generalParser.getLineJava();
             let columnJava = generalParser.getColumnJava();
@@ -49,15 +94,8 @@ class Parser{
             console.log("\n\nastPython: "+JSON.stringify(astPython));
             console.log("\n\nastJava: "+JSON.stringify(astJava));
             console.log("\n\nastC: "+JSON.stringify(astC));
-            lineJava=0;
-            columnJava=0;
-            codigoJava="";
-            linePython = 0;
-            columnPython = 0;
-            codigoPython = "";
-            lineC = 0;
-            columnC = 0;
-            codigoC = "";
+            this.procesarAST(astC, astJava, astPython, dirPaquete);
+            
         }catch(error){
             console.log(error);
         }

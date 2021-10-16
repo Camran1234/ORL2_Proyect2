@@ -103,7 +103,7 @@ break;
 case 5:
 
         this.$=[];
-        
+    
 break;
 case 7:
 addSyntaxError("Se esperaba el final del archivo", $$[$0-1], this._$.first_line, this._$.first_column);

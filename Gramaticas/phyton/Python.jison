@@ -95,7 +95,7 @@
             }
         }
 \s     /*ignore*/;
-"#"[^\n] /*ignore*/;
+"#"[^\n]*\n /*ignore*/;
     
 ([\"][\"][\"][^\"]*([^\"][^\"]*)*[\"][\"][\"]|[\'][\'][\'][^\']*([^\'][^\']*)*[\'][\'][\']) {
                         if(estado==1){
@@ -353,10 +353,9 @@
  return'LIT_ENTERO';
             }
 
-([\"[^\"]*\"]|[\'[^\']*\']) {
-                estado=2;
- return'LIT_CADENA';
-            }
+([\"][^\"]*[\"])  {estado=2;return'LIT_CADENA';}
+
+([\'''][^\']*[\'])  {estado=2;return'LIT_CADENA';}
 
 "True" {
                 estado=2;
@@ -396,7 +395,7 @@
 
     function reversaArreglo(arreglo){
         let array = [];
-        for(let index=arreglo.length; index>=0; index--){
+        for(let index=arreglo.length-1; index>=0; index--){
             array.push(arreglo[index]);
         }
 
@@ -404,27 +403,17 @@
     }
 
     function agregarInstruccionAcumulada(stmt, linea, columna){
-        if(stmt.rol == TIPO_INSTRUCCION.IF ||
-        stmt.rol == TIPO_INSTRUCCION.WHILE ||
-        stmt.rol == TIPO_INSTRUCCION.FOR ||
-        stmt.rol == TIPO_INSTRUCCION.WHILE){
+        let helper = instruccionAcumulada.length-1;
+        let helperInstructions = instruccionAcumulada[helper].instrucciones;
+        let actualstmt = instruccionAcumulada[helper].instrucciones[helperInstructions.length-1];
+        if(actualstmt.rol == TIPO_INSTRUCCION.IF ||
+        actualstmt.rol == TIPO_INSTRUCCION.ELSE ||
+        actualstmt.rol == TIPO_INSTRUCCION.WHILE ||
+        actualstmt.rol == TIPO_INSTRUCCION.FOR ){
+            instruccionAcumulada.push(actualstmt);
             instruccionAcumulada[instruccionAcumulada.length-1].instrucciones.push(stmt);            
-            instruccionAcumulada.push(stmt);
-        }else if(stmt.rol == TIPO_INSTRUCCION.ELSE){
-            var size = instruccionAcumulada[instruccionAcumulada.length-1].instrucciones.length-1;
-            if(instruccionAcumulada[instruccionAcumulada.length-1].instrucciones[size] == TIPO_INSTRUCCION.IF){
-                stmt.if = instruccionAcumulada[instruccionAcumulada.length-1];
-                instruccionAcumulada[instruccionAcumulada.length-1].instrucciones.push(stmt);
-                instruccionAcumulada.push(stmt);
-            }else if(instruccionAcumulada[instruccionAcumulada.length-1].instrucciones[size] == TIPO_INSTRUCCION.ELSE){
-                stmt.if = instruccionAcumulada[instruccionAcumulada.length-1].if;
-                instruccionAcumulada[instruccionAcumulada.length-1].instrucciones.push(stmt);
-                instruccionAcumulada.push(stmt);
-            }else{
-                addSyntaxError("Se esperaba un if antes de else",stmt.rol, linea, columna);
-            }
         }else{
-            instruccionAcumulada[instruccionAcumulada.length-1].instrucciones.push(stmt);
+            addSyntaxError("Bloque de indentacion esperado para la declaracion", stmt.rol, linea, columna);
         }
     }
 
@@ -434,7 +423,7 @@
                 addSyntaxError("Bloque de indentacion esperado para la declaracion", stmt.rol, linea, columna);
             }else{
                 indentacionActual.push(indentacionAcumulada);
-                agregarInstruccionAcumulada(stmt, linea, columna);
+                instruccionAcumulada[instruccionAcumulada.length-1].instrucciones.push(stmt);
             }
         }else {
             if(indentacionAcumulada==0){
@@ -462,15 +451,20 @@
                 }
                 if(flag){
                     indentacionActual = aux;
-                    for(var index=0; index<instruccionesEliminadas; index++){
-                        instruccionAcumulada.pop();
+                    if(instruccionesEliminadas != 0){
+                        for(var index=0; index<instruccionesEliminadas; index++){
+                            instruccionAcumulada.pop();
+                        }
+                        instruccionAcumulada[instruccionAcumulada.length-1].instrucciones.push(stmt);
+                    }else{
+                        addSyntaxError("Se esperaba una instruccion", stmt.rol, linea, column);
                     }
-                    agregarInstruccionAcumulada(stmt, linea, columna);
+                    
                 }else{
                     addSyntaxError("Error de indentacion: se requiere un bloque de indentacion del mismo nivel que las demas declaraciones",stmt.rol, linea, columna);
                 }
             }else if(indentacionAcumulada == indentacionActual[indentacionActual.length-1]){
-                agregarInstruccionAcumulada(stmt, linea, columna);
+                instruccionAcumulada[instruccionAcumulada.length-1].instrucciones.push(stmt);
             }
         }
         indentacionAcumulada=0;
@@ -536,9 +530,9 @@ expresion
 
 ini
     : statements EOF {
-        return reversaArreglo($1);
+        return $1;
     }
-    | ini error {addSyntaxError("Se esperaba una funcion",$2,linea(this._$.first_line), columna(this._$.first_column));}
+    | ini error {addSyntaxError("Se esperaba una funcion1",$2,linea(this._$.first_line), columna(this._$.first_column));}
     ;
 
 /*Funcion*/
@@ -552,7 +546,7 @@ parameters
 
 parameters_re
     :  COMA  IDENTIFICADOR parameters_re{
-        $3.push(instruccionesApi.nuevoParametro($1, TIPO_DATO.ANY, TIPO_LENGUAJE.PYTHON, linea(this._$.first_line), columna(this._$.first_column)));
+        $3.push(instruccionesApi.nuevoParametro($2, TIPO_DATO.ANY, TIPO_LENGUAJE.PYTHON, linea(this._$.first_line), columna(this._$.first_column)));
         $$=$3;
     }
     | COMA error parameters_re{addSyntaxError("Se esperaba otro parametro",$2,linea(this._$.first_line), columna(this._$.first_column)); $$=$3;}
@@ -576,30 +570,34 @@ function_stmt
 
 
 statements
-    : statement statements{
-        if($2.length>0){
-            console.log("ASD1");
-            agregarInstrucciones($1, $2, linea(this._$.first_line), columna(this._$.first_column));
+    : statements statement {
+        if($1.length>0){
+            agregarInstrucciones($2, $1, linea(this._$.first_line), columna(this._$.first_column));
         }else{
-            console.log("ASD2");
-            addSyntaxError("Se esperaba una funcion", $1.rol, linea(this._$.first_line), columna(this._$.first_column));
+            var token = "";
+            if($2.rol == TIPO_INSTRUCCION.VARIABLE){
+                token = $2.arreglo[$2.length-1].id[0].valor;
+            }else{
+                token = $2.rol;
+            }
+            addSyntaxError("Se esperaba una funcion2", token, linea(this._$.first_line), columna(this._$.first_column));
         }
-        $$=$2;
+        $$=$1;
     }
-    | function_stmt statements{
+    | statements function_stmt {
         if(indentacionAcumulada==0){
             instruccionAcumulada = [];
-            instruccionAcumulada.push($1);
+            instruccionAcumulada.push($2);
             $1.push($2);
         }else{
             addSyntaxError("Indentacion no esperada, la funcion no lleva indentacion","def "+$1.id,linea(this._$.first_line), columna(this._$.first_column));
         }
         indentacionAcumulada=0;
-        $$=$2;
+        $$=$1;
     }
-    |  SPACE statements{indentacionAcumulada=0;$$=$2;}
-    |  INDENTATION statements {indentacionAcumulada+=$1;$$=$2;}
-    |  error statements {addSyntaxError("Se esperaba una funcion",$1,linea(this._$.first_line), columna(this._$.first_column));$$=$2;}
+    |  statements SPACE {indentacionAcumulada=0;$$=$1;}
+    |  statements INDENTATION  {indentacionAcumulada+=$2;$$=$1;}
+    |  statements error  {addSyntaxError("Se esperaba una funcion3",$2,linea(this._$.first_line), columna(this._$.first_column));$$=$1;}
     | /*empty*/ {$$=[];}
     ;
 
@@ -764,7 +762,6 @@ asignacion
     : igualaciones expresiones asignacion_re{
         var nuevaIgualacion = instruccionesApi.nuevaAsignacion_O(null,[], $1, $2, TIPO_LENGUAJE.PYTHON, linea(this._$.first_line), columna(this._$.first_column));
         $3.push(nuevaIgualacion);
-        console.log(JSON.stringly(nuevaIgualacion));
         $$=reversaArreglo($3);
     }
     | igualaciones input asignacion_re{
@@ -795,7 +792,6 @@ asignacion_re
 var_stmt
     : nombre_variables asignacion SPACE{
         for(var index=0; index<$2.length; index++){
-            console.log(index);
             $2[index].id = $1;
         }
         $$=instruccionesApi.nuevaVariable($2, lenguaje, linea(this._$.first_line), columna(this._$.first_column));

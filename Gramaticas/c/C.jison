@@ -163,30 +163,6 @@ identificador [aA-zZ|"_"|]([aA-zZ]|[0-9]|"_")*
 		return aux;
 	}
 
-	function checkInstruction(stmt, arreglo){
-		var flag = true;
-		if(stmt.rol == TIPO_INSTRUCCION.ELSE){
-            if(arreglo.length>=1){
-                if(arreglo[arreglo.length-1].rol == TIPO_INSTRUCCION.IF ||
-                arreglo[arreglo.length-1].rol == TIPO_INSTRUCCION.ELSE){
-                    if(arreglo[arreglo.length-1].rol == TIPO_INSTRUCCION.IF){
-                        stmt.if = arreglo[arreglo.length-1];
-                    }else{
-                        if(arreglo[arreglo.length-1].if != null){
-                            stmt.if = arreglo[arreglo.length-1].if;
-                        }else{
-                            flag=false;
-                            addSyntaxError("Se esperaba un else o if antes", stmt.rol, stmt.linea, stmt.columna);
-                        }
-                    }
-                }
-            }
-        }
-		if(flag){
-			arreglo.push(stmt);
-		}
-	}
-
 	function linea(line){
 		return line + lineNumber;
 	}
@@ -241,19 +217,38 @@ metodo_clase_stmt
 	;
 
 variable_clase
-	: variable_clase COMA IDENTIFICADOR
-	| variable_clase COMA error {addSyntaxError("Se esperaba un identificador",$3,linea(this._$.first_line), columna(this._$.first_column));}
-	|  /*empty*/
+	:  COMA IDENTIFICADOR variable_clase {
+		var id = instruccionesApi.nuevoValor($2, null, null, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+		var asignacionClase = instruccionesApi.nuevaDeclaracion(TIPO_VISIBILIDAD.LOCAL, id, null, null, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+		$3.push(asignacionClase);
+	 	$$=$3;
+		 }
+	|  COMA error variable_clase {addSyntaxError("Se esperaba un identificador",$2,linea(this._$.first_line), columna(this._$.first_column));$$=$3;}
+	|  /*empty*/ {$$=[];}
 	;
 
 asignacion_clase
-	: variable_clase
-	| OPEN_PARENTHESIS parametros CLOSE_PARENTHESIS
+	: variable_clase {$$=instruccionesApi.tipoAsignacion($1, "declaracion");}
+	| OPEN_PARENTHESIS parametros CLOSE_PARENTHESIS {$$=instruccionesApi.tipoAsignacion($2, "asignacion");}
 	| OPEN_PARENTHESIS parametros error {addSyntaxError("Se esperaba \')\'",$3,linea(this._$.first_line), columna(this._$.first_column));}
 	;
 
 clase_stmt
-	: CLASE IDENTIFICADOR asignacion_clase 
+	: CLASE IDENTIFICADOR asignacion_clase {
+		var arreglo = [];
+		var id = instruccionesApi.nuevoValor($2, null, null, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+		if($3.rol == "declaracion"){
+			$3.push(instruccionesApi.nuevaDeclaracion(TIPO_VISIBILIDAD.LOCAL, id, null, null,lenguaje, linea(this._$.first_line), columna(this._$.first_column)));
+			for(let index=0; index<$3.length; index++){
+				$3[index].tipo = $1;
+			}
+			arreglo = $3;
+		}else if($3.rol == "asignacion"){
+			//Asignaciones
+			arreglo.push(instruccionesApi.nuevaAsignacionClase($2, $3, $1, lenguaje, linea, columna));
+		}
+		$$=instruccionesApi.nuevaVariable(arreglo, lenguaje, linea, columna);;
+	}
 	| CLASE error {addSyntaxError("Esperaba un identificador",$2,linea(this._$.first_line), columna(this._$.first_column));}
 	;
 
@@ -379,7 +374,10 @@ code_c
 		$2.push($1);
 		$$=$2;
 	}
-	| var_stmt code_c {$2.push($1);$$=$2;}
+	| var_stmt COLON code_c {$3.push($1);$$=$3;}
+	| var_stmt error code_c {addSyntaxError("Se esperaba \';\'", $2, linea(this._$.first_line), columna(this._$.first_column)); $$=$3;}
+	| clase_stmt COLON code_c {$3.push($1);$$=$3;}
+	| clase_stmt error code_c {addSyntaxError("Se esperaba \';\'", $2, linea(this._$.first_line), columna(this._$.first_column));$$=$3;}
 	| main code_c {$2.push($1); $$=$2;}
 	| error code_c {addSyntaxError("Se esperaba una instruccion de inicio, un main, variable o paqueteria", $1, linea(this._$.first_line), columna(this._$.first_column)); $$=$2;}
 	| /*empty*/ {$$=[];}
@@ -416,8 +414,8 @@ block_statements
 	;
 
 statements
-	:  statement statements{
-		checkInstruction($1,$2);
+	:  statement statements {
+		$2.push($1);
 		$$=$2;
 	}
 	| CLOSE_CURLY {$$=[];}
@@ -650,14 +648,61 @@ cases
 	| /*empty*/	{$$=[];}
 	;
 
+
+
+switch_statement
+	: var_stmt COLON	{$$=$1;}
+	| var_stmt error {addSyntaxError("Se esperaba \';\'",$2,linea(this._$.first_line), columna(this._$.first_column));}
+	| scan_stmt COLON	{$$=$1;}
+	| scan_stmt error  {addSyntaxError("Se esperaba \';\'",$2,linea(this._$.first_line), columna(this._$.first_column));}
+	| print_stmt COLON	{$$=$1;}
+	| print_stmt error  {addSyntaxError("Se esperaba \';\'",$2,linea(this._$.first_line), columna(this._$.first_column));}
+	| clean_stmt COLON	{$$=$1;}
+	| clean_stmt error  {addSyntaxError("Se esperaba \';\'",$2,linea(this._$.first_line), columna(this._$.first_column));}
+	| getch_stmt COLON	{$$=$1;}
+	| getch_stmt error  {addSyntaxError("Se esperaba \';\'",$2,linea(this._$.first_line), columna(this._$.first_column));}
+	| metodo_stmt COLON {$$=$1;}
+	| metodo_stmt error  {addSyntaxError("Se esperaba \';\'",$2,linea(this._$.first_line), columna(this._$.first_column));}
+	| metodo_clase_stmt COLON {$$=$1;}
+	| metodo_clase_stmt error  {addSyntaxError("Se esperaba \';\'",$2,linea(this._$.first_line), columna(this._$.first_column));}
+	| clase_stmt COLON	{$$=$1;}
+	| clase_stmt error  {addSyntaxError("Se esperaba \';\'",$2,linea(this._$.first_line), columna(this._$.first_column));}
+	| if_stmt	{$$=$1;}
+	| for_stmt	{$$=$1;}
+	| while_stmt	{$$=$1;}
+	| do_stmt COLON	{$$=$1;}
+	| do_stmt error  {addSyntaxError("Se esperaba \';\'",$2,linea(this._$.first_line), columna(this._$.first_column));}
+	| switch_stmt	{$$=$1;}
+	| CONTINUE COLON	{$$=instruccionesApi.nuevoContinue(linea(this._$.first_line), columna(this._$.first_column));}
+	| CONTINUE error  {addSyntaxError("Se esperaba \';\'",$2,linea(this._$.first_line), columna(this._$.first_column));}
+	;
+
+switch_instructions
+	: switch_statement switch_instructions{
+		$2.push($1);
+		$$=$2;
+	}
+	| BREAK COLON {$$=[];}
+	| BREAK error {addSyntaxError("Se esperaba \';\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
+	;
+
+default_instructions
+	: switch_statement default_instructions {
+		$2.push($1);
+		$$=$2;
+	}
+	| /*empty*/ {$$=[];}
+	;
+
 case_stmt
-	: CASE expresion SEMI_COLON empty_statements {$$=instruccionesApi.nuevoCase($2, reversaArreglo($4), lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+	: CASE expresion SEMI_COLON switch_instructions {$$=instruccionesApi.nuevoCase($2, reversaArreglo($4), lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
 	| CASE error  {addSyntaxError("Se esperaba un valor de caso",$2,linea(this._$.first_line), columna(this._$.first_column));}
 	| CASE expresion error  {addSyntaxError("Se esperaba \':\'",$3,linea(this._$.first_line), columna(this._$.first_column));}
+	| CASE expresion SEMI_COLON error {addSyntaxError("Se esperaba break;", $4, linea(this._$.first_line), columna(this._$.first_column));}
 	;
 
 default_stmt
-	:DEFAULT SEMI_COLON empty_statements {$$=instruccionesApi.nuevoDefault(reversaArreglo($3), lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+	:DEFAULT SEMI_COLON default_instructions {$$=instruccionesApi.nuevoDefault(reversaArreglo($3), lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
 	| DEFAULT error  {addSyntaxError("Se esperaba \':\'",$2,linea(this._$.first_line), columna(this._$.first_column));}
 	;
 

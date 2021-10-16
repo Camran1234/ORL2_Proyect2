@@ -12,6 +12,28 @@ function nuevaOperacion(operadorL, operadorR, operador, lenguaje, linea, columna
     }
 }
 
+function newError(linea, columna, tipo, error, descripcion){
+    return{
+        linea:linea,
+        columna:columna,
+        tipo:tipo,
+        error:error,
+        descripcion:descripcion
+    }
+}
+
+const TIPO_ERROR = {
+    errorLexico: function(token, linea, columna){
+        return newError(linea, columna, "Error Lexico", token, "Lexema no reconocido");
+    },
+    errorSintactico: function(descripcion, token, linea, columna){
+        return newError(linea, columna, "Error Sintactico", token, descripcion);
+    },
+    errorSemantico: function (descripcion, token, linea, columna){
+        return newError(linea, columna, "Error Semantico", token, descripcion);
+    }
+}
+
 const instruccionesApi = {
 
     /**
@@ -183,6 +205,25 @@ const instruccionesApi = {
             columna:columna
         }
     },
+
+    tipoAsignacion: function (arreglo, rol){
+        return {
+            rol:rol,
+            arreglo:arreglo
+        }
+    },
+
+    nuevaAsignacionClase: function(id, parametros, tipo, lenguaje, linea, columna){
+        return {
+            rol: TIPO_INSTRUCCION.CLASE,
+            id: id,
+            parametros: parametros,
+            tipo: tipo,
+            lenguaje:lenguaje,
+            linea:linea,
+            columna:columna
+        }
+    },
     /**
      * Agrega una nueva asignacion pero ahora con el operador indicamos que
      * tipo de operacion especial hara como una suma, resta, por, entre otros; luego
@@ -217,6 +258,7 @@ const instruccionesApi = {
         }
         return {
             condicion: expresion,
+            terminado: terminado,
             instrucciones: instrucciones,
             rol:TIPO_INSTRUCCION.IF,
             lenguaje:lenguaje,
@@ -456,3 +498,4 @@ const instruccionesApi = {
 }
 
 module.exports.instruccionesApi = instruccionesApi;
+module.exports.TIPO_ERROR = TIPO_ERROR;

@@ -15,6 +15,11 @@ class SyntaxError extends Error{
     getToken(){
         return this.token;
     }
+
+    toError(){
+        var TIPO_ERROR = require('../api/InstruccionesApi').TIPO_ERROR;
+        return TIPO_ERROR.errorSintactico(this.descripcion, this.token, this.linea, this.column);
+    }
 }
 
 module.exports = SyntaxError;

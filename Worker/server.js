@@ -16,11 +16,14 @@ app.post('/parse', function (req, res) {
     let resultado = "false";
     let Parser = require('./src/parser/Parser');
     let parser = new Parser();
+    //Parseando
     parser.parse(codigo);
+    //Obteniendo errores
+    errores = parser.getErrores();
     //Mensaje donde enviaremos la respuesta
     // Website you wish to allow to connect
     let jsonAnswer = {
-        respuesta: "resultado"
+        respuesta: parser.haveErrores()
     };
     let respuesta = JSON.stringify(jsonAnswer);
     respuesta= JSON.parse(respuesta);

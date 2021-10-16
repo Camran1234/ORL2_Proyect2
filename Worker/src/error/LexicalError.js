@@ -14,6 +14,11 @@ class LexicalError extends Error{
     getLexema(){
         return this.lexema;
     }
+
+    toError(){
+        var TIPO_ERROR = require('../api/InstruccionesApi').TIPO_ERROR;
+        return TIPO_ERROR.errorLexico(this.lexema, this.linea, this.column);
+    }
 }
 
 module.exports = LexicalError
