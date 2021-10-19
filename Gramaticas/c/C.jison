@@ -553,7 +553,7 @@ valor_asignacion
 
 var_stmt
 	: const_data IDENTIFICADOR arreglo valor_asignacion{
-		var id = instruccionesApi.nuevoValor($1,null, TIPO_VALOR.IDENTIFICADOR, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+		var id = instruccionesApi.nuevoValor($2,null, TIPO_VALOR.IDENTIFICADOR, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
 		$4[0].id = id;
 		var tipo = null;
 		var visibilidad = null;
@@ -564,13 +564,13 @@ var_stmt
 			tipo = $1[1];
 		}
 		$4.push(instruccionesApi.nuevaDeclaracion(visibilidad, id, $3, tipo, lenguaje, linea(this._$.first_line), columna(this._$.first_column)));
-		$$=$4;
+		$$=instruccionesApi.nuevaVariable($4, lenguaje, linea, columna);
 	}
 	| const_data error  {addSyntaxError("Se esperaba un identificador",$2,linea(this._$.first_line), columna(this._$.first_column));}
 	| const_data IDENTIFICADOR arreglo error {addSyntaxError("Se esperaba un valor para asignar",$4,linea(this._$.first_line), columna(this._$.first_column));}
 	| IDENTIFICADOR arreglo valor_asignacion{
 		$3[0].id = instruccionesApi.nuevoValor($1, null, TIPO_VALOR.IDENTIFICADOR,lenguaje, linea(this._$.first_line), columna(this._$.first_column));
-		$$=$4;
+		$$=instruccionesApi.nuevaVariable($3, lenguaje, linea, columna);
 	}
 	| IDENTIFICADOR arreglo error  {addSyntaxError("Se espera un valor para asignar",$2,linea(this._$.first_line), columna(this._$.first_column));}
 	;

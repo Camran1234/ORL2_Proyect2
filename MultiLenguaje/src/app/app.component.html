@@ -27,14 +27,17 @@
   <!-- <div class="card highlight-card card-small">
     <span>{{ title }} app is running!</span>
   </div> -->
-
   <div class="wp-block-columns">
     <div class="sidebar-wrapper">
-      Items
+      <button mat-raised-button color="primary" (click)="parseCode()" ><mat-icon>arrow_forward_ios</mat-icon>Run</button>
     </div>
     <div class="editor-wrapper">
       <div class="editor-desktop-top-bar">
-        <button mat-raised-button color="primary" (click)="parseCode()" ><mat-icon>arrow_forward_ios</mat-icon>Run</button>
+        <button mat-stroked-button color="primary" >Nuevo Proyecto</button>
+        <button mat-stroked-button color="primary" >Abrir Proyecto</button>
+        <button mat-stroked-button color="primary" >Cerrar Proyecto</button>
+        <button mat-stroked-button color="accent" >Nuevo Archivo</button>
+        <button mat-stroked-button color="accent" >Abrir Archivo</button>
       </div>
       <div class="wp-block-column">
         <div class="app-ace-editor-entry" name="entry" #editor (click)="getCurrentLineAndNumber()"  (keyup)="getCurrentLineAndNumber()" >

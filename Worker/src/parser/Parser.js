@@ -1,6 +1,6 @@
 
 class Parser{
-    constructor(){
+    constructor(tablaTipos, estado){
         console.log("limpieza");
         this.resultados = [];
         this.erroresLexicos = [];
@@ -9,7 +9,12 @@ class Parser{
         this.astC = null;
         this.astJava = null;
         this.astPython=null;
+        this.tablaTipos = tablaTipos;
         this.dirPaquete = "";
+        //0 analiza todo
+        //1 analiza Python unicamente
+        //2 analiza Java unicamente
+        this.estado = estado;
     }
 
     haveErrores(){
@@ -45,10 +50,16 @@ class Parser{
             this.push(astJava, ast);
             this.push(astPython, ast);
             let Procesador = require('./Procesador');
-            let procesador = new Procesador();
-            procesador.procesar(astPython, paqueteria, 0, "global");
-            procesador.procesar(astJava, paqueteria, 0, "global");
-            procesador.procesar(astC, paqueteria, 0, "global");
+            let procesador = new Procesador(this.tablaTipos);
+            if(this.estado ==0){
+                procesador.procesar(astPython, paqueteria, 0, null);
+                procesador.procesar(astJava, paqueteria, 0, null);
+                procesador.procesar(astC, paqueteria, 0, null);
+            }else if(this.estado == 1){
+                procesador.procesar(astPython, paqueteria, 0, null);
+            }else if(this.estado == 2){
+                procesador.procesar(astJava, paqueteria, 0, null);
+            }
         }
     }
 

@@ -1,5 +1,6 @@
 var TIPO_INSTRUCCION = require('./Instrucciones').TIPO_INSTRUCCION;
 var TIPO_SWITCH = require('./Instrucciones').TIPO_SWITCH;
+var TIPO_EXPRESION = require('./Instrucciones').TIPO_EXPRESION;
 
 function nuevaOperacion(operadorL, operadorR, operador, lenguaje, linea, columna){
     return{
@@ -8,7 +9,8 @@ function nuevaOperacion(operadorL, operadorR, operador, lenguaje, linea, columna
         operador: operador,
         lenguaje:lenguaje,
         linea: linea,
-        columna: columna
+        columna: columna,
+        rol:TIPO_EXPRESION.OPERACION
     }
 }
 
@@ -70,7 +72,8 @@ const instruccionesApi = {
             tipo: tipo,
             lenguaje:lenguaje,
             linea: linea,
-            columna: columna
+            columna: columna,
+            rol:TIPO_EXPRESION.VALOR
         }
     }, 
 
@@ -274,7 +277,7 @@ const instruccionesApi = {
      * @param {*} if_father 
      */
     nuevoElse: function(expresion, instrucciones, if_father, lenguaje,linea, columna){
-        if(instrucciones == undefined){
+        if(instrucciones == null){
             instrucciones = [];
         }
         return {
@@ -475,16 +478,7 @@ const instruccionesApi = {
             columna:columna
         }
     },
-    nuevoMetodo_stmt: function(metodo, lenguaje, linea, columna){
-        return{
-            rol:TIPO_INSTRUCCION.METODO,
-            id:id,
-            metodo:metodo,
-            lenguaje:lenguaje,
-            linea:linea,
-            columna:columna
-        }
-    },
+
     nuevoMetodo: function(id, parametros, lenguaje, linea, columna){
         return {
             rol: TIPO_INSTRUCCION.METODO,

@@ -2,6 +2,8 @@ const express = require('express')
 const bodyParser = require('body-parser');
 const app = express();
 const cors = require('cors');
+var TablaTipos = require('./src/api/TablaTipos');
+var tablaTipos = null;
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json()); 
 app.use(cors());
@@ -12,10 +14,11 @@ let errores = [];
 app.post('/parse', function (req, res) {
     answer = [];
     errores = [];
+    tablaTipos = new TablaTipos();
     let codigo  = req.body.codigo;
     let resultado = "false";
     let Parser = require('./src/parser/Parser');
-    let parser = new Parser();
+    let parser = new Parser(tablaTipos);
     //Parseando
     parser.parse(codigo);
     //Obteniendo errores

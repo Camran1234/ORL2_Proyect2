@@ -1,11 +1,11 @@
 .sidebar-wrapper {
     display: block;
     box-sizing: border-box;
-    width: 56px;
+    width: 100px;
     background: #eff2f7;
     float: left;
     padding: 8px;
-    height: calc(100vh - 102px);
+    height: calc(100vh - 175px);
     border-top: 1px solid #d3dce6;
     border-right: 1px solid #d3dce6;
 }
