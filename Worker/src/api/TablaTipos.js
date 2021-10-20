@@ -18,10 +18,15 @@ const TIPO_BUSQUEDA = {
     main: 'main'
 }
 
+//Instrucciones
+const Clase = require('../api/instrucciones/Clase');
+const Constructor = require('../api/instrucciones/Constructor');
+const Funcion = require('../api/instrucciones/Function');
+
 var Tipo = require('./instrucciones/Tipo');
 var ErrorSemantico = require('../error/SemanticError');
-function crearTipo(visibilidad, id, tipo, ambito,posMemoria, longitud, esArreglo, rol, paquete) {
-    return new Tipo(visibilidad, id, tipo, ambito, posMemoria, longitud, esArreglo, rol, paquete);
+function crearTipo(visibilidad, id, tipo, ambito,posMemoria, longitud, esArreglo, rol, paquete, instruccion) {
+    return new Tipo(visibilidad, id, tipo, ambito, posMemoria, longitud, esArreglo, rol, paquete, instruccion);
 }
 
 class TablaTipos{
@@ -32,147 +37,110 @@ class TablaTipos{
         this.mainFounded=false;
     }
 
-    //Analizar caso para agregar:
-    //Variables
-    //Funciones
-    //Mains
-    //Incluir Paquetes
-    //Ambitos
-    //Roles
-    //Visibilidad
-   /* agregarTipo(visibilidad, id, tipo, ambito, longitud, esArreglo, rol, paquete, linea, columna){
-        let simboloLocal = buscar(id, ambito, rol);
-        let tipo_ = crearTipo(visibilidad, id, tipo, ambito, this.posMemoria, longitud, esArreglo, rol, paquete);
-        if(simboloLocal == null){
-            if(rol == TIPO_INSTRUCCION.MAIN){
-                if(this.mainFounded = true ){
-                    tipo_ = new ErrorSemantico("Ya existe un main", "main", linea, columna);
-                }else{
-                    this.mainFounded=true;
-                    this.tipos.push(tipo_);
-                }
-            }else {
-                this.tipos.push(tipo_);
-            }
-        }else{
-            tipo_ = new ErrorSemantico("Ya existe el identificador dentro del paquete: "+paquete+", dentro del ambito: "+ambito, id,linea, columna);
-        }
+    crear(visibilidad, id, tipo, ambito, longitud, esArreglo, rol, paquete, instruccion){
+        let tipo = crearTipo(visibilidad, id, tipo, ambito, this.posMemoria, longitud, esArreglo, rol, paquete, instruccion);
+        return tipo;
+    }
+
+    agregarTipo(tipo){
+        this.tipos.push(tipo);
         this.posMemoria++;
-        return tipo_;
-    }*/
-
-    agregar(tipo){
-        this.tipos.push(tipo_);
     }
 
-    agregarTipo(visibilidad, id, tipo, ambito, longitud, esArreglo, rol, paquete, linea, columna){
-        let tipo_ = crearTipo(visibilidad, id, tipo, ambito, posMemoria, longitud, esArreglo, rol, paquete);        
-        let busqueda = this.buscar(id, ambito, rol, paqueteria);
-        if(busqueda == null){
-
-        }else{
-
-        }
+    buscar(tipo){
+        let id = tipo.getId();
+        let ambito = tipo.getAmbito();
+        let rol = tipo.getRol();
+        let lenguaje = tipo.getLenguaje();
+        let paquete = tipo.getPaquete();
+        return this.buscar(id, ambito, rol, lenguaje, paquete);
     }
 
-    compararFuncion(tipoL,tipoR, lenguaje){
-
-    }
-
-    compararConstructor(tipoL, tipoR, lenguaje){
-
-    }
-
-    compararClase(tipoL, tipoR, lenguaje){
+    //Ambito sera un objeto siempre, haremos comparaciones por direcciones de memoria
+    buscar(id, ambito, rol, lenguaje, paquete){
+        let tipoEncontrado = null;
         if(lenguaje == TIPO_LENGUAJE.JAVA){
-
+            tipoEncontrado = this.busquedaJava(id, ambito, rol, paquete);
+        }else if(lenguaje == TIPO_LENGUAJE.C){
+            tipoEncontrado = this.busquedaC(id, ambito, rol, paquete);
+        }else if(lenguaje == TIPO_LENGUAJE.PYTHON){
+            tipoEncontrado = this.busquedaPython(id, ambito, rol, paquete);
         }
+        return tipoEncontrado;
     }
 
-    
-
-    buscar(id, ambito, rol, paqueteria){
-        let busqueda = null;
-        let tipoBusqueda = this.seleccionarBusqueda(rol);
-
-        if(rol == TIPO_VALOR.IDENTIFICADOR){
-            busqueda = this.buscarLocalmente(id, ambito, rol, paqueteria, tipoBusqueda);
-        }
-        if(rol == TIPO_VALOR.THIS_IDENTIFICADOR || rol == ){
-
-        }
-        
-        return busqueda;
-    }
-
-    seleccionarBusqueda(rol){
-        if(rol == TIPO_INSTRUCCION.IDENTIFICADOR){
-            return TIPO_BUSQUEDA.IDENTIFICADOR;
-        }else if(rol == TIPO_INSTRUCCION.THIS_IDENTIFICADOR){
-            return TIPO_BUSQUEDA.THIS_IDENTIFICADOR;
-        }else if(rol == TIPO_INSTRUCCION.METODO){
-            return TIPO_BUSQUEDA.METODO;
-        }else if(rol == TIPO_INSTRUCCION.CONSTRUCTOR){
-            return TIPO_BUSQUEDA.CONSTRUCTOR;
-        }else if(rol == TIPO_INSTRUCCION.MAIN){
-            return TIPO_BUSQUEDA.MAIN;
-        }
-    }
-
-    //Realizar las busquedas de abajo para arriba
-    buscarLocalmente(id, ambito, rol, paqueteria, tipoBusqueda){
-        let busqueda=null;
-        for(let index=this.tipos.length-1; index>=0; index--){
-            let simboloLocal = this.tipos[index];
-            let jsonLocal = simboloLocal.getJSON();
-            if(jsonLocal.id() == id && jsonLocal.ambito() == ambito &&
-            jsonLocal.rol() == TIPO_INSTRUCCION.DECLARACION && 
-            jsonLocal.paqueteria() == paqueteria){
-                busqueda = simboloLocal;
-                break;
+    busquedaJava(id, ambito, rol, paquete){
+        let resultado = null;
+        let tabla = this.tipos;
+        if(ambito!=null){
+            for(let index=tabla.length-1; index>=0; index--){
+                let tipo = tabla[index];
+                if(tipo.getId() == id &&
+                tipo.getRol() == rol && 
+                tipo.getAmbito() == ambito){
+                    resultado = tipo;
+                }
+            }
+            if(tipo == null){
+                let instruccion = ambito.getAmbito();
+                if(instruccion!=null){
+                    if(instruccion instanceof Clase ){
+                        if(instruccion.getIdExtension() !=null || instruccion.getIdExtension() != ""
+                        || instruccion.getIdExtension() != undefined){
+                            let clase = this.buscarClase(instruccion.getIdExtension(), paquete);
+                            let newAmbito = clase.getInstruccion();
+                            resultado = this.busquedaJava(id, newAmbito, rol);
+                        }
+                    }else{
+                        resultado = this.busquedaJava(id, ambito, rol);
+                    }
+                }
             }
         }
-        return busqueda;
+        return resultado;
     }
 
-    buscarClase(id, ambito, rol, paqueteria, tipoBusqueda){
-
-    }
-
-    buscarExtension(id, ambito, rol, paqueteria, tipoBusqueda){
-
-    }
-
-    transformarDatoToValor(tipo){
-        let valor = tipo;
-        if(TIPO_DATO.INT){
-            valor = TIPO_VALOR.ENTERO;
-        }else if(TIPO_DATO.FLOAT){
-            valor = TIPO_VALOR.DECIMAL;
-        }else if(TIPO_DATO.CHAR){
-            valor = TIPO_VALOR.CARACTER;
-        }else if(TIPO_DATO.STRING){
-            valor = TIPO_VALOR.STRING;
-        }else if(TIPO_DATO.BOOLEAN){
-            valor = TIPO_VALOR.BOOLEAN;
-        }else if(TIPO_DATO.VOID){
-            valor = TIPO_VALOR.VOID;
+    buscarClase(id, paquete){
+        for(let index=this.tipos.legth-1; index>=0; index--){
+            let tipo = this.tipos[index];
+            if(id == tipo.getId() && tipo.getRol() == TIPO_INSTRUCCION.CLASE
+            && paquete == tipo.getPaquete()){
+                return tipo;
+            }
         }
-        return valor;
+        return null;
     }
 
-    FromClass(){
-
+    busquedaC(id, ambito, rol){
+        for(let index=this.tipos.length-1; index>=0; index--){
+            let tipo = this.tipos[index];
+            if(tipo.getId() == id && tipo.getAmbito() == ambito 
+            && tipo.getRol() == rol){
+                return tipo;
+            }
+            if(ambito!=null){
+                let newAmbito = ambito.getAmbito();
+                return this.busquedaC(id, newAmbito, rol);
+            }
+        }
+        return null;
     }
 
-    getTipos(){
-        return this.tipos;
+    busquedaPython(id, ambito, rol){
+        if(ambito!=null){
+            for(let index=this.tipos.length-1; index>=0; index--){
+                let tipo = this.tipos[index];
+                if(tipo.getId() == id && tipo.getAmbito() == ambito &&
+                tipo.getRol() == rol){
+                    return tipo;
+                }
+            }
+            //Scope back
+            let newAmbito = ambito.getAmbito();
+            return this.busquedaPython(id, newAmbito, rol);
+        }        
+        return null;
     }
-
-    getMemoriaUtilizada(){
-        return this.posMemoria;
-    }
-
     
 }
 

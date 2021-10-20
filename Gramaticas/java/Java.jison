@@ -717,7 +717,7 @@ expresion
     |OPEN_PARENTHESIS expresion CLOSE_PARENTHESIS {$$=$2;}
     |ENTERO     {$$=instruccionesApi.nuevoValor($1,null, TIPO_VALOR.ENTERO, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
     |DECIMAL    {$$=instruccionesApi.nuevoValor($1,null, TIPO_VALOR.DECIMAL, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
-    |RESTA expresion %prec UMINUS   {$$=instruccionesApi.operacionUnaria($2, TIPO_OPERACION.RESTA, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+    |RESTA expresion %prec UMINUS   {$$=instruccionesApi.operacionUnaria($2, TIPO_OPERACION.NEGATIVO, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
     |this_stmt accion_increm {$$=instruccionesApi.operacionUnaria($1, $2, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
     |this_stmt  {$$=$1;}
     |CADENA {$$=instruccionesApi.nuevoValor($1,null, TIPO_VALOR.CADENA, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}

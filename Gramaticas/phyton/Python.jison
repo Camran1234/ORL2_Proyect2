@@ -357,6 +357,16 @@
 
 ([\'''][^\']*[\'])  {estado=2;return'LIT_CADENA';}
 
+"True" {
+                estado=2;
+ return'LIT_TRUE';
+            }
+
+"False" {
+                estado=2;
+ return'LIT_FALSE';
+            }
+
 [aA-zZ|"_"]([aA-zZ]|[0-9]|"_")* {
                 estado=2;
  return'IDENTIFICADOR';
@@ -508,10 +518,12 @@ expresion
     |expresion DIV expresion {$$=instruccionesApi.operacionAritmetica($1,$3, TIPO_OPERACION.DIV, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
     |expresion MOD expresion {$$=instruccionesApi.operacionAritmetica($1,$3, TIPO_OPERACION.MOD, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
     |expresion POW expresion {$$=instruccionesApi.operacionAritmetica($1, $3, TIPO_OPERACION.POW, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
-    |RESTA expresion %prec UMINUS {$$=instruccionesApi.operacionUnaria($2, TIPO_OPERACION.RESTA, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+    |RESTA expresion %prec UMINUS {$$=instruccionesApi.operacionUnaria($2, TIPO_OPERACION.NEGATIVO, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
     |LIT_ENTERO {$$=instruccionesApi.nuevoValor(parseInt($1.toString()),null, TIPO_VALOR.ENTERO, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
     |LIT_DECIMAL {$$=instruccionesApi.nuevoValor(parseFloat($1.toString()),null,TIPO_VALOR.DECIMAL, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
     |LIT_CADENA {$$=instruccionesApi.nuevoValor($1.toString(),null, TIPO_VALOR.CADENA, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+    |LIT_TRUE {$$=instruccionesApi.nuevoValor("true",null, TIPO_VALOR.BOOLEAN, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+    |LIT_FALSE {$$=instruccionesApi.nuevoValor("false",null, TIPO_VALOR.BOOLEAN, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
     |IDENTIFICADOR {$$=instruccionesApi.nuevoValor($1.toString(),null, TIPO_VALOR.IDENTIFICADOR, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
     |OPEN_PARENTHESIS expresion CLOSE_PARENTHESIS {$$=$2;}
     ;

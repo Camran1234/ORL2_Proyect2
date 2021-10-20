@@ -18,13 +18,35 @@ class Instruccion{
         this.lenguaje = lenguaje;
         this.ambito = ambito;
         this.paqueteria = paqueteria;
-        this.father = null;
         this.instrucciones = instrucciones;
     }
+
+    getLinea(){
+        return this.linea;
+    }
+
+    getColumna(){
+        return this.columna;
+    }
+
+    getLenguaje(){
+        return this.lenguaje;
+    }
+
+    getAmbito(){
+        return this.ambito;
+    }
+
+    getPaqueteria(){
+        return this.paqueteria;
+    }
+
 
     getInstrucciones(){
         return this.instrucciones;
     }
+
+    
 
     ambitoEnCiclo(){
         let retornar = null;
@@ -78,6 +100,7 @@ class Instruccion{
         return retornar;
     }
 
+    
 
 }
 

@@ -334,6 +334,23 @@ arreglo_stmt
 	}
 	;
 
+
+magnitud
+	:	OPEN_BRACKET expresion CLOSE_BRACKET magnitud_re {
+		$4.push($2);
+		$$=reversaArreglo($4);
+	}
+	| /*empty*/ {$$=[];}
+	;
+
+magnitud_re
+	:	OPEN_BRACKET expresion CLOSE_BRACKET magnitud_re {
+		$4.push($2);
+		$$=$4;
+	}
+	|  /*empty*/ {$$=[];}
+	;
+
 expresion
 	: expresion AND expresion {$$=instruccionesApi.operacionAritmetica($1,$3, TIPO_OPERACION.AND, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
 	| expresion OR expresion	{$$=instruccionesApi.operacionAritmetica($1,$3, TIPO_OPERACION.OR, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
@@ -347,14 +364,14 @@ expresion
 	| expresion POR expresion	{$$=instruccionesApi.operacionAritmetica($1,$3, TIPO_OPERACION.POR, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
 	| expresion DIV expresion	{$$=instruccionesApi.operacionAritmetica($1,$3, TIPO_OPERACION.DIV, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
 	| expresion MOD expresion {$$=instruccionesApi.operacionAritmetica($1, $3, TIPO_OPERACION.MOD, lenguaje, line(), columna(this._$.first_column));}
-	| RESTA expresion %prec UMINUS	{$$=instruccionesApi.operacionUnaria($2, TIPO_OPERACION.RESTA, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+	| RESTA expresion %prec UMINUS	{$$=instruccionesApi.operacionUnaria($2, TIPO_OPERACION.NEGATIVO, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
 	| LIT_ENTERO	{$$=instruccionesApi.nuevoValor($1, null, TIPO_VALOR.ENTERO, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
 	| LIT_DECIMAL	{$$=instruccionesApi.nuevoValor($1, null, TIPO_VALOR.DECIMAL, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
 	| LIT_CARACTER	{$$=instruccionesApi.nuevoValor($1, null, TIPO_VALOR.CARACTER, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
 	| LIT_STRING {$$=instruccionesApi.nuevoValor($1, null, TIPO_VALOR.CADENA, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
 	| IDENTIFICADOR {$$=instruccionesApi.nuevoValor($1,null, TIPO_VALOR.IDENTIFICADOR, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
 	| arreglo_stmt {$$=$1;}
-	| PUNTERO IDENTIFICADOR %prec UPUNTERO {$$=instruccionesApi.nuevoValor($2, TIPO_VALOR.PUNTERO_IDENTIFICADOR);}
+	| PUNTERO IDENTIFICADOR magnitud %prec UPUNTERO {$$=instruccionesApi.nuevoValor($2, $3, TIPO_VALOR.PUNTERO_IDENTIFICADOR, lenguaje, linea(this._$.fist_line), columna(this._$.fist_column));}
 	| metodo_stmt	{$$=instruccionesApi.nuevoValor($1, null, TIPO_VALOR.METODO, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
 	| metodo_clase_stmt	{$$=instruccionesApi.nuevoValor($1, null, TIPO_VALOR.METODO, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
 	| OPEN_PARENTHESIS expresion CLOSE_PARENTHESIS {$$=$2;}

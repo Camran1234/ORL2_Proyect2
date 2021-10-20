@@ -1,13 +1,7 @@
 var TIPO_INSTRUCCION = require('../api/Instrucciones').TIPO_INSTRUCCION;
-var TIPO_VISIBILIDAD = require('../api/Instrucciones').TIPO_VISIBILIDAD;
-var TIPO_DATO = require('../api/Instrucciones').TIPO_DATO;
-var TIPO_SWITCH = require('../api/Instrucciones').TIPO_SWITCH;
-var TIPO_OPERACION = require('../api/Instrucciones').TIPO_OPERACION;
-var ProcesadorOperacion = require('../api/ProcesadorOperacion');
-var ProcesadorTipos = require('../api/ProcesadorTipos');
+
 var ErrorSemantico = require('../error/SemanticError');
-var Cuarteto = new require('../api/Cuarteto');
-var cuarteto = new Cuarteto();
+const Asignacion = require();
 
 class Procesador{
 
@@ -41,96 +35,66 @@ class Procesador{
 		}
 	}
 
-    findMaxAmbit(ambito){
-        let aux = ambito;
-        if(aux !=null){
-            if(){
-                
-            }
-        }
-        return aux;
-    }
-
-    checkEstado(instrucciones, ambito){
-        let if_stmt = false;
-        let if_=null;
-        instrucciones.array.forEach(instruccion => {
-            if(instruccion.rol == TIPO_INSTRUCCION.IF){
-                if_stmt = true;
-                if_ = null;
-            }else if(instruccion.rol == TIPO_INSTRUCCION.ELSE){
-                if(if_stmt){
-                    instruccion.if = if_;       
-                }if(!if_stmt){
-                    this.addSyntaxError("Se esperaba un if antes", "else", instruccion.linea, instruccion.columna);
-                }
-                if(instruccion.condicion == null){
-                    if_stmt = false;
-                    if_ = null;
-                }
+    checkReturns(ast, returnFounded){
+        let resultado = false;
+        for(let index=0; index<ast.length; index++){
+            let expresion = ast[index];
+            if(returnFounded){
+                this.addSemanticError("Se espera que una funcion solo tenga un return y no vengan mas declaraciones despues",expresion.rol, expresion.linea, expresion.columna);
             }else{
-                if_stmt = false;
-                if_ = null;
-            }
-        });
-    }
-
-    foundVariable(instruccion){
-        if(instruccion.rol == TIPO_INSTRUCCION.VARIABLE){
-            if(instruccion.id != undefined){
-                return instruccion.id.valor;
+                if(expresion.rol == TIPO_INSTRUCCION.RETURN){
+                    returnFounded=true;
+                    return true;
+                }
             }
         }
-        return TIPO_INSTRUCCION.VARIABLE;
+        return resultado
     }
 
-    checkReturns(ast, estado, ambito){
-        if(estado == 2){
+    checkIfs(ast){
+        try{
+            let if_stmt = false;
+            let if_ = null;
+            let returnFounded=false;
             for(let index=0; index<ast.length; index++){
-                let instruccion = ast[index];
-                let returnFounded=false;
-                if(instruccion.rol == TIPO_INSTRUCCION.ELSE
-                    && instruccion.condicion == null){
-                    if(returnFounded==true){
-                        this.addSemanticError("else","No pueden existir declaraciones debajo de un return", instruccion.linea, instruccion.columna)
-                    }else{
-                        instrucciones = ast[index].instrucciones;
-                        returnFounded = this.checkReturns(instrucciones, estado);
-                    }
-                }else if(instruccion.rol == TIPO_INSTRUCCION.RETURN){
-                    if(returnFounded=true){
-                        this.addSemanticError("return ","No puede existir declaraciones debajo de un return", instruccion.linea, instruccion.columna)
+                let expresion = ast[index];
+                if(!returnFounded){
+                    if(expresion.rol == TIPO_INSTRUCCION.IF){
+                        if_stmt = true;
+                        if_ = expresion;
+                    }else if(expresion.rol == TIPO_INSTRUCCION.ELSE){
+                        if(if_stmt){
+                            if(expresion.condicion == null){
+                                expresion.if = if_;
+                                if_stmt = false;
+                                if_ = null;
+                                let resultado = this.checkReturns(expresion.instrucciones, returnFounded);
+                                if(!returnFounded){
+                                    returnFounded = resultado;
+                                }else{
+                                    this.addSemanticError("Se espera que una funcion solo tenga un return", expresion.rol, expresion.linea, expresion.columna);
+                                }
+                            }else{                            
+                                expresion.if = if_;
+                            }   
+                        }else{
+                            this.addSyntaxError("Se necesita un if antes de un else", "else ", expresion.linea, expresion.columna);
+                        }
                     }else{  
-                        returnFounded=true;
+                        if_stmt = false;
+                        if_ = null;
+                        if(expresion.rol == TIPO_INSTRUCCION.RETURN){
+                            returnFounded=true;
+                        }
                     }
                 }else{
-                    if(returnFounded==true){
-                        this.addSemanticError(foundVariable(ast[instruccion]), "No puede existir declaraciones debajo de un return", instruccion.linea, instruccion.columna);
-                    }
+                    this.addSemanticError("Se espera que una funcion solo tenga un return y no vengan mas declaraciones despues",expresion.rol, expresion.linea, expresion.columna);
                 }
             }
-            return returnFounded;
+        }catch(ex){
+            console.log(ex);
         }
-        return false;
-    }   
-
-    procesarEstado(estado, instruccion){
-        if(estado != 3){
-            if(instruccion.rol == TIPO_INSTRUCCION.BREAK){
-                this.addSemanticError("break", "Se esperaba que estuviera dentro de un ciclo", instruccion.linea, instruccion.columna);
-            }else if(instruccion.rol == TIPO_INSTRUCCION.CONTINUE){
-                this.addSemanticError("continue", "Se esperaba que estuviera dentro de un ciclo", instruccion.linea, instruccion.columna);
-            }
-        }else if(estado == 6){
-            if(instruccion.rol == TIPO_INSTRUCCION.BREAK){
-                this.addSemanticError("break", "Se esperaba que estuviera dentro de un ciclo", instruccion.linea, instruccion.columna);
-            }else if(instruccion.rol == TIPO_INSTRUCCION.CONTINUE){
-                this.addSemanticError("continue", "Se esperaba que estuviera dentro de un ciclo", instruccion.linea, instruccion.columna);
-            }else if(instruccion.rol == TIPO_INSTRUCCION.RETURN){
-                this.addSemanticError(instruccion.id, "No se puede agregar un return a algo que no sea una funcion", instruccion.linea, instruccion.columna);
-            }
-        }
-        return true;
+        
     }
 
     /**
@@ -152,54 +116,53 @@ class Procesador{
      * @param {*} estado 
      * @param {*} ambito
      */
-    procesar(ast, paqueteria, estado, ambito){
+    procesar(ast, paqueteria, ambito){
         this.paqueteria = paqueteria;
-        this.checkEstado(ast, ambito);        
-        this.checkReturns(ast, estado, ambito);
+        this.checkIfs(ast);
         ast.array.forEach(instruccion => {
             if(this.procesarEstado(estado, instruccion)){
                 if(instruccion.rol == TIPO_INSTRUCCION.DECLARACION){
-                    this.procesarDeclaracion(instruccion, ambito, estado);
+                    this.procesarDeclaracion(instruccion, ambito, paqueteria);
                 }else if(instruccion.rol == TIPO_INSTRUCCION.INCLUDE){
-                    this.procesarInclude(instruccion, ambito, estado);
+                    this.procesarInclude(instruccion, ambito, paqueteria);
                 }else if(instruccion.rol == TIPO_INSTRUCCION.FUNCION){
-                    this.procesarFuncion(instruccion, ambito, estado);
+                    this.procesarFuncion(instruccion, ambito, paqueteria);
                 }else if(instruccion.rol == TIPO_INSTRUCCION.MAIN){
-                    this.procesarMain(instruccion, ambito, estado);
+                    this.procesarMain(instruccion, ambito, paqueteria);
                 }else if (instruccion.rol == TIPO_INSTRUCCION.CONSTRUCTOR){
-                    this.procesarConstructor(instruccion, ambito, estado);
+                    this.procesarConstructor(instruccion, ambito, paqueteria);
                 }else if(instruccion.rol == TIPO_INSTRUCCION.CLASE){
-                    this.procesarClase(instruccion, ambito, estado);
+                    this.procesarClase(instruccion, ambito, paqueteria);
                 }else if(instruccion.rol == TIPO_INSTRUCCION.ASIGNACION_O){
-                    this.procesarAsignacion(instruccion, ambito, estado);
+                    this.procesarAsignacion(instruccion, ambito, paqueteria);
                 }else if(instruccion.rol == TIPO_INSTRUCCION.VARIABLE){
-                    this.procesarVariable(instruccion, ambito, estado);
+                    this.procesarVariable(instruccion, ambito, paqueteria);
                 }else if(instruccion.rol == TIPO_INSTRUCCION.IF){
-                    this.procesarIf(instruccion, ambito, estado);
+                    this.procesarIf(instruccion, ambito, paqueteria);
                 }else if(instruccion.rol == TIPO_INSTRUCCION.ELSE){
-                    this.procesarElse(instruccion, ambito, estado);
+                    this.procesarElse(instruccion, ambito, paqueteria);
                 }else if(instruccion.rol == TIPO_INSTRUCCION.SWITCH){
-                    this.procesarSwitch(instruccion, ambito, estado);
+                    this.procesarSwitch(instruccion, ambito, paqueteria);
                 }else if(instruccion.rol == TIPO_INSTRUCCION.FOR){
-                    this.procesarFor(instruccion, ambito, estado);
+                    this.procesarFor(instruccion, ambito, paqueteria);
                 }else if(instruccion.rol == TIPO_INSTRUCCION.WHILE){
-                    this.procesarWhile(instruccion, ambito, estado);
+                    this.procesarWhile(instruccion, ambito, paqueteria);
                 }else if(instruccion.rol == TIPO_INSTRUCCION.DO){
-                    this.procesarDo(instruccion, ambito, estado);
+                    this.procesarDo(instruccion, ambito, paqueteria);
                 }else if(instruccion.rol == TIPO_INSTRUCCION.CLEAN){
-                    this.procesarClean(instruccion, ambito, estado);
+                    this.procesarClean(instruccion, ambito, paqueteria);
                 }else if(instruccion.rol == TIPO_INSTRUCCION.GETCH){
-                    this.procesarGetch(instruccion, ambito, estado);
+                    this.procesarGetch(instruccion, ambito, paqueteria);
                 }else if(instruccion.rol == TIPO_INSTRUCCION.IMPRIMIR){
-                    this.procesarImprimir(instruccion, ambito, estado);
+                    this.procesarImprimir(instruccion, ambito, paqueteria);
                 }else if(instruccion.rol == TIPO_INSTRUCCION.CONTINUE){
-                    this.procesarContinue(instruccion, ambito, estado);
+                    this.procesarContinue(instruccion, ambito, paqueteria);
                 }else if(instruccion.rol == TIPO_INSTRUCCION.BREAK){
-                    this.procesarBreak(instruccion, ambito, estado);
+                    this.procesarBreak(instruccion, ambito, paqueteria);
                 }else if(instruccion.rol == TIPO_INSTRUCCION.RETURN){
-                    this.procesarReturn(instruccion, ambito, estado);
+                    this.procesarReturn(instruccion, ambito, paqueteria);
                 }else if(instruccion.rol == TIPO_INSTRUCCION.METODO){
-                    this.procesarMetodo(instruccion, ambito, estado);
+                    this.procesarMetodo(instruccion, ambito, paqueteria);
                 }else if(instruccion.rol == TIPO_INSTRUCCION.SCAN){
                     this.procesarScan(instruccion)
                 }
@@ -208,331 +171,94 @@ class Procesador{
         });
     }
 
-    checkError(respuesta, instruccion){
-        if(respuesta !=null){
-            if(respuesta instanceof ErrorSemantico){
-                this.errores.push(respuesta);
-                return false;
-            }
-        }
-        return true;
-    }
-
-    procesarDeclaracion(instruccion, ambito, estado){
-        let tablaTipos = this.tablaTipos;
-        let visibilidad = instruccion.visibilidad;
-        let id = instruccion.id;
-        let tipo = instruccion.tipo;
-        let longitud = instruccion.magnitud;
-        let esArreglo = false;
-        if(instruccion.magnitud==null){
-            esArreglo = false;
-        }else if(instruccion.magnitud>1){
-            esArreglo = 1;
-        }
-        let rol = instruccion.rol;
-        let paquete = this.paqueteria;
-        let linea = instruccion.linea;
-        let columna = instruccion.columna;
-        let resultado = tablaTipos.agregarTipo(visibilidad,id,tipo,ambito, longitud, esArreglo, rol,
-            paquete, linea, columna);
-        this.checkError(resultado, instruccion);
-    }
-
-    procesarInclude(instruccion, ambito, estado){
-        //PENDIENTE
-    }
-
-    procesarParametro(parametro, ambito, estado){
-        let visibilidad = TIPO_VISIBILIDAD.LOCAL;
-        let id = parametro.id;
-        let tipo = parametro.tipo;
-        let longitud = 1;
-        let esArreglo = false;
-        let rol = TIPO_INSTRUCCION.DECLARACION;
-        let paquete = this.paquete;
-        let linea = parametro.linea;
-        let columna = parametro.columna;
-        let resultado = this.tablaTipos.agregarTipo(visibilidad, id, tipo, ambito, longitud, esArreglo, rol, paquete, linea, columna);
-        return this.checkError(resultado, null)
-    }
-
-    procesarParametros(parametros, ambito, estado){
-        parametros.array.forEach(parametro => {
-            let resultado = this.procesarParametro(parametro, ambito, estado);
-            if(resultado == false){
-                return resultado;
-            }
-        });
-    }
-
-    procesarFuncion(instruccion, ambito, estado){
-        let tablaTipos = this.tablaTipos;
-        let visibilidad = instruccion.visibilidad;
-        let id = instruccion.id;
-        let tipo = instruccion.tipo;
-        let longitud = instruccion.parametros;
-        let esArreglo = false;
-        let rol = instruccion.rol;
-        let paquete = this.paqueteria;
-        let linea = instruccion.linea;
-        let columna = instruccion.columna;
-        let resultado = tablaTipos.agregarTipo(visibilidad,id,tipo,ambito, longitud, esArreglo, rol,
-            paquete, linea, columna);
-        let parametros = instruccion.parametros;
-        this.procesarParametros(parametros, ambito, estado);
-        let arregloAST = instruccion.instrucciones;
-        this.checkError(resultado, instruccion);
-        this.procesar(arregloAST,this.paqueteria, 2, resultado);
-    }
-
-    procesarMain(instruccion, ambito, estado){
-        let tablaTipos = this.tablaTipos;
-        let visibilidad = TIPO_VISIBILIDAD.PUBLIC;
-        let id = "";
-        let tipo = TIPO_DATO.VOID;
-        let longitud = 1;
-        let esArreglo = false;
-        let rol = instruccion.rol;
-        let paquete= this.paqueteria;
-        let linea = instruccion.linea;
-        let columna = instruccion.columna;
-        let resultado = tablaTipos.agregarTipo(visibilidad,id,tipo,ambito, longitud, esArreglo, rol,
-            paquete, linea, columna);
-        let parametros = instruccion.parametros;
-        this.procesarParametros(parametros, ambito, estado);
-        let arregloAST = instruccion.instrucciones;
-        this.checkError(resultado, instruccion);
-        this.procesar(arregloAST, this.paqueteria, 6, resultado);
+    procesarDeclaracion(instruccion, ambito, paqueteria){
         
     }
 
-    procesarConstructor(instruccion, ambito, estado){
-        let tablaTipos = this.tablaTipos;
-        let visibilidad = instruccion.visibilidad;
-        let id = instruccion.id;
-        if(id == this.clase){
-            let tipo = "";
-            let longitud = instruccion.parametros;
-            let esArreglo = false;
-            let rol = instruccion.rol;
-            let paquete = this.paquete;
-            let linea = instruccion.linea;
-            let columna = instruccion.columna;
-            let resultado = tablaTipos.agregarTipo(visibilidad,id,tipo,ambito, longitud, esArreglo, rol,
-                paquete, linea, columna);
-            let parametros = instruccion.parametros;
-            this.procesarParametros(parametros, ambito, estado);
-            let arregloAST = instruccion.instrucciones;
-            this.checkError(resultado, instruccion);
-            this.procesar(arregloAST, this.paqueteria, 6, resultado);
-        }else{
-            this.addSemanticError("El constructor debe tener el mismo nombre de la clase", id, instruccion.linea, instruccion.columna);
-        }
+    procesarInclude(instruccion, ambito, paqueteria){
+
     }
 
-    procesarClase(instruccion, ambito, estado){
-        let tablaTipos = this.tablaTipos;
-        let visibilidad = TIPO_VISIBILIDAD.PUBLIC;
-        let id = instruccion.id;
-        //Usaremos el tipo para guardar la clase extendida
-        let tipo = instruccion.idExtension;
-        let longitud = 1;
-        let esArreglo = false;
-        let rol = instruccion.rol;
-        let paquete = this.paquete;
-        let linea = instruccion.linea;
-        let columna = instruccion.columna;
-        this.clase = id;
-        let resultado = tablaTipos.agregarTipo(visibilidad,id,tipo,ambito, longitud, esArreglo, rol,
-            paquete, linea, columna);
-        let parametros = instruccion.parametros;
-        this.procesarParametros(parametros, ambito, estado);
-        let arregloAST = instruccion.instrucciones;
-        this.checkError(resultado, instruccion);
-        this.procesar(arregloAST, this.paqueteria, 1, resultado);
+    procesarFuncion(instruccion, ambito, paqueteria){
+
+    }
+
+    procesarMain(instruccion, ambito,estado){
+
+    }
+
+    procesarConstructor(instruccion, ambito, paqueteria){
+
+    }
+
+    procesarClase(instruccion, ambito, paqueteria){
+
+    }
+
+    procesarAsignacion(instruccion, ambito, paqueteria){
+
+    }
+
+    procesarVariable(instruccion, ambito, paqueteria){
+
+    }
+
+    procesarIf(instruccion, ambito, paqueteria){
+
+    }
+
+    procesarElse(instruccion, ambito, paqueteria){
+
+    }
+
+    procesarSwitch(instruccion, ambito, paqueteria){
+
+    }
+
+    procesarFor(instruccion, ambito, paqueteria){
+
+    }
+
+    procesarWhile(instruccion, ambito, paqueteria){
+
+    }
+
+    procesarDo(instruccion, ambito, paqueteria){
+
+    }
+
+    procesarClean(instruccion, ambito, paqueteria){
+
+    }
+
+    procesarGetch(instruccion, ambito, paqueteria){
+
+    }
+
+    procesarImprimir(instruccion, ambito, paqueteria){
+
+    }
+
+    procesarContinue(instruccion, ambito, paqueteria){
+
+    }
+
+    procesarBreak(instruccion, ambito, paqueteria){
         
     }
 
-    procesarAsignacion(instruccion, ambito, estado){
-        let procesador = new ProcesadorOperacion();
-        let expresion = instruccion.expresion;
-        procesador.procesarOperacion(expresion,ambito,this.tablaTipos, this.errores);        
+    procesarReturn(instruccion, ambito, paqueteria){
+
     }
 
-    procesarVariable(instruccion, ambito, estado){
-        let arreglo = instruccion.arreglo;
-        let paqueteria = this.paqueteria;
-        this.procesar(arreglo, paqueteria, 2, ambito);
+    procesarMetodo(instruccion, ambito, paqueteria){
+
     }
 
-    procesarIf(instruccion, ambito, estado){
-        let astOperaciones = instruccion.condicion;
-        let procesador = new ProcesadorOperacion();
-        let resultado = procesador.procesarOperacion(astOperaciones, ambito, this.tablaTipos, this.errores)
-        let astIf = instruccion.instrucciones;
-        this.procesar(astIf, this.paqueteria, estado, ambito);        
-    }
+    procesarScan(instruccion, ambito, paqueteria){
 
-    procesarElse(instruccion, ambito, estado){
-        let astOperaciones = instruccion.condicion;
-        let procesador = new ProcesadorOperacion();
-        let astElse = instruccion.instrucciones;
-        let resultado = procesador.procesarOperacion(astOperaciones, ambito, this.tablaTipos, this.errores);
-        this.procesar(astElse, this.paqueteria, estado, ambito);        
     }
-
-    procesarSwitch(instruccion, ambito, estado){
-        let casos = instruccion.cases;
-        let id = instruccion.id;
-        let simbolo = this.tablaTipos.buscar(id, ambito, this.paquete, TIPO_INSTRUCCION.DECLARACION);
-        if(simbolo == null){
-            this.addSemanticError( "switch("+id+")","No se encontro ningun identificador "+id, instruccion.linea, instruccion.columna);
-        }else{
-            if(simbolo.tipo == TIPO_DATO.BOOLEAN){
-                this.addSemanticError("switch("+id+")","No se puede usar un identificador booleano en switch", instruccion.linea, instruccion.columna)
-            }else{
-                //Comprobamos los casos de switch
-                //Comprobamos el caso
-                for(let index=0; index<casos.length; index++){
-                    let expresion = casos[index].condicion;
-                    let procesador = new ProcesadorTipos();
-                    let resultado = procesador.procesarOperacion(expresion, ambito, this.tablaTipos, this.errores);
-                    let resultadoAsignacion = procesador.procesarAsignacion(id, resultado, this.tablaTipos, this.errores);
-                    if(resultadoAsignacion){
-                        //Ejecutamos las instrucciones
-                        let instrucciones = casos[index].instrucciones;
-                        if(casos[index].rol == TIPO_SWITCH.CASE){
-                            this.procesar(instrucciones, this.paqueteria, 4, ambito);
-                        }else if(casos[index].rol == TIPO_SWITCH.DEFAULT){
-                            this.procesar(instrucciones, this.paqueteria, 5, ambito);
-                        }
-                    }
-                }
-            }
-        }
-        
-    }
-
-    procesarFor(instruccion, ambito, estado){
-        let valor_inicial = instruccion.valor_inicial;
-        let condicion = instruccion.condicion;
-        let accion_post = [instruccion.accion_post];
-        //Procesamos los valores iniciales
-        this.procesarVariable(valor_inicial, ambito, estado);
-        let procesador = new ProcesadorOperacion();
-        //Procesamos la condicion
-        let resultado = procesador.procesarOperacion(condicion, ambito, this.tablaTipos, this.errores);
-        procesador.procesarAsignacion(TIPO_INSTRUCCION.FOR, resultado, this.tablaTipos, this.errores);
-        //Procesamos la accion posterior
-        this.procesar(accion_post, this.paqueteria, estado, ambito);
-        let instrucciones = instruccion.instrucciones;
-        this.procesar(instrucciones, this.paqueteria, 3, ambito) ;       
-    }
-
-    procesarWhile(instruccion, ambito, estado){
-        let condicion = instruccion.condicion;
-        let procesador = new ProcesadorOperacion();
-        let resultado = procesador.procesarOperacion(condicion, ambito, this.tablaTipos, this.errores);
-        procesador.procesarAsignacion(TIPO_INSTRUCCION.WHILE, resultado, this.tablaTipos, this.errores);
-        let instrucciones = instruccion.instrucciones;
-        this.procesar(instrucciones, this.paqueteria, 3, ambito)
-    }
-
-    procesarDo(instruccion, ambito, estado){
-        let condicion = instruccion.condicion;
-        let procesador = new ProcesadorOperacion();
-        let resultado = procesador.procesarOperacion(condicion, ambito, this.tablaTipos, this.errores);
-        procesador.procesarAsignacion(TIPO_INSTRUCCION.DO, resultado, this.tablaTipos, this.errores);
-        let instrucciones = instruccion.instrucciones;
-        this.procesar(instrucciones, this.paqueteria, 3, ambito)
-    }
-
-    procesarClean(instruccion, ambito, estado){
-        /*Do nothing*/ 
-    }
-
-    procesarGetch(instruccion, ambito, estado){
-        /*Do nothing*/ 
-    }
-
-    procesarImprimir(instruccion, ambito, estado){
-        let parametros = instruccion.parametros;
-        let procesador = new ProcesadorOperacion();
-        procesador.procesarImprimir(parametros, this.tablaTipos, this.errores, instruccion.lenguaje);
-    }
-
-    procesarContinue(instruccion, ambito, estado){
-        if(estado != 3){
-            this.addSemanticError("continue","Se esperaba que estuviera dentro de un ciclo", instruccion.linea, instruccion.columna);
-        }
-    }
-
-    procesarBreak(instruccion, ambito, estado){
-        if(estado != 3){
-            this.addSemanticError("continue","Se esperaba que estuviera dentro de un ciclo", instruccion.linea, instruccion.columna);
-        }
-    }
-
-    procesarReturn(instruccion, ambito, estado){
-        let procesador = new ProcesadorOperacion();
-        let condicion = instruccion.expresion;
-        let resultado = procesador.procesarOperacion(condicion, ambito, this.tablaTipos, this.errores);
-        procesador.procesarReturn(ambito, resultado, this.tablaTipos, this.errores);
-    }
-
-    procesarMetodo(instruccion, ambito, estado){
-        let procesadorTipos = new ProcesadorTipos();
-        let id = instruccion.id;
-        let parametros = instruccion.parametros;
-        procesadorTipos.procesarMetodo(id, parametros, ambito, this.tablaTipos);
-    }
-
-    //existen dos tipos los inputs y los scans
-    procesarScan(instruccion, ambito, estado){
-        let procesador = new ProcesadorTipos();
-        let cadena = instruccion.cadena.toString();
-        let id = instruccion.id;
-        let resultado = this.tablaTipos.buscar(id, ambito, this.paquete, TIPO_INSTRUCCION.DECLARACION);
-        let metodo = null;
-        let auxiliar = cadena.split('');
-        let flag = false;
-        let founded=false;
-        let yyFunction = function(param, paramInstruccion, errores, SemanticErrorV, val){
-            if(param == true){
-                let error = new SemanticErrorV("Ya existe mas de un tipo de asignacion en el scanner en la cadena",val. paramInstruccion.linea, paramInstruccion.columna);                
-                errores.push(error);
-                return false;
-            }
-            return true;
-        };
-        //Examinamos la cadena
-        for(let index=0; index<auxiliar.length; index++){
-            if(auxiliar[index] == '%'){
-                flag = true;
-            }else if(flag){
-                if(auxiliar[index] == 'd'){
-                    if(yyFunction(founded, instruccion, this.errores, ErrorSemantico,"%d")){
-                        metodo = TIPO_DATO.INT;
-                    }
-                }else if(auxiliar[index] == 'c'){
-                    if(yyFunction(founded, instruccion, this.errores, ErrorSemantico, "%c")){
-                        metodo = TIPO_DATO.CHAR;
-                    }                    
-                }else if(auxilair[index] == 'f'){
-                    if(yyFunction(founded, instruccion, this.errores, ErrorSemantico, "%f")){
-                        metodo = TIPO_DATO.FLOAT;
-                    }
-                }else{
-                    flag = false;
-                }
-            }
-        }
-        if(metodo!=null){
-            procesador.compararTipos(resultado.tipo, metodo, this.errores);
-        }
-        
-    }
+    
 }
 
 module.exports = Procesador;

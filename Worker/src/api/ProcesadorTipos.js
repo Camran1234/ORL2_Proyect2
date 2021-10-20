@@ -31,5 +31,6 @@ function procesarAsignacion(id, expresion, tablaTipos,errores){
 
 module.exports = {
     compararTipos,
-    procesarAsignacion
+    procesarAsignacion,
+    convertirVariable
 };
