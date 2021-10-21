@@ -1,6 +1,6 @@
 class Tipo{
 
-    constructor(visibilidad, id, tipo, ambito, posMemoria, longitud, esArreglo, rol, paquete, instruccion){
+    constructor(visibilidad, id, tipo, ambito, posMemoria, longitud, esArreglo, rol, paquete, instruccion, lenguaje){
         this.visibilidad = visibilidad;
         this.id = id;
         this.tipo = tipo;
@@ -14,7 +14,16 @@ class Tipo{
         this.paquete = paquete;
         //Instruccion del objeto que hace referencia
         this.instruccion = instruccion;
+        this.lenguaje = lenguaje;
     }    
+
+    getInstruccion(){
+        return this.instruccion;
+    }
+
+    getLenguaje(){
+        return this.lenguaje;
+    }
 
     getVisibilidad(){
         return this.visibilidad;

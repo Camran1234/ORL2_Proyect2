@@ -1,7 +1,7 @@
 var TIPO_INSTRUCCION = require('./Instrucciones').TIPO_INSTRUCCION;
 var TIPO_SWITCH = require('./Instrucciones').TIPO_SWITCH;
 var TIPO_EXPRESION = require('./Instrucciones').TIPO_EXPRESION;
-
+var TIPO_VISIBILIDAD = require('./Instrucciones').TIPO_VISIBILIDAD;
 function nuevaOperacion(operadorL, operadorR, operador, lenguaje, linea, columna){
     return{
         operadorL: operadorL,
@@ -56,7 +56,7 @@ const instruccionesApi = {
      * @returns 
      */
     operacionUnaria: function(operadorL, operador, lenguaje, linea, columna){
-        return nuevaOperacion(operadorL, undefined, operador, lenguaje, linea, columna);
+        return nuevaOperacion(operadorL, null, operador, lenguaje, linea, columna);
     },
 
     /**
@@ -93,10 +93,11 @@ const instruccionesApi = {
      * @param {*} id
      * @param {*} tipo 
      */
-    nuevoParametro: function(id, tipo, lenguaje,linea, columna){
+    nuevoParametro: function(id, tipo, puntero, lenguaje,linea, columna){
         return {
             id: id,
             tipo: tipo,
+            puntero: puntero,
             lenguaje:lenguaje,
             linea: linea, 
             columna:columna
@@ -218,8 +219,9 @@ const instruccionesApi = {
 
     nuevaAsignacionClase: function(id, parametros, tipo, lenguaje, linea, columna){
         return {
-            rol: TIPO_INSTRUCCION.CLASE,
+            rol: TIPO_INSTRUCCION.ASIGNACION_CLASE,
             id: id,
+            visibilidad: TIPO_VISIBILIDAD.LOCAL,
             parametros: parametros,
             tipo: tipo,
             lenguaje:lenguaje,
@@ -359,6 +361,15 @@ const instruccionesApi = {
         if(instrucciones == undefined){
             instrucciones = [];
         }
+        if(!Array.isArray(valor_inicial)){
+            let helper = [];
+            helper.push(valor_inicial);
+            valor_inicial = helper;
+        }
+        if(!Array.isArray(accion_post)){
+            let helper = [];
+            helper.push(accion_post);
+        }   accion_post = helper;
         return{
             valor_inicial:valor_inicial,
             condicion: expresion,
@@ -416,9 +427,10 @@ const instruccionesApi = {
      * @param {*} parametros 
      * @returns 
      */
-    nuevoImprimir: function(parametros, lenguaje, linea, columna){
+    nuevoImprimir: function(parametros,tipo, lenguaje, linea, columna){
         return{
             parametros:parametros,
+            tipo:tipo,
             rol:TIPO_INSTRUCCION.IMPRIMIR,
             lenguaje:lenguaje,
             linea:linea,

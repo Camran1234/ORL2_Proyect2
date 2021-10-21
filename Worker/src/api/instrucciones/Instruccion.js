@@ -21,6 +21,10 @@ class Instruccion{
         this.instrucciones = instrucciones;
     }
 
+    setInstrucciones(instrucciones){
+        this.instrucciones = instrucciones;
+    }
+
     getLinea(){
         return this.linea;
     }

@@ -7,6 +7,11 @@ class Function extends Instruccion{
         this.visibilidad = visibilidad;
         this.id = id;
         this.tipo = tipo;
+        this.parametros = parametros;
+    }
+
+    getParametros(){
+        return this.parametros;
     }
 
     getVisibilidad(){

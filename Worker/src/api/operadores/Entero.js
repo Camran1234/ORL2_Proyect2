@@ -1,3 +1,4 @@
+
 var Decimal = require('./Decimal');
 
 class Entero extends Decimal {

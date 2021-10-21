@@ -121,6 +121,10 @@
              estado=2;
  return'PRINT';
             }
+"&" {
+    estado = 2;
+    return 'PUNTERO';
+}
 
 "println" {
                 estado=2;
@@ -535,18 +539,23 @@ ini
     | ini error {addSyntaxError("Se esperaba una funcion1",$2,linea(this._$.first_line), columna(this._$.first_column));}
     ;
 
+ides
+    :IDENTIFICADOR {let arreglo = []; arreglo.push($1); arreglo.push(false); $$=arreglo; }
+    |PUNTERO IDENTIFICADOR {let arreglo = []; arreglo.push($2); arreglo.push(true); $$=arreglo;}
+    ;
+
 /*Funcion*/
 parameters
-    : IDENTIFICADOR parameters_re {
-        $2.push(instruccionesApi.nuevoParametro($1, TIPO_DATO.ANY, TIPO_LENGUAJE.PYTHON, linea(this._$.first_line), columna(this._$.first_column)));
+    : ides parameters_re {
+        $2.push(instruccionesApi.nuevoParametro($1[0], TIPO_DATO.ANY,$1[1], TIPO_LENGUAJE.PYTHON, linea(this._$.first_line), columna(this._$.first_column)));
         $$=reversaArreglo($2);
     }
     |  /*empty*/ {$$=[];}
     ;
 
 parameters_re
-    :  COMA  IDENTIFICADOR parameters_re{
-        $3.push(instruccionesApi.nuevoParametro($2, TIPO_DATO.ANY, TIPO_LENGUAJE.PYTHON, linea(this._$.first_line), columna(this._$.first_column)));
+    :  COMA  ides parameters_re{
+        $3.push(instruccionesApi.nuevoParametro($2[0], TIPO_DATO.ANY,$2[1], TIPO_LENGUAJE.PYTHON, linea(this._$.first_line), columna(this._$.first_column)));
         $$=$3;
     }
     | COMA error parameters_re{addSyntaxError("Se esperaba otro parametro",$2,linea(this._$.first_line), columna(this._$.first_column)); $$=$3;}
@@ -638,7 +647,7 @@ print_method
 
 print_stmt
     : print_method  OPEN_PARENTHESIS print_parameter CLOSE_PARENTHESIS SPACE{
-        $$= instruccionesApi.nuevoImprimir($3, TIPO_LENGUAJE.PYTHON, linea(this._$.first_line), columna(this._$.first_column));
+        $$= instruccionesApi.nuevoImprimir($3,$1, TIPO_LENGUAJE.PYTHON, linea(this._$.first_line), columna(this._$.first_column));
     }
     | print_method error {addSyntaxError("Se esperaba \'(\'",$2,linea(this._$.first_line), columna(this._$.first_column));}
     | print_method OPEN_PARENTHESIS error {addSyntaxError("Se esperaba una cadena",$3,linea(this._$.first_line), columna(this._$.first_column));}
@@ -695,7 +704,7 @@ rango
 
 for_stmt
     : FOR IDENTIFICADOR IN rango SEMI_COLON SPACE{
-        var valor_inicial = instruccionesApi.nuevaDeclaracion(TIPO_VISIBILIDAD.PUBLIC, $2,[], TIPO_DATO.INT, TIPO_LENGUAJE.PYTHON, linea(this._$.first_line), columna(this._$.first_column));
+        var valor_inicial = instruccionesApi.nuevaDeclaracion(TIPO_VISIBILIDAD.LOCAL, $2,[], TIPO_DATO.INT, TIPO_LENGUAJE.PYTHON, linea(this._$.first_line), columna(this._$.first_column));
         var valor_accion = instruccionesApi.nuevoValor(parseInt("1"),null,TIPO_VALOR.ENTERO, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
         var accion_post = instruccionesApi.nuevaAsignacion_O($2,[],TIPO_OPERACION.INCREMENTO,valor_accion,TIPO_LENGUAJE.PYTHON, linea(this._$.first_line), columna(this._$.first_column));
         $$ = instruccionesApi.nuevoFor(valor_inicial, $4, accion_post, null, TIPO_LENGUAJE.PYTHON, linea(this._$.first_line), columna(this._$.first_column));

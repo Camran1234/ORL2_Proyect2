@@ -9,6 +9,18 @@ class For extends Instruccion{
         this.accion_post = accion_post;
     }
 
+    setValorInicial(valor){
+        this.valor_inicial = valor;
+    }
+
+    setCondicion(condicion){
+        this.condicion = condicion;
+    }
+
+    setAccionPost(accionPost){
+        this.accion_post = accionPost;
+    }
+
     getValorInicial(){
         return this.valor_inicial;
     }

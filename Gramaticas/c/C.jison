@@ -72,7 +72,6 @@ identificador [aA-zZ|"_"|]([aA-zZ]|[0-9]|"_")*
 "switch"	return 'SWITCH';
 "while"		return 'WHILE';
 "#include"	return 'INCLUDE';
-{paqueteria}	return 'PAQUETERIA';
 "for"		return 'FOR';
 "do"		return 'DO';
 "int"		return 'INT';
@@ -302,7 +301,7 @@ print_parametros_re
 
 print_stmt
 	: PRINTF OPEN_PARENTHESIS print_parametros CLOSE_PARENTHESIS {
-		$$=instruccionesApi.nuevoImprimir($3, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+		$$=instruccionesApi.nuevoImprimir($3,TIPO_PRINT.PRINTLN, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
 	}
 	| PRINTF error {addSyntaxError("Se esperaba \'(\'",$2,linea(this._$.first_line), columna(this._$.first_column));}
 	| PRINTF OPEN_PARENTHESIS error {addSyntaxError("Se esperaba una expresion", $3, linea(this._$.first_line), columna(this._$.first_column));}
@@ -475,7 +474,7 @@ accion_for
 	: var_stmt {$$=$1;}
 	| metodo_stmt	{$$=$1;}
 	| metodo_clase_stmt	{$$=$1;}
-	| clase_Stmt 	{$$=$1;}
+	| clase_stmt 	{$$=$1;}
 	| print_stmt	{$$=$1;}
 	| scan_stmt	{$$=$1;}
 	| clean_stmt	{$$=$1;}

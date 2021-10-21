@@ -77,6 +77,7 @@ block_commentary [/][*][^*]*[*]+([^/*][^*]*[*]+)*[/]
 "&&" { 
                            return 'AND';       
             }
+"&"		return 'PUNTERO';
 "||" { 
                            return 'OR';       
             }
@@ -377,7 +378,7 @@ print
 
 print_stmt
         :print OPEN_PARENTHESIS concatenate_values{
-            $$ = instruccionesApi.nuevoImprimir($3, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+            $$ = instruccionesApi.nuevoImprimir($3,$1, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
         }
         | print error {addSyntaxError("Se esperaba \'(\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
         | print OPEN_PARENTHESIS error {addSyntaxError("Error de parametros, agregar parametros o un cierre \')\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
@@ -442,10 +443,13 @@ class_instructions
         }
         | CLOSE_CURLY  {$$=[];}
         ;
-
+ides
+    :IDENTIFICADOR {let arreglo = []; arreglo.push($1); arreglo.push(false); $$=arreglo; }
+    |PUNTERO IDENTIFICADOR {let arreglo = []; arreglo.push($2); arreglo.push(true); $$=arreglo;}
+    ;
 function_parameters
-        : data_type IDENTIFICADOR function_parameters_re{
-            var parametro = instruccionesApi.nuevoParametro($2, $1, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+        : data_type ides function_parameters_re{
+            var parametro = instruccionesApi.nuevoParametro($2[0], $1,$2[1], lenguaje, linea(this._$.first_line), columna(this._$.first_column));
             $3.push(parametro);
             $$=reversaArreglo($3);
         }
@@ -454,8 +458,8 @@ function_parameters
         ;
 
 function_parameters_re
-        :  COMA data_type IDENTIFICADOR function_parameters_re {
-            var parametro2 = instruccionesApi.nuevoParametro($3, $2, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+        :  COMA data_type ides function_parameters_re {
+            var parametro2 = instruccionesApi.nuevoParametro($3[0], $2,$3[1], lenguaje, linea(this._$.first_line), columna(this._$.first_column));
             $4.push(parametro2);
             $$= $4;
         }
@@ -916,7 +920,7 @@ declaracion_for_re
 
 for_stmt
     : FOR OPEN_PARENTHESIS for_inicio for_condition for_asignacion stmt_enclusure{
-        $$= instruccionesApi.nuevoVor($3, $4, $5, $6, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+        $$= instruccionesApi.nuevoFor($3, $4, $5, $6, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
     }
     | FOR error {addSyntaxError("Se esperaba \'(\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
     | FOR OPEN_PARENTHESIS error {addSyntaxError("Se esperaba una asignacion", $3, linea(this._$.first_line), columna(this._$.first_column));}
