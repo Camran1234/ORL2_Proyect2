@@ -1,4 +1,4 @@
-const { TIPO_LENGUAJE } = require('../../Instrucciones').TIPO_LENGUAJE;
+const  TIPO_LENGUAJE  = require('../../Instrucciones').TIPO_LENGUAJE;
 var OperacionAritmetica = require('../OperacionAritmetica');
 const Booleano = require('../../operadores/Booleano');
 const Cadena = require('../../operadores/Cadena');
@@ -14,7 +14,7 @@ class Suma extends OperacionAritmetica {
 
     operar(errores){
         //Condicion de operacion
-        if(lenguaje == TIPO_LENGUAJE.JAVA){
+        if(this.lenguaje == TIPO_LENGUAJE.JAVA){
             if(this.operadorL instanceof Booleano || this.operadorR instanceof Booleano){
                 this.crearError(errores, "+", "operar");
                 return null;

@@ -5,6 +5,11 @@ const TIPO_VISIBILIDAD = {
     CONST : 'CONST'
 }
 
+const TIPO = {
+    DIRECTORIO : 'DIRECTORIO',
+    ARCHIVO : 'ARCHIVO'
+}
+
 const LIBRERIAS = {
     LIB_PY : 'LIB_PY',
     LIB_JAVA : 'LIB_JAVA',
@@ -129,3 +134,4 @@ module.exports.TIPO_PRINT = TIPO_PRINT;
 module.exports.TIPO_INSTRUCCION = TIPO_INSTRUCCION;
 module.exports.TIPO_SWITCH = TIPO_SWITCH;
 module.exports.TIPO_EXPRESION = TIPO_EXPRESION;
+module.exports.TIPO = TIPO;

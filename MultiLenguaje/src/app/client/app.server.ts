@@ -1,38 +1,37 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { ErrorStateMatcher } from '@angular/material/core';
+
 @Injectable({
     providedIn: 'root'
 })
 
 export class CodeService {
     url = 'http://localhost:2000/';
-    
+    errores: "";
     constructor(private http:HttpClient) {
         
     }
 
-    public parse(codigo:JSON) {
-        var parseUrl = this.url+"parse";
-        console.log(parseUrl.toString());
-        console.log(JSON.stringify(codigo));
-        this.http.post(parseUrl, codigo).subscribe(response=> {
-            let respuesta = JSON.parse(JSON.stringify(response));
-            console.log(respuesta.respuesta);
-            if(respuesta==true){
-                respuesta = this.getErrores();
-            }else{
-                respuesta = this.getResultado();
-            }
-            return respuesta;
-        });            
+
+    public parse(codigo:JSON): Observable<any> {
+        let parseUrl = this.url+"parse";
+        //console.log(parseUrl.toString());
+        //console.log(JSON.stringify(codigo));
+        let answer = false;
+        return this.http.post<any>(parseUrl, codigo);
     }
 
-    public getErrores(){
-        var parseUrl = this.url + "obtenerErrores";
-        return this.http.post(parseUrl, "").subscribe(response=> {
+    public getErrores(): Observable<any>{
+        let parseUrl = this.url + "obtenerErrores";
+        /*this.http.post(parseUrl, "").subscribe(response=> {
             return JSON.parse(JSON.stringify(response));
-        });
+        });*/
+        let body = {
+            
+        };
+        return this.http.post<any>(parseUrl, JSON.stringify(body));
     }
 
     public getResultado(){

@@ -11,17 +11,28 @@ class Parser{
         this.astPython=null;
         this.tablaTipos = tablaTipos;
         this.dirPaquete = "";
+
         //0 analiza todo
         //1 analiza Python unicamente
         //2 analiza Java unicamente
         this.estado = estado;
+        this.ast = [];
     }
 
     haveErrores(){
-        if(this.erroresLexicos.length == 0 && this.erroresSintacticos.length ==0){
+        if(this.erroresLexicos.length == 0 && this.erroresSintacticos.length ==0
+            && this.erroresSemanticos.length ==0){
             return false;
         }
         return true;
+    }
+
+    getAst(){
+        return this.ast;
+    }
+
+    getCodigo3D(){
+        
     }
 
     getErrores(){
@@ -31,6 +42,18 @@ class Parser{
         }
         for (let index=0; index<this.erroresSintacticos.length; index++){
             errores.push(this.erroresSintacticos[index].toError());
+        }
+        for (let index=0; index<this.erroresSemanticos.length; index++){
+            errores.push(this.erroresSemanticos[index].toError());
+        }
+        if(errores.length == 0){
+            errores.push({
+                Fila:"Sin errores",
+                Columna:"Sin errores",
+                Tipo_de_Error:"Sin errores",
+                Simbolo_provocador:"Sin errores",
+                Descripcion:"Sin errores"
+            });
         }
 
         return errores;
@@ -43,6 +66,12 @@ class Parser{
         return array;
     }
 
+    unificarAst(ast){
+        for(let index=0; index<ast.length; index++){
+            this.ast.unshift(ast[index]);
+        }
+    }
+
     procesarAST(astC, astJava, astPython, paqueteria){
         if(!this.haveErrores()){
             let ast = [];
@@ -50,15 +79,22 @@ class Parser{
             this.push(astJava, ast);
             this.push(astPython, ast);
             let Procesador = require('./Procesador');
-            let procesador = new Procesador(this.tablaTipos);
+            let procesador = new Procesador(this.tablaTipos, this.erroresSemanticos);
+            let helper = null;
             if(this.estado ==0){
-                procesador.procesar(astPython, paqueteria, 0, null);
-                procesador.procesar(astJava, paqueteria, 0, null);
-                procesador.procesar(astC, paqueteria, 0, null);
+                
+                helper = procesador.procesar(astPython, paqueteria, null);
+                this.unificarAst(helper);
+                helper = procesador.procesar(astJava, paqueteria, null);
+                this.unificarAst(helper);
+                helper = procesador.procesar(astC, paqueteria, null);
+                this.unificarAst(helper);
             }else if(this.estado == 1){
-                procesador.procesar(astPython, paqueteria, 0, null);
+                helper = procesador.procesar(astPython, paqueteria, null);
+                this.unificarAst(helper);
             }else if(this.estado == 2){
-                procesador.procesar(astJava, paqueteria, 0, null);
+                helper = procesador.procesar(astJava, paqueteria, null);
+                this.unificarAst(helper);
             }
         }
     }
@@ -78,15 +114,15 @@ class Parser{
             //
             let dirPaquete = generalParser.getPaquete();
             //java
-            let lineJava = generalParser.getLineJava();
+            let lineJava = generalParser.getLineJava()-1;
             let columnJava = generalParser.getColumnJava();
             let codigoJava = generalParser.getCodigoJava();
             //python
-            let linePython = generalParser.getLinePython();
+            let linePython = generalParser.getLinePython()-2;
             let columnPython = generalParser.getColumnPython();
             let codigoPython = generalParser.getCodigoPython();
             //C
-            let lineC = generalParser.getLineC();
+            let lineC = generalParser.getLineC()-2;
             let columnC = generalParser.getColumnC();
             let codigoC = generalParser.getCodigoC();
             //Paquete
@@ -99,14 +135,15 @@ class Parser{
             //Getting ast of Java
             let astJava = this.parseJava(lineJava, columnJava, codigoJava);
             //Getin ast of C
-            let astC = this.parseC(lineC, columnC, codigoC);
+            let astC = this.parseC(lineC, columnC, codigoC);            
+            this.procesarAST(astC, astJava, astPython, dirPaquete);
             console.log("Errores Lexicos POST: "+JSON.stringify(erroresLexicos));
             console.log("Errores Sintacticos POST: "+JSON.stringify(erroresSintacticos));
+            console.log("Errores Semanticos POST: "+JSON.stringify(this.erroresSemanticos));
             console.log("\n\nastPython: "+JSON.stringify(astPython));
             console.log("\n\nastJava: "+JSON.stringify(astJava));
             console.log("\n\nastC: "+JSON.stringify(astC));
-            this.procesarAST(astC, astJava, astPython, dirPaquete);
-            
+            return this.ast;
         }catch(error){
             console.log(error);
         }

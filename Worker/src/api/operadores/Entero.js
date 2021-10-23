@@ -1,6 +1,6 @@
 
 var Decimal = require('./Decimal');
-
+const TIPO_LENGUAJE  = require('../Instrucciones').TIPO_LENGUAJE;
 class Entero extends Decimal {
 
     constructor(valor, linea, columna, lenguaje){
@@ -12,7 +12,7 @@ class Entero extends Decimal {
     }
 
     tryParse(operador){
-        if(lenguaje == TIPO_LENGUAJE.JAVA){
+        if(this.lenguaje == TIPO_LENGUAJE.JAVA){
             if(operador instanceof Booleano){
                 return null;
             }

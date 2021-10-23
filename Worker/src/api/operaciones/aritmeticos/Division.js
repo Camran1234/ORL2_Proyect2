@@ -4,7 +4,7 @@ const Cadena = require('../../operadores/Cadena');
 const Caracter = require('../../operadores/Caracter');
 const Decimal = require('../../operadores/Decimal');
 const Entero = require('../../operadores/Entero');
-
+const  TIPO_LENGUAJE  = require('../../Instrucciones').TIPO_LENGUAJE;
 class Division extends OperacionAritmetica {
 
     constructor(operadorL, operadorR, linea, columna, lenguaje){
@@ -13,7 +13,7 @@ class Division extends OperacionAritmetica {
 
     operar(errores){
         //Condicion de operacion
-        if(lenguaje == TIPO_LENGUAJE.JAVA){
+        if(this.lenguaje == TIPO_LENGUAJE.JAVA){
             if(this.operadorL instanceof Booleano || this.operadorR instanceof Booleano){
                 this.crearError(errores, "/", "operar");
                 return null;

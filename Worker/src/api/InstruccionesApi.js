@@ -16,11 +16,11 @@ function nuevaOperacion(operadorL, operadorR, operador, lenguaje, linea, columna
 
 function newError(linea, columna, tipo, error, descripcion){
     return{
-        linea:linea,
-        columna:columna,
-        tipo:tipo,
-        error:error,
-        descripcion:descripcion
+        Fila:linea,
+        Columna:columna,
+        Tipo_de_Error:tipo,
+        Simbolo_provocador:error,
+        Descripcion:descripcion
     }
 }
 
@@ -46,7 +46,10 @@ const instruccionesApi = {
      * @returns 
      */
     operacionAritmetica: function(operadorL, operadorR, operador, lenguaje, linea, columna){
-        return nuevaOperacion(operadorL, operadorR, operador, lenguaje, linea, columna);
+        let result = nuevaOperacion(operadorL, operadorR, operador, lenguaje, linea, columna);
+        console.log("NUEVA OPERACION ARITMETICA");
+        console.log(result);
+        return result;
     },
 
     /**
@@ -66,10 +69,12 @@ const instruccionesApi = {
      * @returns 
      */
     nuevoValor: function(valor,magnitud, tipo, lenguaje,linea, columna){
+        let puntero = false;
         return {
             valor: valor,
             magnitud:magnitud,
             tipo: tipo,
+            puntero: puntero,
             lenguaje:lenguaje,
             linea: linea,
             columna: columna,
@@ -263,7 +268,6 @@ const instruccionesApi = {
         }
         return {
             condicion: expresion,
-            terminado: terminado,
             instrucciones: instrucciones,
             rol:TIPO_INSTRUCCION.IF,
             lenguaje:lenguaje,
@@ -369,7 +373,8 @@ const instruccionesApi = {
         if(!Array.isArray(accion_post)){
             let helper = [];
             helper.push(accion_post);
-        }   accion_post = helper;
+            accion_post = helper;
+        }   
         return{
             valor_inicial:valor_inicial,
             condicion: expresion,

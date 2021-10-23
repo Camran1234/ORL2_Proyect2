@@ -92,8 +92,14 @@ identificador [aA-zZ|"_"|]([aA-zZ]|[0-9]|"_")*
 //Literales
 {lit_entero}	return 'LIT_ENTERO';
 {lit_decimal}	return 'LIT_DECIMAL';
-{lit_caracter}	return 'LIT_CARACTER';
-{lit_string}	return 'LIT_STRING';
+{lit_caracter}	{
+	yytext = yytext.substr(1,yyleng-2);
+	return 'LIT_CARACTER';
+}
+{lit_string}	{
+	yytext = yytext.substr(1,yyleng-2);
+	return 'LIT_STRING';
+}
 
 //Identificador
 {identificador} return 'IDENTIFICADOR';
@@ -244,7 +250,7 @@ clase_stmt
 			arreglo = $3;
 		}else if($3.rol == "asignacion"){
 			//Asignaciones
-			arreglo.push(instruccionesApi.nuevaAsignacionClase($2, $3, $1, lenguaje, linea, columna));
+			arreglo.push(instruccionesApi.nuevaAsignacionClase($2, $3, $1, lenguaje, linea(this._$.first_line), columna(this._$.first_column)));
 		}
 		$$=instruccionesApi.nuevaVariable(arreglo, lenguaje, linea, columna);;
 	}
@@ -557,20 +563,21 @@ valor_asignacion
 	| IGUAL error  {addSyntaxError("Se esperaba un valor par asignar",$2,linea(this._$.first_line), columna(this._$.first_column));}
 	| INCREMENTO	{
 		var arreglo = [];
-		arreglo.push(instruccionesApi.nuevaAsignacion_O(null, null, TIPO_OPERACION.INCREMENTO, expresion, lenguaje, linea(this._$.first_line), columna(this._$.first_column)));
+		arreglo.push(instruccionesApi.nuevaAsignacion_O(null, null, TIPO_OPERACION.INCREMENTO, null, lenguaje, linea(this._$.first_line), columna(this._$.first_column)));
 		$$ = arreglo;
 		}
 	| DECREMENTO	{
 		var arreglo = [];
-		arreglo.push(instruccionesApi.nuevaAsignacion_O(null, null, TIPO_OPERACION.DECREMENTO, expresion, lenguaje, linea(this._$.first_line), columna(this._$.first_column)));
+		arreglo.push(instruccionesApi.nuevaAsignacion_O(null, null, TIPO_OPERACION.DECREMENTO, null, lenguaje, linea(this._$.first_line), columna(this._$.first_column)));
 		$$ = arreglo;
 		}
 	;
 
 var_stmt
 	: const_data IDENTIFICADOR arreglo valor_asignacion{
-		var id = instruccionesApi.nuevoValor($2,null, TIPO_VALOR.IDENTIFICADOR, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+		var id = instruccionesApi.nuevoValor($2,$3, TIPO_VALOR.IDENTIFICADOR, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
 		$4[0].id = id;
+		$4[0].magnitud = $3;
 		var tipo = null;
 		var visibilidad = null;
 		if(!Array.isArray($1)){
@@ -580,13 +587,14 @@ var_stmt
 			tipo = $1[1];
 		}
 		$4.push(instruccionesApi.nuevaDeclaracion(visibilidad, id, $3, tipo, lenguaje, linea(this._$.first_line), columna(this._$.first_column)));
-		$$=instruccionesApi.nuevaVariable($4, lenguaje, linea, columna);
+		$$=instruccionesApi.nuevaVariable(reversaArreglo($4), lenguaje, linea, columna);
 	}
 	| const_data error  {addSyntaxError("Se esperaba un identificador",$2,linea(this._$.first_line), columna(this._$.first_column));}
 	| const_data IDENTIFICADOR arreglo error {addSyntaxError("Se esperaba un valor para asignar",$4,linea(this._$.first_line), columna(this._$.first_column));}
 	| IDENTIFICADOR arreglo valor_asignacion{
-		$3[0].id = instruccionesApi.nuevoValor($1, null, TIPO_VALOR.IDENTIFICADOR,lenguaje, linea(this._$.first_line), columna(this._$.first_column));
-		$$=instruccionesApi.nuevaVariable($3, lenguaje, linea, columna);
+		$3[0].id = instruccionesApi.nuevoValor($1, $2, TIPO_VALOR.IDENTIFICADOR,lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+		$3[0].magnitud = $2;
+		$$=instruccionesApi.nuevaVariable(reversaArreglo($3), lenguaje, linea, columna);
 	}
 	| IDENTIFICADOR arreglo error  {addSyntaxError("Se espera un valor para asignar",$2,linea(this._$.first_line), columna(this._$.first_column));}
 	;
@@ -595,7 +603,7 @@ var_stmt
 /*Start of IF*/
 if_stmt
 	: IF OPEN_PARENTHESIS expresion CLOSE_PARENTHESIS block_statements {
-		$$=instruccionesApi.nuevoIf($2, $5, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+		$$=instruccionesApi.nuevoIf($3, $5, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
 	}
 	| IF error  {addSyntaxError("Se esperaba \'(\'",$2,linea(this._$.first_line), columna(this._$.first_column));}
 	| IF OPEN_PARENTHESIS error {addSyntaxError("Se esperaba una condicion",$3,linea(this._$.first_line), columna(this._$.first_column));}
@@ -605,7 +613,7 @@ if_stmt
 		var else_stmt = instruccionesApi.nuevoElse(null, null, null, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
 		if(!Array.isArray($2)){
 			if($2.rol == TIPO_INSTRUCCION.IF){
-				else_stmt.codicion = $2.condicion;
+				else_stmt.condicion = $2.condicion;
 			}
 			else_stmt.instrucciones = $2.instrucciones;
 		}else{
@@ -657,8 +665,8 @@ switch_stmt
 
 cases
 	:case_stmt cases {
-		$1.push($2);
-		$$=$1;
+		$2.push($1);
+		$$=$2;
 	}
 	|default_stmt {var arreglo = []; arreglo.push($1); $$=arreglo;}
 	| /*empty*/	{$$=[];}

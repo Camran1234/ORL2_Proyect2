@@ -37,12 +37,20 @@ class Tipo{
         return this.tipo;
     }
 
+    setTipo(tipo){
+        this.tipo = tipo;
+    }
+
     getAmbito(){
         return this.ambito;
     }
 
     getPosMemoria(){
         return this.posMemoria;
+    }
+
+    setPosMemoria(posMemoria){
+        this.posMemoria = posMemoria;
     }
 
     getLongitud(){

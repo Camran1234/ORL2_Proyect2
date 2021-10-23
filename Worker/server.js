@@ -15,10 +15,12 @@ app.post('/parse', function (req, res) {
     answer = [];
     errores = [];
     tablaTipos = new TablaTipos();
+    
     let codigo  = req.body.codigo;
+    console.log(codigo);
     let resultado = "false";
     let Parser = require('./src/parser/Parser');
-    let parser = new Parser(tablaTipos);
+    let parser = new Parser(tablaTipos, 0);
     //Parseando
     parser.parse(codigo);
     //Obteniendo errores
@@ -30,12 +32,19 @@ app.post('/parse', function (req, res) {
     };
     let respuesta = JSON.stringify(jsonAnswer);
     respuesta= JSON.parse(respuesta);
-    res.status(500).send(respuesta);
+    res.send(respuesta);
     res.end();
   });
 
 app.post('/obtenerErrores', function (req, res){
-    res.send(JSON.stringify(errores));
+    let jsonString = [];
+    console.log(JSON.stringify(errores));
+    let jsonRespuesta = {
+        respuesta: errores
+    }
+    let respuesta = JSON.parse(JSON.stringify(jsonRespuesta));
+    res.send(JSON.stringify(respuesta));
+    res.end();
 });
 
 app.post('/obtenerResultado', function(req,res){

@@ -1,0 +1,29 @@
+paquete com.paquete1 //Igual al de paquetes en java
+%%PY
+def funcion(x,y):
+    z = 2
+    x = 3
+    if x == z :
+        print("HAZ ALGO")
+%%JAVA
+public class Calculadora{
+    public int valor1 = 0;
+    private int valor2 = 0;
+    
+    public Calculadora(){
+    
+    }
+}
+    
+%%PROGRAMA
+#include "PY"
+#include "JAVA"
+
+const int x = 4;
+
+void main(){
+    for(int index=2; index<4; index++){
+        printf("Print Something %d");
+    }
+    
+}

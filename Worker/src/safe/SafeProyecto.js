@@ -1,8 +1,5 @@
 
-const TIPO = {
-    DIRECTORIO = 'DIRECTORIO',
-    ARCHIVO = 'ARCHIVO'
-}
+const TIPO = require('../api/Instrucciones').TIPO;
 
 function initProyectos(){
     return {
@@ -90,11 +87,57 @@ function introducirArchivo(archivo,dirPaquete, proyecto){
     }
 }
 
+
 class SafeProyecto{
 
     constructor(){
-        this.proyectos=this.initProyectos();
+        this.proyectos= initProyectos();
         this.proyectoActual = null;
+        this.xmlFiles = "../../xmlFile.dat"
+        this.actualDir = "";
+        this.createDirectory(this.dirFiles);
+    }
+
+    createDirectory(dir){
+        let fs = require('fs');
+
+        if (!fs.existsSync(dir)){
+            fs.mkdirSync(dir);
+        }
+    }
+
+    createFile(dir){
+        let fs = require('fs');
+        fs.open(dir, function (err, file) {
+            if (err) throw err;
+            console.log('Saved!');
+          });
+    }
+
+    readFile(dir){
+        let fs = require('fs');
+        let result = "";
+        fs.readFile((dir), (err, data) => {
+            if (err) throw err;
+            return data.toString();
+        });
+    }
+
+    updateFile(dir, content){
+        let fs = require('fs');
+
+        fs.writeFile(dir, content, function (err) {
+            if (err) throw err;
+            console.log('Replaced!');
+        });
+    }
+
+    deleteFile(dir){
+        let fs = require('fs');
+        fs.unlink(dir, function (err) {
+            if (err) throw err;
+            console.log('File deleted!');
+          }); 
     }
 
     nuevoProyecto(nombre){
@@ -124,8 +167,8 @@ class SafeProyecto{
     cerrarProyecto(){
         this.proyectoActual = null;
     }
-
-
 }
+
+//let safe = new SafeProyecto();
 
 module.exports = SafeProyecto;

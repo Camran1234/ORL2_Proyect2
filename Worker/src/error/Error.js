@@ -17,9 +17,7 @@ class Error{
         return this.tipo;
     }
 
-    toObject(){
-        
-    }
+    
 
 }
 module.exports = Error;

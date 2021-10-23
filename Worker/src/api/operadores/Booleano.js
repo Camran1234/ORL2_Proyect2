@@ -1,5 +1,5 @@
 var Caracter = require('./Caracter');
-
+const TIPO_LENGUAJE  = require('../Instrucciones').TIPO_LENGUAJE;
 class Booleano extends Caracter{
 
     constructor(valor, linea, columna, lenguaje){

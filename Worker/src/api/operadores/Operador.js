@@ -3,6 +3,7 @@ const TIPO_DATO = require("../Instrucciones").TIPO_DATO;
 const TIPO_VALOR = require('../Instrucciones').TIPO_VALOR;
 const TIPO_LENGUAJE = require('../Instrucciones').TIPO_LENGUAJE;
 const TIPO_INSTRUCCION = require('../Instrucciones').TIPO_INSTRUCCION;
+const TIPO_OPERACION = require('../Instrucciones').TIPO_OPERACION;
 const Booleano = require('../operadores/Booleano');
 const Cadena = require('../operadores/Cadena');
 const Caracter = require('../operadores/Caracter');
@@ -10,6 +11,27 @@ const Decimal = require('../operadores/Decimal');
 const Entero = require('../operadores/Entero');
 const Object = require('../operadores/Object');
 const ProcesadorTipos = require('../ProcesadorTipos');
+//Operadores
+//Aritmeticos
+const Suma = require('../operaciones/aritmeticos/Suma');
+const Resta = require('../operaciones/aritmeticos/Resta');
+const Multiplicacion = require('../operaciones/aritmeticos/Multiplicacion');
+const Division = require('../operaciones/aritmeticos/Division');
+const Mod  = require('../operaciones/aritmeticos/Mod');
+const Pow = require('../operaciones/aritmeticos/Pow');
+const Negativo = require('../operaciones/aritmeticos/Negativo');
+//Comparativos
+const Comparacion = require('../operaciones/comparaciones/Comparacion');
+const Diferente = require('../operaciones/comparaciones/Diferente');
+const Mayor = require('../operaciones/comparaciones/Mayor');
+const MayorIgual = require('../operaciones/comparaciones/MayorIgual');
+const Menor = require('../operaciones/comparaciones/Menor');
+const MenorIgual = require('../operaciones/comparaciones/MenorIgual');
+//Condicionales
+const And = require('../operaciones/condicionales/And');
+const Or = require('../operaciones/condicionales/Or');
+const Not = require('../operaciones/condicionales/Not');
+
 
 var ErrorSemantico = require('../../error/SemanticError');
 class Operador{
@@ -27,10 +49,11 @@ class Operador{
      * @returns 
      */
     procesarOperaciones(operacion, ambito, tablaTipos, errores){
+        console.log("PROCESANDO OPERACIONES");
         if(operacion.rol == TIPO_EXPRESION.OPERACION){
             return this.procesarOperacion(operacion, ambito, tablaTipos, errores);
         }else if(operacion.rol == TIPO_EXPRESION.VALOR){
-            return this.procesarValor(expresion, ambito, tablaTipos, errores);
+            return this.procesarValor(operacion, ambito, tablaTipos, errores, operacion.lenguaje);
         }
 
     }
@@ -52,20 +75,33 @@ class Operador{
             resultadoR = this.procesarOperacion(operadorR, ambito, tablaTipos, errores);
         }else if(operadorL.rol ==TIPO_EXPRESION.VALOR && operadorR.rol == TIPO_EXPRESION.VALOR){
             resultadoL = this.procesarValor(operadorL, ambito, tablaTipos, errores, lenguaje);
-            resultadoR = this.procesarValor(operadorR, ambito, tablaTi, errores, lenguaje);
+            resultadoR = this.procesarValor(operadorR, ambito, tablaTipos, errores, lenguaje);
         }
         if(resultadoL == null){
             return null;
         }else if(resultadoR == null){
             return null;
         }
+        console.log("OPERACION");
+        console.log(operacion);
         let operador = this.crearTipo(operacion.operador, resultadoL, resultadoR, operacion.linea, operacion.columna, operacion.lenguaje);
+        if(operador == null){
+            return null;
+        }
         return operador.operar(errores);
     }
 
+    /**
+     * Devuelve instancias del tipo de la clase
+     * @param {*} parametros 
+     * @param {*} ambito 
+     * @param {*} tablaTipos 
+     * @param {*} errores 
+     * @returns 
+     */
     calcularParametros(parametros, ambito, tablaTipos, errores){
         let arreglo = [];
-        for(let index= parametros.length; index>=0; index++){
+        for(let index= 0; index<parametros.length; index++){
             let astExp = parametros[index];
             let tipoFinal = this.procesarOperaciones(astExp, ambito, tablaTipos, errores);
             if(tipoFinal!=null){
@@ -95,11 +131,12 @@ class Operador{
         return true;
     }
 
+
     convertirParametros_tipo(parametros){
         let arreglo = [];
         for(let index=0; index<parametros.length; index++){
             let parametro = parametros[index];
-            arreglo.push(this.convertirParametro(parametros));
+            arreglo.push(this.convertirParametro(parametro.tipo));
         }   
         return arreglo;
     }
@@ -121,23 +158,43 @@ class Operador{
         return null;
     }
 
+    convertirArregloObjeto_Parametro(parametros){
+        let array=[];
+        for(let index=0; index<parametros.length; index++){
+            let parametro = parametros[index];
+            let answer = this.convertirObjeto_Tipo(parametro);
+            array.push(answer);
+        }
+        return array;
+    }
+
     procesarValor(operacion, ambito, tablaTipos, errores, lenguaje){
         let valor = operacion.valor;
         let magnitud = operacion.magnitud;
         let tipo = operacion.tipo;
+        let paqueteria = "";
+        if(ambito!=null){
+            paqueteria = ambito.getPaqueteria();
+        }
         let simbolo = null;
         let flag = false;
         if(tipo == TIPO_VALOR.IDENTIFICADOR ||
             tipo == TIPO_VALOR.PUNTERO_IDENTIFICADOR){
             flag=true;
             //Buscar localmente
-            simbolo = tablaTipos.buscar(valor, ambito, TIPO_INSTRUCCION.DECLARACION, lenguaje, "");
+            simbolo = tablaTipos.buscarP(valor, ambito, TIPO_INSTRUCCION.DECLARACION, lenguaje, paqueteria);
+            tablaTipos.imprimirSimbolos();
+            
         }else if(tipo == TIPO_VALOR.THIS_IDENTIFICADOR){
             //Buscar globalmente en la clase
             flag=true;
             let newAmbito = ambito.ambitoEnClase();
             if(newAmbito!=null){
-                simbolo = tablaTipos.buscar(valor, newAmbito, TIPO_INSTRUCCION.DECLARACION, lenguaje, "");
+                simbolo = tablaTipos.buscarP(valor, newAmbito, TIPO_INSTRUCCION.DECLARACION, lenguaje, paqueteria);
+            }
+            if(simbolo == null){
+                console.log("Simbolo %s No encontrado"), valor;
+                console.error(newAmbito);
             }
         }else if(tipo == TIPO_VALOR.METODO){
             //Manejo de metodos
@@ -146,8 +203,13 @@ class Operador{
             let metodo = valor;
             let idMetodo = metodo.id;
             let parametrosMetodo = metodo.parametros;
-            let newParametros = this.calcularParametros(parametrosMetodo);
+            let newParametros = this.calcularParametros(parametrosMetodo);    
+            newParametros = this.convertirArregloObjeto_Parametro(newParametros);
             let lenguajeMetodo = metodo.lenguaje;
+            let paqueteria = "";
+            if(ambito!=null){
+                paqueteria = ambito.getPaqueteria();
+            }
             if(lenguajeMetodo == TIPO_LENGUAJE.C){
                 let cadenas = idMetodo.split(".");
                 if(cadenas[0] == "PY"){ 
@@ -156,20 +218,26 @@ class Operador{
                 }else if(cadenas[0] == "JAVA"){
                     let identificadorVar = cadenas[1];
                     let identificadorMetodo = cadenas[2];
-                    let simboloVar = tablaTipos.buscar(identificadorVar, ambito, TIPO_INSTRUCCION.DECLARACION, lenguaje, "");
+                    let simboloVar = tablaTipos.buscarP(identificadorVar, ambito, TIPO_INSTRUCCION.DECLARACION, lenguaje, paqueteria);
                     if(simboloVar!=null){
                         let newAmbito = simboloVar.getTipo();
                         if(newAmbito!=null){
                             simbolo = tablaTipos.buscarFuncion(identificadorMetodo, newAmbito, TIPO_INSTRUCCION.FUNCION, newParametros);
                         }
+                    }else{
+                        errores.push(new ErrorSemantico("No se encontro la variable en el contexto actual",identificadorVar, instruccion.linea, instruccion.columna ));
                     }
                 }
             }else{
-                //Java
+                //Java y Python
                 simbolo = tablaTipos.buscarFuncion(idMetodo, ambito, TIPO_INSTRUCCION.FUNCION, newParametros);
             }
         }
         
+        console.log("BUSCANDO VALOR EN PROCESAR VALOR");
+        console.log(operacion);
+        console.log(simbolo);
+        console.log("FIN................");
         if(flag){
             if(simbolo!=null){
                 if(simbolo.getEsArreglo()){
@@ -276,7 +344,22 @@ class Operador{
         return null;
     }
 
-  
+    convertirObjeto_Tipo(tipo){
+        if(tipo instanceof Booleano){
+            return TIPO_DATO.BOOLEAN;
+        }else if(tipo instanceof Caracter){
+            return TIPO_DATO.CHAR;
+        }else if(tipo instanceof Entero){
+            return TIPO_DATO.INT;
+        }else if(tipo instanceof Decimal){
+            return TIPO_DATO.FLOAT;
+        }else if(tipo instanceof String){
+            return TIPO_DATO.STRING;
+        }else if(tipo instanceof Object){
+            return TIPO_DATO.ANY;
+        }
+        return null;
+    }
 
 }
 

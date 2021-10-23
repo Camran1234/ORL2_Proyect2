@@ -1,5 +1,5 @@
 var Entero = require('./Entero');
-
+const TIPO_LENGUAJE  = require('../Instrucciones').TIPO_LENGUAJE;
 class Caracter extends Entero {
 
     constructor(valor, linea, columna, lenguaje){
@@ -11,7 +11,7 @@ class Caracter extends Entero {
     }
 
     tryParse(operador){
-        if(lenguaje == TIPO_LENGUAJE.JAVA){
+        if(this.lenguaje == TIPO_LENGUAJE.JAVA){
             if(operador instanceof Booleano){
                 return null;
             }

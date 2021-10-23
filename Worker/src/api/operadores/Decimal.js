@@ -1,5 +1,5 @@
 var Number =require('./Number');
-
+const TIPO_LENGUAJE  = require('../Instrucciones').TIPO_LENGUAJE;
 class Decimal extends Number{
 
     constructor(valor,linea, columna, lenguaje){
@@ -11,7 +11,7 @@ class Decimal extends Number{
     }
 
     tryParse(operador){
-        if(lenguaje == TIPO_LENGUAJE.JAVA){
+        if(this.lenguaje == TIPO_LENGUAJE.JAVA){
             if(operador instanceof Booleano){
                 return null;
             }

@@ -6,7 +6,6 @@ class Cadena extends Object {
 
     constructor(valor, linea, columna, lenguaje){
         super(linea, columna, lenguaje);
-        this.valor = valor;
     }
 
     getValor(){
@@ -18,7 +17,7 @@ class Cadena extends Object {
     }
 
     tryParse(operador){
-        if(lenguaje == TIPO_LENGUAJE.JAVA){
+        if(this.lenguaje == TIPO_LENGUAJE.JAVA){
             if(operador instanceof Booleano){
                 return null;
             }

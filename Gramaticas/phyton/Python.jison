@@ -357,9 +357,9 @@
  return'LIT_ENTERO';
             }
 
-([\"][^\"]*[\"])  {estado=2;return'LIT_CADENA';}
+([\"][^\"]*[\"])  {estado=2;yytext = yytext.substr(1,yyleng-2);return'LIT_CADENA';}
 
-([\'''][^\']*[\'])  {estado=2;return'LIT_CADENA';}
+([\'''][^\']*[\'])  {estado=2;yytext = yytext.substr(1,yyleng-2);return'LIT_CADENA';}
 
 "True" {
                 estado=2;
@@ -398,8 +398,8 @@
     var instruccionAcumulada = [];
 
     function reversaArreglo(arreglo){
-        let array = [];
-        for(let index=arreglo.length-1; index>=0; index--){
+        var array = [];
+        for(var index=arreglo.length-1; index>=0; index--){
             array.push(arreglo[index]);
         }
 
@@ -407,9 +407,9 @@
     }
 
     function agregarInstruccionAcumulada(stmt, linea, columna){
-        let helper = instruccionAcumulada.length-1;
-        let helperInstructions = instruccionAcumulada[helper].instrucciones;
-        let actualstmt = instruccionAcumulada[helper].instrucciones[helperInstructions.length-1];
+        var helper = instruccionAcumulada.length-1;
+        var helperInstructions = instruccionAcumulada[helper].instrucciones;
+        var actualstmt = instruccionAcumulada[helper].instrucciones[helperInstructions.length-1];
         if(actualstmt.rol == TIPO_INSTRUCCION.IF ||
         actualstmt.rol == TIPO_INSTRUCCION.ELSE ||
         actualstmt.rol == TIPO_INSTRUCCION.WHILE ||
@@ -540,8 +540,8 @@ ini
     ;
 
 ides
-    :IDENTIFICADOR {let arreglo = []; arreglo.push($1); arreglo.push(false); $$=arreglo; }
-    |PUNTERO IDENTIFICADOR {let arreglo = []; arreglo.push($2); arreglo.push(true); $$=arreglo;}
+    :IDENTIFICADOR {var arreglo = []; arreglo.push($1); arreglo.push(false); $$=arreglo; }
+    |PUNTERO IDENTIFICADOR {var arreglo = []; arreglo.push($2); arreglo.push(true); $$=arreglo;}
     ;
 
 /*Funcion*/
@@ -610,12 +610,39 @@ statements
     | /*empty*/ {$$=[];}
     ;
 
+met_params
+    :expresion met_params_re{
+        $2.push($1);
+        $$=reversaArreglo($2);
+    }
+    |/*empty*/ {$$=[];}
+    ;
+
+met_params_re
+    :COMA expresion met_params_re {
+        $3.push($2);
+        $$=$3;
+    }
+    |COMA error met_params_re {addSyntaxError("Se esperaba una expresion", $2, linea(this._$.first_line), columna(this._$.first_column));}
+    |/*empty*/ {$$=[];}
+    ;
+
+metodo_stmt
+    :IDENTIFICADOR OPEN_PARENTHESIS met_params CLOSE_PARENTHESIS SPACE{
+        var metodo = instruccionesApi.nuevoMetodo($1, $3, lenguaje,linea(this._$.first_line), columna(this._$.first_column));
+        $$=metodo;
+    }
+    |IDENTIFICADOR OPEN_PARENTHESIS met_params error {addSyntaxError("Se esperaba \')\'", $4, linea(this._$.fist_line),columna(this._$.first_column));}
+    |IDENTIFICADOR OPEN_PARENTHESIS met_params CLOSE_PARENTHESIS error {addSyntaxError("Se esperaba un salto de linea", $5, linea(this._$.fist_line),columna(this._$.first_column));}
+    ;
+
 statement
     : var_stmt {$$=$1;}
     | if_stmt {$$=$1;}
     | for_stmt {$$=$1;}
     | while_stmt {$$=$1;}
     | print_stmt  {$$=$1;}
+    | metodo_stmt {$$=$1;}
     | CONTINUE SPACE {$$=instruccionesApi.nuevoContinue( linea(this._$.first_line), columna(this._$.first_column));}
     | CONTINUE error {addSyntaxError("Se esperaba salto de linea",$2,linea(this._$.first_line), columna(this._$.first_column));}
     | BREAK SPACE {$$=instruccionesApi.nuevoBreak(linea(this._$.first_line), columna(this._$.first_column));}
@@ -800,10 +827,17 @@ asignacion_re
 
 var_stmt
     : nombre_variables asignacion SPACE{
-        for(var index=0; index<$2.length; index++){
-            $2[index].id = $1;
+        var arreglo = [];
+        for(var index=0; index<$1.length; index++){
+            let id = $1[index];
+            for(var indexJ =0; indexJ<$2.length; indexJ++){
+                let helper = JSON.parse(JSON.stringify($2[indexJ]));
+                helper.id = id;
+                arreglo.push(helper);
+            }
         }
-        $$=instruccionesApi.nuevaVariable($2, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+        console.log("var_stmt");
+        $$=instruccionesApi.nuevaVariable(arreglo, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
     }
     | nombre_variables error {addSyntaxError("Se esperaba una asignacion",$2,linea(this._$.first_line), columna(this._$.first_column));}
     | nombre_variables asignacion error {addSyntaxError("Se esperaba un salto de linea", $3, linea(this._$.first_line), columna(this._$.first_column));}

@@ -29,7 +29,11 @@
   </div> -->
   <div class="wp-block-columns">
     <div class="sidebar-wrapper">
-      <button mat-raised-button color="primary" (click)="parseCode()" ><mat-icon>arrow_forward_ios</mat-icon>Run</button>
+      <button mat-raised-button color="primary"  (click)="parseCode()" ><mat-icon>arrow_forward_ios</mat-icon>Run</button>
+      <button mat-raised-button color="accent"  (click)="parseCode()" ><mat-icon>save</mat-icon>3D</button>
+      <button mat-raised-button color="accent"  (click)="parseCode()" ><mat-icon>save</mat-icon>3D Op</button>
+      <button mat-raised-button color="accent"  (click)="parseCode()" ><mat-icon>save</mat-icon>Assembler</button>
+      <button mat-raised-button color="warn"  (click)="parseCode()" ><mat-icon>save</mat-icon>Guardar</button>
     </div>
     <div class="editor-wrapper">
       <div class="editor-desktop-top-bar">
@@ -48,15 +52,62 @@
       
     </div>
     
-    
     <div class="wp-block-column">
-      <br>
-      <div class="app-ace-editor-entry2" #editor2>
-        
-      </div>
+      <mat-tree [dataSource]="dataSource" [treeControl]="treeControl">
+        <!-- This is the tree node template for leaf nodes -->
+        <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding>
+          <!-- use a disabled button to provide padding for tree leaf -->
+          <button mat-icon-button disabled></button>
+          {{node.name}}
+        </mat-tree-node>
+        <!-- This is the tree node template for expandable nodes -->
+        <mat-tree-node *matTreeNodeDef="let node;when: hasChild" matTreeNodePadding>
+          <button mat-icon-button matTreeNodeToggle
+                  [attr.aria-label]="'toggle ' + node.name">
+            <mat-icon class="mat-icon-rtl-mirror">
+              {{treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
+            </mat-icon>
+          </button>
+          {{node.name}}
+        </mat-tree-node>
+      </mat-tree>
+      
     </div>
+    
+    
   </div>
 
+
+  
+    <table mat-table [dataSource]="tableDataSrc" class="mat-elevation-z8 " fixedLayout>
+      <ng-container matColumnDef="Fila">
+        <th mat-header-cell *matHeaderCellDef>Fila</th>
+        <td mat-cell *matCellDef="let profile">{{profile.Fila}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="Columna">
+        <th mat-header-cell *matHeaderCellDef>Columna</th>
+        <td mat-cell *matCellDef="let profile">{{profile.Columna}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="Tipo_de_Error">
+        <th mat-header-cell *matHeaderCellDef>Tipo_de_Error</th>
+        <td mat-cell *matCellDef="let profile">{{profile.Tipo_de_Error}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="Simbolo_provocador">
+        <th mat-header-cell *matHeaderCellDef>Simbolo_provocador</th>
+        <td mat-cell *matCellDef="let profile">{{profile.Simbolo_provocador}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="Descripcion">
+        <th mat-header-cell *matHeaderCellDef>Descripcion</th>
+        <td mat-cell *matCellDef="let profile">{{profile.Descripcion}}</td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef = "tableCols"></tr>
+      <tr mat-row *matRowDef="let row; columns: tableCols"></tr>
+    </table>
   
 
 

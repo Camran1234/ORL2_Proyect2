@@ -13,6 +13,10 @@ class AsignacionClase extends Variable{
         return this.parametros;
     }
 
+    getTipo(){
+        return this.tipo;
+    }
+
     getId(){
         return this.id;
     }

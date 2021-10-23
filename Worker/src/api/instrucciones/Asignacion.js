@@ -10,6 +10,10 @@ class Asignacion extends Variable{
         this.expresion = expresion;
     }
 
+    setExpresion(expresion){
+        this.expresion = expresion;
+    }
+
     getId(){
         return this.id;
     }

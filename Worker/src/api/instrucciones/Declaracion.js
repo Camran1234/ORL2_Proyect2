@@ -9,6 +9,15 @@ class Declaracion extends Variable{
         this.id = id;
         this.magnitud = magnitud;
         this.tipo = tipo;
+        this.asignado = 0;
+    }
+
+    addAsignacion(){
+        if(this.asignado >= 1){
+            return false;
+        }
+        this.asignado++;
+        return true;
     }
 
     getVisibilidad(){

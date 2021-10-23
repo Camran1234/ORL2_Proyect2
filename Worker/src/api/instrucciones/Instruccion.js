@@ -1,15 +1,3 @@
-var Break = require('./Break');
-var Clase = require('./Clase');
-var Continue = require('./Continue');
-var doWhile = require('./doWhile');
-var Else = require('./Else');
-var For = require('./For');
-var Function = require('./Function');
-var If = require('./If');
-var Main = require('./Main');
-var Switch = require('./Switch');
-var While = require('./While');
-var Constructor = require('./Constructor');
 
 class Instruccion{
     constructor(linea, columna, lenguaje, ambito, paqueteria, instrucciones){
@@ -54,6 +42,9 @@ class Instruccion{
 
     ambitoEnCiclo(){
         let retornar = null;
+        let doWhile = require('./doWhile');
+        let For = require('./For');
+        let While = require('./While');
         if(this.ambito != null){
             if(this.ambito instanceof For || this.ambito instanceof While
                 || this.ambito instanceof doWhile){
@@ -67,6 +58,7 @@ class Instruccion{
 
     ambitoEnFuncion(){
         let retornar = null;
+        let Function = require('./Function');
         if(this.ambito != null){
             if(this.ambito instanceof Function){
                     retornar = this.ambito;
@@ -82,6 +74,8 @@ class Instruccion{
      */
     ambitoEnConstructor(){
         let retornar = null;
+        let Main = require('./Main');
+        let Constructor = require('./Constructor');
         if(this.ambito !=null){
             if(this.ambito instanceof Constructor
                 || this.ambito instanceof Main){
@@ -90,10 +84,12 @@ class Instruccion{
                 retornar = this.ambito.ambitoEnConstructor();
             }
         }
+        return retornar;
     }
 
     ambitoEnClase(){
         let retornar = null;
+        let Clase = require('./Clase');
         if(this.ambito != null){
             if(this.ambito instanceof Clase){
                     retornar = this.ambito;

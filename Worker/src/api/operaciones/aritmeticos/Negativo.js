@@ -5,6 +5,7 @@ const Caracter = require('../../operadores/Caracter');
 const Decimal = require('../../operadores/Decimal');
 const Entero = require('../../operadores/Entero');
 const ErrorSemantico = require('../../../error/SemanticError');
+const  TIPO_LENGUAJE  = require('../../Instrucciones').TIPO_LENGUAJE;
 class Negativo extends OperacionAritmetica {
 
     constructor(operadorL, operadorR, linea, columna, lenguaje){
@@ -13,7 +14,7 @@ class Negativo extends OperacionAritmetica {
 
     operar(errores){
         //Condicion de operacion
-        if(lenguaje == TIPO_LENGUAJE.JAVA){
+        if(this.lenguaje == TIPO_LENGUAJE.JAVA){
             if(this.operadorL instanceof Booleano){
                 this.crearError(errores, "-", "aplicar unario");
                 return null;

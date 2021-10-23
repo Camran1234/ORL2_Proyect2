@@ -429,7 +429,15 @@ class_stmt
 
 class_instructions
         :  identifier class_instruction class_instructions{
-            $2.visibilidad = $1;
+            if($2.rol == TIPO_INSTRUCCION.VARIABLE){
+                let arregloVar = $2.arreglo;
+                for(let index=0; index<arregloVar.length; index++){
+                    let helperV = arregloVar[index];
+                    helperV.visibilidad = $1;
+                }
+            }else{
+                $2.visibilidad = $1;
+            }            
             $3.push($2);
             $$=$3;        
         }
@@ -444,8 +452,8 @@ class_instructions
         | CLOSE_CURLY  {$$=[];}
         ;
 ides
-    :IDENTIFICADOR {let arreglo = []; arreglo.push($1); arreglo.push(false); $$=arreglo; }
-    |PUNTERO IDENTIFICADOR {let arreglo = []; arreglo.push($2); arreglo.push(true); $$=arreglo;}
+    :IDENTIFICADOR {var arreglo = []; arreglo.push($1); arreglo.push(false); $$=arreglo; }
+    |PUNTERO IDENTIFICADOR {var arreglo = []; arreglo.push($2); arreglo.push(true); $$=arreglo;}
     ;
 function_parameters
         : data_type ides function_parameters_re{
@@ -523,11 +531,15 @@ constructor_class
 
 class_instruction
         : data_type class_statements{
-            for(var index=0; index< $2.length; index++){
-                if($2[index].rol == TIPO_INSTRUCCION.FUNCION ||
-                $2[index].rol == TIPO_INSTRUCCION.DECLARACION){
-                    $2[index].tipo = $1;
+            
+            if($2.rol == TIPO_INSTRUCCION.VARIABLE){
+                let variableArreglo = $2.arreglo;
+                for(var index=0; index< variableArreglo.length; index++){
+                    let varD = variableArreglo[index];
+                    varD.tipo = $1;
                 }
+            }else{
+               $2.tipo = $1; 
             }
             $$=$2;
         }
@@ -654,7 +666,7 @@ nombre_variables_re
             $3[index].id = $2;
             $4.push($3[index]);
         }
-        $4.push(instruccionesApi.nuevaDeclaracion(null, id,[], null, lenguaje, linea(this._$.first_line), columna(this._$.first_column)));
+        $4.push(instruccionesApi.nuevaDeclaracion(null, $2,[], null, lenguaje, linea(this._$.first_line), columna(this._$.first_column)));
         $$=$4;
     }
     |  COMA error nombre_variables_re  {addSyntaxError("Se esperaba una variable", $2, linea(this._$.first_line), columna(this._$.first_column));$$=$3;}
