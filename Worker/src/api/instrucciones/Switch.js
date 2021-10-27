@@ -11,6 +11,39 @@ class Switch extends Instruccion {
         }
         
         this.default_ = default_;
+        this.variableReferencia = null;
+        this.ast = [];
+        //cuartetos
+        this.tIde = "";
+        this.etSalida = "";
+    }
+
+    setEtSalida(et){
+        this.etSalida = et;
+    }
+
+    getEtSalida(){
+        return this.etSalida;
+    }
+
+    setTIde(t){
+        this.tIde = t;
+    }
+
+    getTIde(){
+        return this.tIde;
+    }
+
+    getAst(){
+        return this.ast;
+    }
+
+    setVariableReferencia(variable){
+        this.variableReferencia = variable;
+    }
+
+    getVariableReferencia(){
+        return this.variableReferencia;
     }
 
     setCase(newCase){
@@ -19,6 +52,10 @@ class Switch extends Instruccion {
 
     setDefault(default_){
         this.default_ = default_;
+    }
+
+    getDefault(){
+        return this.default_;
     }
 
     getId(){

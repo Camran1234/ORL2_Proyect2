@@ -3,8 +3,10 @@ paquete com.paquete1 //Igual al de paquetes en java
 def funcion(x,y):
     z = 2
     x = 3
+    nuevaVariable = input()
     if x == z :
-        print("HAZ ALGO")
+        print("ASIDOJAOWJDOIAWJDOIAJWID")
+        println("WOLLOLOLOLOLO", x, y)
 %%JAVA
 public class Calculadora{
     public int valor1 = 0;
@@ -13,17 +15,24 @@ public class Calculadora{
     public Calculadora(){
     
     }
+    
+    public int proceso2(int x, int y){
+        println("Algo");
+    }
 }
     
 %%PROGRAMA
 #include "PY"
 #include "JAVA"
 
-const int x = 4;
+
 
 void main(){
-    for(int index=2; index<4; index++){
-        printf("Print Something %d");
-    }
+    
+    JAVA.Calculadora calculadora();
+    JAVA.calculadora.proceso2(4,4);
+    PY.funcion(4,4);
+    int x = 2+4;
+    getch();
     
 }

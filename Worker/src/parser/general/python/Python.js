@@ -129,7 +129,7 @@ case 15:
 this.$= instruccionesApi.operacionAritmetica($$[$0-2],$$[$0], TIPO_OPERACION.MULTIPLICACION, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
 break;
 case 16:
-this.$=instruccionesApi.operacionAritmetica($$[$0-2],$$[$0], TIPO_OPERACION.DIV, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+this.$=instruccionesApi.operacionAritmetica($$[$0-2],$$[$0], TIPO_OPERACION.DIVISION, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
 break;
 case 17:
 this.$=instruccionesApi.operacionAritmetica($$[$0-2],$$[$0], TIPO_OPERACION.MOD, lenguaje, linea(this._$.first_line), columna(this._$.first_column));

@@ -14,12 +14,59 @@ class Operacion{
         this.linea = linea;
         this.columna = columna;
         this.lenguaje = lenguaje;
+        this.nombre = "tnull";
+        this.operacionFinal = "null";
+        this.tipo = "";
+        this.operador = "";
+        this.lastOperacion = true;;
+    }
+
+
+    incluirLastOperacion(){
+        this.lastOperacion = true;
+    }
+
+    noIncluirLastOperacion(){
+        this.lastOperacion = false;
+    }
+
+    getTipo(){
+        return this.tipo;
+    }
+
+    setTipo(tipo){
+        this.tipo = tipo;
+    }
+
+    setOperacionFinal(operacion){
+        this.operacionFinal = operacion;
+    }
+
+    getOperacionFinal(){
+        return this.operacionFinal;
+    }
+
+    setNombre(t){
+        this.nombre = t;
+    }
+
+    getNombre(){
+        return this.nombre;
     }
 
     crearError(errores, token, verbo){
         errores.push(new ErrorSemantico("No se puede "+verbo+" los tipos "+this.operadorL.type()+" y "+this.operadorR.type(),token, this.linea, this.columna));
     }
 
+    drawT(t){
+        return "t"+t;
+    }
+
+    drawEt(e){
+        return "et"+e;
+    }
+
+    
     
     
 

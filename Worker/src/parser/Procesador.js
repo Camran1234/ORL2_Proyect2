@@ -55,8 +55,16 @@ class Procesador{
         this.mainFounded=false;
         this.accesJava = false;
         this.accesPython = false;
+        this.if_ = null;
     }
 
+    setAccesJava(acces){
+        this.accesJava = acces;
+    }
+
+    setAccesPython(acces){
+        this.accesPython = acces;
+    }
   
 
     addSemanticError(token,descripcion, linea, columna){        
@@ -167,13 +175,17 @@ class Procesador{
      * @param {*} ambito
      */
     procesar(ast, paqueteria, ambito){
+        if(!Array.isArray(ast)){
+            let aux = [];
+            aux.push(ast);
+            ast = aux;
+        }
         this.checkIfs(ast);
         let instrucciones = [];
         for(let index=0; index<ast.length; index++){
             let instruccion = ast[index];
             let resultado = null;
             try {
-                console.log(instruccion.rol);
                 if(instruccion.rol == TIPO_INSTRUCCION.DECLARACION){
                     resultado = this.procesarDeclaracion(instruccion, ambito, paqueteria);
                 }else if(instruccion.rol == TIPO_INSTRUCCION.INCLUDE){
@@ -219,7 +231,7 @@ class Procesador{
                 }else if(instruccion.rol == TIPO_INSTRUCCION.METODO){
                     resultado = this.procesarMetodo(instruccion, ambito, paqueteria);
                 }else if(instruccion.rol == TIPO_INSTRUCCION.SCAN){
-                    resultado =  this.procesarScan(instruccion)
+                    resultado =  this.procesarScan(instruccion, ambito, paqueteria)
                 }   
             } catch (error) {
                 console.log(error);
@@ -235,8 +247,6 @@ class Procesador{
     procesarLongitud(longitud, rol){
         if(longitud!=null){
             if(longitud.length > 0 && rol == TIPO_INSTRUCCION.DECLARACION){
-                console.log("ES ARREGLO "+longitud.length);
-                console.log(longitud);
                 return true;
             }
         }
@@ -259,9 +269,16 @@ class Procesador{
         return null;
     }
 
+    verificarArreglo(arr){
+        if(arr!=null){
+
+        }else{
+            return false;
+        }
+    }
+
     procesarDeclaracion(instruccion, ambito, paqueteria){
         console.log("CREANDO DECLARACION");
-        console.log(JSON.stringify(instruccion));
         let visibilidad = instruccion.visibilidad;
         let id = instruccion.id.valor;
         console.log("PROCESANDO DECLARACION ID %s", JSON.stringify(id));
@@ -283,6 +300,12 @@ class Procesador{
             }
         }
         let simbolo = new Declaracion(visibilidad, id, longitud, tipo, lenguaje, instruccion.linea, instruccion.columna, ambito, paqueteria);
+        let magnitudO = this.procesarMagnitudOP(id, longitud);
+        if(magnitudO == null){
+            return null;
+        }else{
+            simbolo.setMagnitudO(magnitudO);
+        }
         let newTipo = this.tablaTipos.crear(visibilidad, id, tipo, ambito, longitud, esArreglo, rol, paquete, simbolo, lenguaje);
         let resultado = this.tablaTipos.buscar(newTipo);
         if(resultado==null){
@@ -299,9 +322,10 @@ class Procesador{
         let cadena = paquete.split(".");
         if(cadena.length>1){
             //Pendiente 
+            //op something
+            //set instrucciones
         }else if(cadena.length == 1){
             console.log("AQUI");
-            console.log(cadena[0]);
             if(cadena[0] == 'PY'){
                 this.accesPython = true;
             }else if(cadena[0] == 'JAVA'){
@@ -333,6 +357,20 @@ class Procesador{
         return array;
     }
 
+    establecerPunteros(instruccion, ast){
+        //Recogemos los punteros
+        if(ast != null){
+            let params = instruccion.parametros;
+            let declaraciones = ast[0].getAst();
+            for(let index=0; index<declaraciones.length; index++){
+                let object = declaraciones[index];
+                let param = params[index];
+                let puntero = param.puntero;
+                object.setPuntero(puntero);            
+            }
+        }
+    }
+
     procesarFuncion(instruccion, ambito, paqueteria){
         let visibilidad = instruccion.visibilidad;
         let id = instruccion.id;
@@ -348,10 +386,18 @@ class Procesador{
         let simbolo = new Function(visibilidad, id, tipo, null, longitud, lenguaje, instruccion.linea, instruccion.columna, ambito, paqueteria);
         let params = this.declaracionParametros(instruccion, simbolo);
         console.log("EJECUTANDO PARAMETROS FUNCION......");
-        console.log(params);
-        this.procesar(params, paqueteria, simbolo);
-        let instrucciones = this.procesar(instruccion.instrucciones, paqueteria, simbolo);
+        let procesador_1 = new Procesador(this.tablaTipos, this.errores);
+        procesador_1.setAccesJava(this.accesJava);
+        procesador_1.setAccesPython(this.accesPython);
+        let paramsO = procesador_1.procesar(params, paqueteria, simbolo);//Son declaraciones es arreglo
+        this.establecerPunteros(instruccion, paramsO);
+        simbolo.setParametrosO(paramsO);//SOn declaraciones
+        let instrucciones = procesador_1.procesar(instruccion.instrucciones, paqueteria, simbolo);
         simbolo.setInstrucciones(instrucciones);
+        if(tipo != TIPO_DATO.VOID && tipo!=TIPO_DATO.ANY){
+            //checar returns
+            
+        }
         let newTipo = this.tablaTipos.crear(visibilidad, id, tipo, ambito, longitud, esArreglo, rol, paquete, simbolo, lenguaje);
         let resultado = this.tablaTipos.buscarFuncion(id, ambito, rol, longitud);
             
@@ -379,7 +425,10 @@ class Procesador{
         if(finalResult !=null){
             this.mainFounded=true;
         }
-        let instrucciones = this.procesar(instruccion.instrucciones, paqueteria, simbolo);
+        let procesador_1 = new Procesador(this.tablaTipos, this.errores);
+        procesador_1.setAccesJava(this.accesJava);
+        procesador_1.setAccesPython(this.accesPython);
+        let instrucciones = procesador_1.procesar(instruccion.instrucciones, paqueteria, simbolo);
         simbolo.setInstrucciones(instrucciones);
         console.log("FIN MAIN");
         return finalResult;
@@ -405,9 +454,13 @@ class Procesador{
         let simbolo = new Constructor(id, visibilidad, null, longitud, instruccion.linea, instruccion.columna, lenguaje, ambito, paqueteria);
         let params = this.declaracionParametros(instruccion, simbolo);
         console.log("EJECUTANDO PARAMETROS CONSTRUCTOR...........");
-        console.log(params);
-        this.procesar(params, paqueteria, simbolo);
-        let instrucciones = this.procesar(instruccion.instrucciones, paqueteria, simbolo);
+        let procesador_1 = new Procesador(this.tablaTipos, this.errores);
+        procesador_1.setAccesJava(this.accesJava);
+        procesador_1.setAccesPython(this.accesPython);
+        let paramsO = procesador_1.procesar(params, paqueteria, simbolo);//Son declaraciones en su mayoria
+        this.establecerPunteros(instruccion, paramsO);
+        simbolo.setParametrosO(paramsO);
+        let instrucciones = procesador_1.procesar(instruccion.instrucciones, paqueteria, simbolo);
         simbolo.setInstrucciones(instrucciones);
         let newTipo = this.tablaTipos.crear(visibilidad, id, tipo, ambito, longitud, esArreglo, rol, paquete, simbolo, lenguaje);
         let resultado = this.tablaTipos.buscarFuncion(id, ambito, rol, longitud);
@@ -424,7 +477,11 @@ class Procesador{
         let rol = instruccion.rol;
         let lenguaje = instruccion.lenguaje;
         let simbolo = new Clase(id, null, idExtension, visibilidad, instruccion.linea, instruccion.columna, lenguaje, ambito, paqueteria);
-        let instrucciones = this.procesar(instruccion.instrucciones, paqueteria, simbolo);
+        simbolo.setClaseExtendida(this.tablaTipos);
+        let procesador_1 = new Procesador(this.tablaTipos, this.errores);
+        procesador_1.setAccesJava(this.accesJava);
+        procesador_1.setAccesPython(this.accesPython);
+        let instrucciones = procesador_1.procesar(instruccion.instrucciones, paqueteria, simbolo);
         let flag=true;
         for(let index=0; index<instrucciones.length; index++){
             if(instrucciones[index] instanceof Constructor){
@@ -473,7 +530,7 @@ class Procesador{
         //Opera los parametros
         let newParametros = operador.calcularParametros(parametros, ambito, this.tablaTipos, this.errores);
         let rol = TIPO_INSTRUCCION.DECLARACION;
-        let lenguaje = instruccion.lenguaje;
+        let lenguaje = instruccion.lenguaje;    
         let simbolo = new AsignacionClase(id, parametros, tipo, instruccion.linea, instruccion.columna, instruccion.lenguaje, ambito, paqueteria);
         //Conseguimos el constructor
         //Conseguimos el constructor
@@ -487,7 +544,8 @@ class Procesador{
             }
         }
         //Comparacion de los parametros
-        console.log(tipo);
+        //Asignamos el constructor que es una instruccion
+        simbolo.setConstructor(constructorIns);
         let helper = operador.convertirParametros_tipo(constructorIns.getParametros());
         let result1 = operador.compararParametros(id,newParametros, helper, instruccion.linea, instruccion.columna,this.errores);
         if(result1){
@@ -504,6 +562,7 @@ class Procesador{
         return null;
     }
 
+    //Solo checa que tenga la misma cantidad de bloques 
     procesarMagnitud(magnitud, tipo, linea, columna){
         try {
             if(magnitud!=null && tipo!=null){
@@ -520,26 +579,66 @@ class Procesador{
         }
     }
 
+    isEmpty(magnitud){
+        try {
+            if(magnitud != null 
+                && magnitud.length != 0 ){
+                return false;
+            }
+            return true;            
+        } catch (error) {
+            return true;
+        }
+    }
+
+    procesarMagnitudOP(id, magnitud){
+        let magnitudO = [];
+        if(!(this.isEmpty(magnitud))){
+            const Operador = require('../api/operadores/Operador');
+            let operador = new Operador();
+            let flag = false;
+            for(let index=0; index< magnitud.length; index++){
+                let block = magnitud[index];
+                let resultado = operador.procesar(block);
+                if(!(resultado instanceof Number)){
+                    this.errores.push(new ErrorSemantico("El tamano de un arreglo debe ser numerico",id,block.linea, block.columna));
+                    flag = true;
+                }else{
+                    let freshResult = operador.getOperacion();
+                    magnitudO.push(freshResult);
+                }
+            }
+            if(flag){
+                return null;
+            }
+        }
+        return magnitudO;
+    }
+
     procesarAsignacion(instruccion, ambito, paqueteria){
         console.log('PROCESANDO ASIGNACION');
-        console.log(instruccion);
         let visibilidad = TIPO_VISIBILIDAD.LOCAL;
         let id = instruccion.id.valor;
         let magnitud = instruccion.magnitud;
         let rol = instruccion.rol;
         let operador = instruccion.operador;
         let expresion = instruccion.expresion;
+        let expresionO = null;
         //Comprobando el tipo de la expresion
         let simbolo = new Asignacion(id, magnitud, operador, expresion, instruccion.linea, instruccion.columna, instruccion.lenguaje, ambito, paqueteria);
+        let magnitudO = this.procesarMagnitudOP(id, magnitud);
+        if(magnitudO == null){
+            return null;
+        }else{
+            simbolo.setMagnitudO(magnitudO);
+        }
         let theAmbit_ = ambito;
         if(instruccion.id.tipo!=null){
             console.log("DENTRO AMBITO");
-            console.log(id);
             let asdTipo = instruccion.id.tipo;
             if(asdTipo == TIPO_VALOR.THIS_IDENTIFICADOR ){
                 theAmbit_ = ambito.ambitoEnClase();
                 console.log("THIS_AMBITO");
-                console.log(theAmbit_);
             }
         }
         
@@ -550,13 +649,13 @@ class Procesador{
             if(instruccion.lenguaje == TIPO_LENGUAJE.PYTHON){
                 tipoCreado = this.tablaTipos.crear(visibilidad, id, TIPO_VALOR.ANY, ambito, 1, false, TIPO_INSTRUCCION.DECLARACION, paqueteria, simbolo, instruccion.lenguaje);
             }else{
-                console.log("ASIGNACION CON ERROR AQUIII");
-                console.log(JSON.stringify(instruccion));
                 this.errores.push(new ErrorSemantico("No se encontro el identificador", id, instruccion.linea, instruccion.columna));
                 return null;
             }
         }
+        simbolo.setVariableReferencia(tipoCreado.getInstruccion());
         this.procesarMagnitud(magnitud, tipoCreado, instruccion.linea, instruccion.columna);
+        
         if(tipoCreado.getVisibilidad() == TIPO_VISIBILIDAD.CONST){
             let instruccionTipo = tipoCreado.getInstruccion();
             if(!instruccionTipo.addAsignacion()){
@@ -565,7 +664,7 @@ class Procesador{
             }            
         }
         let newExpresion = expresion;
-        let newValor = instruccionesApi.nuevoValor(instruccion.id, magnitud, tipoCreado.getTipo(), instruccion.lenguaje, instruccion.linea, instruccion.columna);
+        let newValor = instruccionesApi.nuevoValor(instruccion.id.valor, magnitud, tipoCreado.getTipo(), instruccion.lenguaje, instruccion.linea, instruccion.columna);
         if(operador == TIPO_OPERACION.IGUAL){
             newExpresion = expresion;
         }else if(operador == TIPO_OPERACION.SUMA){
@@ -593,50 +692,89 @@ class Procesador{
         if(newTipo == null){
             //Agregamos el nuevo tipo
             console.log("Procesando Tipo nuevo ANY");
-            if(expresion == TIPO_VALOR.INPUT){
+            if(expresion.tipo == TIPO_VALOR.INPUT){
                 /*nothing*/ 
-            }else{               
+                let expresion_ = new Entero("scan()", instruccion.linea, instruccion.columna, instruccion.lenguaje);
+                expresion_.setInstruccion(instruccion);
+                expresion_.setEstado(0);
+                let tipo = operador_.convertirObjeto_Tipo(expresion_);
+                tipoCreado.setTipo(tipo);
+                this.tablaTipos.agregarTipo(tipoCreado);
+                simbolo.setExpresionO(expresion_);
+                return simbolo;
+            }else{            
                 //No importa el resultado porque la variable es any 
                 let resultado = operador_.procesarOperaciones(expresion, ambito, this.tablaTipos, this.errores);
                 let tipo = operador_.convertirObjeto_Tipo(resultado);
                 if(tipo!=null){
-                    tipoCreado.setTipo(tipo);
+                    console.log("ES ");
+                    tipoCreado.setTipo(tipo);                    
+                }
+                try {
+                    this.tablaTipos.agregarTipo(tipoCreado);
+                    console.log("FIN ASIGNACION");
+                    simbolo.setExpresionO(operador_.getOperacion());
+                    
+                    return simbolo;    
+                } catch (error) {
+                    console.log(error);    
                 }
             }
-            this.tablaTipos.agregarTipo(tipoCreado);
-            console.log("FIN ASIGNACION");
-            return simbolo;
+            
+            
         }else{
-            console.log(".....................................");
-            if(expresion == TIPO_VALOR.INPUT_INT){
+            if(expresion.tipo == TIPO_VALOR.INPUT_INT){
                 if(newTipo.getTipo() == TIPO_VALOR.ENTERO
                 || newTipo.getTipo() == TIPO_VALOR.DECIMAL){
-                    /*empty*/ 
+                    let expresion_ = new Entero("scan()", instruccion.linea, instruccion.columna, instruccion.lenguaje);
+                    expresion_.setInstruccion(instruccion);
+                    expresion_.setEstado(0);
+                    let tipo = operador_.convertirObjeto_Tipo(expresion_);
+                    tipoCreado.setTipo(tipo);
+                    simbolo.setExpresionO(expresion_);
+                    return simbolo;
                 }else{
-                    this.errores.push(new ErrorSemantico("Los tipos no son compatibles", id, instruccion.linea, instruccion.columna));
+                    this.errores.push(new ErrorSemantico("Los tipos no son compatibles ", id, instruccion.linea, instruccion.columna));
                     return null;
                 }
-            }else if(expresion == TIPO_VALOR.INPUT_CHAR){
+            }else if(expresion.tipo == TIPO_VALOR.INPUT_CHAR){
                 if(newTipo.getTipo() == TIPO_VALOR.ENTERO
                 || newTipo.getTipo() == TIPO_VALOR.DECIMAL
                 || newTipo.getTipo() == TIPO_VALOR.CARACTER ){
-                    /*nothing*/ 
+                    let expresion_ = new Caracter("scan()", instruccion.linea, instruccion.columna, instruccion.lenguaje);
+                    expresion_.setInstruccion(instruccion);
+                    expresion_.setEstado(0);
+                    let tipo = operador_.convertirObjeto_Tipo(expresion_);
+                    tipoCreado.setTipo(tipo);
+                    simbolo.setExpresionO(expresion_);
+                    return simbolo;
                 }else{
                     this.errores.push(new ErrorSemantico("Los tipos no son compatibles", id, instruccion.linea, instruccion.columna));
                     return null;
                 }
-            }else if(expresion == TIPO_VALOR.INPUT_FLOAT){
+            }else if(expresion.tipo == TIPO_VALOR.INPUT_FLOAT){
                 if(newTipo.getTipo() == TIPO_VALOR.DECIMAL){
-                    /*nothing*/ 
+                    let expresion_ = new Decimal("scan()", instruccion.linea, instruccion.columna, instruccion.lenguaje);
+                    expresion_.setInstruccion(instruccion);
+                    expresion_.setEstado(0);
+                    let tipo = operador_.convertirObjeto_Tipo(expresion_);
+                    tipoCreado.setTipo(tipo);
+                    simbolo.setExpresionO(expresion_);
+                    return simbolo;
                 }else{
                     this.errores.push(new ErrorSemantico("Los tipos no son compatibles", id, instruccion.linea, instruccion.columna));
                     return null;
                 }
             }else{
                 let resultado = operador_.procesarOperaciones(expresion, ambito, this.tablaTipos, this.errores);
+                simbolo.setExpresionO(operador_.getOperacion());
                 let helper_ = operador_.convertirObjeto_Tipo(resultado);
-                if(helper_ == newTipo.getTipo()) {
+                if(helper_ == newTipo.getTipo()
+                || newTipo.getTipo() == TIPO_VALOR.ANY) {
                     console.log("FIN ASIGNACION");
+                    if(newTipo.getTipo() == TIPO_VALOR.ANY){
+                        newTipo.setTipo(helper_);
+                    }
                     return simbolo;
                 }
                 if(newTipo.getTipo() == TIPO_VALOR.ENTERO || newTipo.getTipo() == TIPO_DATO.INT){
@@ -675,7 +813,10 @@ class Procesador{
 
     procesarVariable(instruccion, ambito, paqueteria){
         let arreglo = instruccion.arreglo;
-        let ast = this.procesar(arreglo, paqueteria, ambito);
+        let procesador_1 = new Procesador(this.tablaTipos, this.errores);
+        procesador_1.setAccesJava(this.accesJava);
+        procesador_1.setAccesPython(this.accesPython);
+        let ast = procesador_1.procesar(arreglo, paqueteria, ambito);
         let declaraciones = [];
         let asignaciones = [];
         for(let index=0; index<ast.length; index++){
@@ -686,6 +827,7 @@ class Procesador{
             }
         }
         let simbolo = new Variable(declaraciones, asignaciones, instruccion.linea, instruccion.columna, instruccion.lenguaje, ambito, paqueteria, null);
+        simbolo.setAst(ast);
         return simbolo;
     }
 
@@ -694,7 +836,8 @@ class Procesador{
         let lenguaje = instruccion.lenguaje;
         let operador = new Operador();
         let resultado = operador.procesarOperaciones(condicion, ambito, this.tablaTipos, this.errores);
-        let simbolo = new If(operador, instruccion.linea, instruccion.columna, lenguaje, ambito, paqueteria, null);
+        let simbolo = new If(condicion, instruccion.linea, instruccion.columna, lenguaje, ambito, paqueteria, null);
+        simbolo.setExpresionO(operador.getOperacion());
         if(lenguaje == TIPO_LENGUAJE.JAVA){
             if((resultado instanceof Booleano)==false){
                 this.errores.push(new ErrorSemantico("Solo se permiten soluciones booleanas en java", "if", instruccion.linea, instruccion.columna));
@@ -706,8 +849,12 @@ class Procesador{
                 return null;
             }
         }
-        let instrucciones = this.procesar(instruccion.instrucciones, paqueteria, simbolo);
+        let procesador_1 = new Procesador(this.tablaTipos, this.errores);
+        procesador_1.setAccesJava(this.accesJava);
+        procesador_1.setAccesPython(this.accesPython);
+        let instrucciones = procesador_1.procesar(instruccion.instrucciones, paqueteria, simbolo);
         simbolo.setInstrucciones(instrucciones);
+        this.if_ = simbolo;
         return simbolo;
     }
 
@@ -718,6 +865,7 @@ class Procesador{
         if(condicion != null){
             let operador = new Operador();
             let resultado = operador.procesarOperaciones(condicion, ambito, this.tablaTipos, this.errores);
+            simbolo.setExpresionO(operador.getOperacion());
             if(lenguaje == TIPO_LENGUAJE.JAVA){
                 if((resultado instanceof Booleano)==false){
                     this.errores.push(new ErrorSemantico("Solo se permiten soluciones booleanas en java", "else if", instruccion.linea, instruccion.columna));
@@ -730,8 +878,12 @@ class Procesador{
                 }
             }
         }
-        let instrucciones = this.procesar(instruccion.instrucciones, paqueteria, simbolo);
+        let procesador_1 = new Procesador(this.tablaTipos, this.errores);
+        procesador_1.setAccesJava(this.accesJava);
+        procesador_1.setAccesPython(this.accesPython);
+        let instrucciones = procesador_1.procesar(instruccion.instrucciones, paqueteria, simbolo);
         simbolo.setInstrucciones(instrucciones);
+        simbolo.setIf(this.if_);
         return simbolo;
     }
 
@@ -744,11 +896,18 @@ class Procesador{
                 this.errores.push(new ErrorSemantico("Una variable booleana no puede ir en un switch", variable.getId(), instruccion.linea, instruccion.columna));
                 return null;
             }
+        }else{
+            this.errores.push(new ErrorSemantico("La variable no existe en el contexto actual", id, instruccion.linea, instruccion.columna));
         }
+
         let operador = new Operador();
         let tipo = operador.convertirParametro(variable.getTipo());
         let simbolo = new Switch(id, [],null, instruccion.linea, instruccion.columna, instruccion.lenguaje, ambito, paqueteria);
+        simbolo.setVariableReferencia(variable.getInstruccion());
         let returnThen = true;
+        let procesador_1 = new Procesador(this.tablaTipos, this.errores);
+        procesador_1.setAccesJava(this.accesJava);
+        procesador_1.setAccesPython(this.accesPython);
         for(let index=0; index<cases.length; index++){
             let caso = cases[index];
             let expresion = caso.condicion;
@@ -756,18 +915,20 @@ class Procesador{
             
             if(caso == TIPO_SWITCH.CASE){
                 resultado = operador.procesarOperaciones(expresion, ambito, this.tablaTipos, this.errores);
+                
                 if((resultado instanceof tipo) == false){
                     this.errores.push(new ErrorSemantico("El tipo de la condicion de case no es del mismo tipo que la variable", id, instruccion.linea, instruccion.columna));
                     returnThen = false;                    
                 }else{
                     let newCase = new Case(expresion, instruccion.linea, instruccion.columna, instruccion.lenguaje, simbolo, paqueteria, null);
-                    let instrucciones = this.procesar(caso.instrucciones, paqueteria, newCase);
+                    let instrucciones = procesador_1.procesar(caso.instrucciones, paqueteria, newCase);
+                    newCase.setExpresionO(operador.getOperacion());
                     newCase.setInstrucciones(instrucciones);
                     simbolo.setCase(newCase);
                 }
             }else if(caso == TIPO_SWITCH.DEFAULT){
                 let newDefault = new Default(instruccion.linea, instruccion.columna, instruccion.lenguaje, simbolo, paqueteria, null);
-                let instrucciones = this.procesar(caso.instrucciones, paqueteria, newDefault);
+                let instrucciones = procesador_1.procesar(caso.instrucciones, paqueteria, newDefault);
                 newDefault.setInstrucciones(instrucciones);;
                 simbolo.setDefault(newDefault);
             }else{
@@ -789,7 +950,9 @@ class Procesador{
         let rol = instruccion.for;
         let simbolo = new For(valorInicial, condicion, accionPost, null, instruccion.lenguaje, instruccion.linea, instruccion.columna, paqueteria, ambito);
         let operador = new Operador();
-        
+        let procesador_1 = new Procesador(this.tablaTipos, this.errores);
+        procesador_1.setAccesJava(this.accesJava);
+        procesador_1.setAccesPython(this.accesPython);
         let inicio = null;
         let post = null;
 
@@ -799,17 +962,17 @@ class Procesador{
             //procesando valor inicial
             console.log("VALORES INICIALES FOR");
 
-            inicio = this.procesar(valorInicial, paqueteria, simbolo);
-            console.log(inicio);
+            inicio = procesador_1.procesar(valorInicial, paqueteria, simbolo);//Son instrucciones
             let resultado = operador.procesarOperaciones(condicion, simbolo, this.tablaTipos, this.errores);
+            simbolo.setExpresionO(operador.getOperacion());//Condicion
             if((resultado instanceof Booleano) == false && instruccion.lenguaje == TIPO_LENGUAJE.JAVA){
                 this.errores.push(new ErrorSemantico("La condicion del for debe ser booleana", "for", instruccion.linea, instruccion.columna));            
                 return null;
             }
             //procesando accion_post
-            post = this.procesar(accionPost, paqueteria, simbolo);
+            post = procesador_1.procesar(accionPost, paqueteria, simbolo);
         }else if(instruccion.lenguaje == TIPO_LENGUAJE.PYTHON){
-            inicio = this.procesar(valorInicial, paqueteria, simbolo);
+            inicio = procesador_1.procesar(valorInicial, paqueteria, simbolo);
             if(Array.isArray(condicion)){
                 if(condicion.length==1){
                     //Declaracion y asignacion
@@ -818,51 +981,54 @@ class Procesador{
                         instruccion.linea, instruccion.columna);
                     valorInicial.push(instruccionesApi.nuevaAsignacion_O(idInit, null, TIPO_OPERACION.IGUAL,
                         expresionInit, instruccion.lenguaje, instruccion.linea, instruccion.columna));
-                    inicio = this.procesar(valorInicial, paqueteria, simbolo);
+                    inicio = procesador_1.procesar(valorInicial, paqueteria, simbolo);
                     //Condicion
                     let operadorL = instruccionesApi.nuevoValor(idInit, null, TIPO_VALOR.IDENTIFICADOR, instruccion.lenguaje,
                         instruccion.linea, instruccion.columna);
                     let operadorR = condicion[0];
                     let auxCondicion = instruccionesApi.operacionAritmetica(operadorL, operadorR, TIPO_OPERACION.MENOR, instruccion.lenguaje, instruccion.linea, instruccion.columna);
                     let resultado = operador.procesarOperaciones(auxCondicion, ambito, this.tablaTipos);
+                    simbolo.setExpresionO(operador.getOperacion());
                     if((resultado instanceof Number) == false){
                         this.errores.push(new ErrorSemantico("La condicion no es un numero", "range(", instruccion.linea, instruccion.columna));
                         return null;
                     }
                     condicion = auxCondicion;
-                    post = this.procesar(accionPost, paqueteria, simbolo);
+                    post = procesador_1.procesar(accionPost, paqueteria, simbolo);
                 }else if(condicion.length == 2){
                     //Declaracion y asignacion
                     let idInit = valorInicial[0].id;
                     let expresionInit = condicion[0];
                     valorInicial.push(instruccionesApi.nuevaAsignacion_O(idInit, null, TIPO_OPERACION.IGUAL,
                         expresionInit, instruccion.lenguaje, instruccion.linea, instruccion.columna));
-                    inicio = this.procesar(valorInicial, paqueteria, simbolo);
+                    inicio = procesador_1.procesar(valorInicial, paqueteria, simbolo);
                     //Condicion
                     let operadorL = instruccionesApi.nuevoValor(idInit, null, TIPO_VALOR.IDENTIFICADOR, instruccion.lenguaje,
                         instruccion.linea, instruccion.columna);
                     let operadorR = condicion[1];
                     let auxCondicion = instruccionesApi.operacionAritmetica(operadorL, operadorR, TIPO_OPERACION.MENOR, instruccion.lenguaje, instruccion.linea, instruccion.columna);                        
                     let resultado = operador.procesarOperaciones(auxCondicion, ambito, this.tablaTipos, this.errores);
+                    simbolo.setExpresionO(operador.getOperacion());
                     if((resultado instanceof Number) == false){
                         this.errores.push(new ErrorSemantico("La condicion no es un numero", "range(", instruccion.linea, instruccion.columna));
                         return null;
                     }
                     condicion = auxCondicion;
-                    post = this.procesar(accionPost, paqueteria, simbolo);
+                    post = procesador_1.procesar(accionPost, paqueteria, simbolo);
                 }else if(condicion.length == 3){
                     //Declaracion y asignacion
                     let idInit = valorInicial[0].id;
                     let expresionInit = condicion[0];
                     valorInicial.push(instruccionesApi.nuevaAsignacion_O(idInit, null, TIPO_OPERACION.IGUAL,
                         expresionInit, instruccion.lenguaje, instruccion.linea, instruccion.columna));
-                    inicio = this.procesar(valorInicial, paqueteria, simbolo);
+                    inicio = procesador_1.procesar(valorInicial, paqueteria, simbolo);
                     //Condicion
                     let operadorL = instruccionesApi.nuevoValor(idInit, null, TIPO_VALOR.IDENTIFICADOR, instruccion.lenguaje,
                         instruccion.linea, instruccion.columna);
                     let operadorR = condicion[1];
                     let auxCondicion = instruccionesApi.operacionAritmetica(operadorL, operadorR, TIPO_OPERACION.MENOR, instruccion.lenguaje, instruccion.linea, instruccion.columna);                        
                     let resultado = operador.procesarOperaciones(auxCondicion, ambito, this.tablaTipos, this.errores);
+                    simbolo.setExpresionO(operador.getOperacion());
                     if((resultado instanceof Number) == false){
                         this.errores.push(new ErrorSemantico("La condicion no es un numero", "range(", instruccion.linea, instruccion.columna));
                         return null;
@@ -870,7 +1036,7 @@ class Procesador{
                     condicion = auxCondicion;
                     accionPost = instruccionesApi.nuevaAsignacion_O(idInit, [], TIPO_OPERADOR.SUMA, condicion[2],
                         instruccion.lenguaje, instruccion.linea, instruccion.columna);
-                    post = this.procesar(accionPost, paqueteria, simbolo);
+                    post = procesador_1.procesar(accionPost, paqueteria, simbolo);
                 }else{
                     this.errores.push(new ErrorSemantico("Range dentro del for puede tener hasta un maximo de 3 parametros unicamente", ));
                 }
@@ -882,7 +1048,7 @@ class Procesador{
         simbolo.setValorInicial(inicio);
         simbolo.setCondicion(condicion);
         simbolo.setAccionPost(post);        
-        let instrucciones = this.procesar(instruccion.instrucciones, paqueteria, simbolo);
+        let instrucciones = procesador_1.procesar(instruccion.instrucciones, paqueteria, simbolo);
         simbolo.setInstrucciones(instrucciones);
         console.log("FIN FOR");
         return simbolo;
@@ -893,6 +1059,7 @@ class Procesador{
         let operador = new Operador();
         let tipoFinal = operador.procesarOperaciones(condicion, ambito, this.tablaTipos, this.errores);
         let simbolo = new While(condicion, instruccion.linea, instruccion.columna, instruccion.lenguaje, ambito, paqueteria, null);
+        simbolo.setExpresionO(operador.getOperacion());
         if(tipoFinal!=null){
             if(instruccion.lenguaje == TIPO_LENGUAJE.JAVA){
                 if((tipoFinal instanceof Booleano) == false){
@@ -906,7 +1073,10 @@ class Procesador{
                 }
             }
         }
-        let instrucciones = this.procesar(instruccion.instrucciones, paqueteria, simbolo);
+        let procesador_1 = new Procesador(this.tablaTipos, this.errores);
+        procesador_1.setAccesJava(this.accesJava);
+        procesador_1.setAccesPython(this.accesPython);
+        let instrucciones = procesador_1.procesar(instruccion.instrucciones, paqueteria, simbolo);
         simbolo.setInstrucciones(instrucciones);
         return simbolo;
     }
@@ -916,6 +1086,7 @@ class Procesador{
         let operador = new Operador();
         let tipoFinal = operador.procesarOperaciones(condicion, ambito, this.tablaTipos, this.errores);
         let simbolo = new doWhile(null, condicion, instruccion.linea, instruccion.columna, instruccion.lenguaje, ambito, paqueteria);
+        simbolo.setExpresionO(operador.getOperacion());
         if(tipoFinal!=null){
             if(instruccion.lenguaje == TIPO_LENGUAJE.JAVA){
                 if((tipoFinal instanceof Booleano)){
@@ -929,7 +1100,10 @@ class Procesador{
                 }
             }
         }
-        let instrucciones = this.procesar(instruccion.instrucciones, paqueteria, simbolo);
+        let procesador_1 = new Procesador(this.tablaTipos, this.errores);
+        procesador_1.setAccesJava(this.accesJava);
+        procesador_1.setAccesPython(this.accesPython);
+        let instrucciones = procesador_1.procesar(instruccion.instrucciones, paqueteria, simbolo);
         simbolo.setInstrucciones(instrucciones);
         return simbolo;
     }
@@ -951,38 +1125,67 @@ class Procesador{
             instruccion.lenguaje == TIPO_LENGUAJE.PYTHON){
                 for(let index=0; index<parametros.length; index++){
                     let resultado = operador.procesarOperaciones(parametros[index], ambito, this.tablaTipos, this.errores)
+                    simbolo.addParamsO(operador.getOperacion());
+
                     if(resultado == null){
+                        this.errores.push(new ErrorSemantico("No se puede usar la expresion en el print", tipo, instruccion.linea, instruccion.columna));
+                        return null;
+                    }else if(resultado instanceof Booleano){
                         this.errores.push(new ErrorSemantico("No se puede usar la expresion en el print", tipo, instruccion.linea, instruccion.columna));
                         return null;
                     }
                 }
         }else{
-            let tipoInicial = parametros[0];
+            let tipoInicial = parametros[0].tipo;
             let arreglo = [];
+            let cadenas = [];
+            let estructura ="";
             if(tipoInicial == TIPO_VALOR.CADENA){
-                let cadena = tipoInicial.split("");
+                let cadena = parametros[0].valor.split("");
                 let flag=false;
                 for(let index=0; index<cadena.length; index++){
                     if(flag){
                         if(cadena[index] == "d"){
                             arreglo.push(Entero);
+                            cadenas.push(estructura);
+                            estructura = "";
+                            flag=false;
                         }else if(cadena[index] == "c"){
                             arreglo.push(Caracter);
+                            cadenas.push(estructura);
+                            estructura = "";
+                            flag=false;
                         }else if(cadena[index] == "f"){
                             arreglo.push(Decimal);
+                            cadenas.push(estructura);
+                            estructura = "";
+                            flag=false;
+                        }else{
+                            flag=false;
+                            estructura += cadena[index-1];
+                            estructura += cadena[index];
                         }
-                        flag=false;
+                    }else{
+                        estructura += cadena[index];
                     }
                     if(cadena[index] == "%"){
                         flag=true;
                     }
                 }
+                if((estructura != "")){
+                    console.log('IAJFWOIJFOAIWJFOIAWJIOFWAJOIFAJW[FJWAIFKOPAWKK');
+                    cadenas.push(estructura);
+                }
                 if(arreglo.length == parametros.length-1){
-                    for(let index=1; index<parametros.length; index++){
+                    simbolo.setCadenas(cadenas);
+                    for(let index=0; index<parametros.length; index++){
                         let resultado = operador.procesarOperaciones(parametros[index], ambito, this.tablaTipos, this.errores)
-                        if((resultado instanceof arreglo[index-1])==false){
-                            this.errores.push(new ErrorSemantico("Se esperaba que el parametro fuera de tipo "+this.checkTipo(arreglo[index-1]), "printf", instruccion.linea, instruccion.columna));
-                            return null;
+                        simbolo.addParamsO(operador.getOperacion());
+                        if(index!=0){
+                            if((resultado instanceof arreglo[index-1])==false){
+                                this.errores.push(new ErrorSemantico("Se esperaba que el parametro fuera de tipo "+this.checkTipo(arreglo[index-1]), "printf", instruccion.linea, instruccion.columna));
+                                return null;
+                            }
                         }
                     }
                 }else{
@@ -990,6 +1193,7 @@ class Procesador{
                     return null;
                 }
             }
+            
         }
 
         return simbolo;
@@ -1054,10 +1258,12 @@ class Procesador{
         let ambitoFuncion = ambito.ambitoEnFuncion();
         let expresion = instruccion.expresion;
         //Chequeo de tipo de retorno
+        let expresionO = null;
         let finalType = null;
         if(ambitoFuncion!=null){
             let operador = new Operador();
             let resultado = operador.procesarOperaciones(expresion, ambito, this.tablaTipos, this.errores);
+            expresionO = operador.getOperacion();
             let tipoFuncion = this.tipoDato_tipo(ambitoFuncion.getTipo());
             finalType = tipoFuncion;
             if(resultado != null){
@@ -1077,6 +1283,7 @@ class Procesador{
             return null;
         }
         let simbolo = new Retornar(expresion, instruccion.linea, instruccion.columna, instruccion.lenguaje, ambito, paqueteria, null);
+        simbolo.setExpresionO(expresionO);
         let nuevoTipo = this.tablaTipos.crear(TIPO_VISIBILIDAD.LOCAL, "return", finalType,ambito, 1, false, instruccion.rol, paqueteria, simbolo, instruccion.lenguaje );
         let resultado = this.tablaTipos.buscar(nuevoTipo);
         return this.agregar(resultado, nuevoTipo, instruccion);
@@ -1091,13 +1298,17 @@ class Procesador{
             instruccion.lenguaje, ambito, paqueteria, null, null);
         let resultadoParametros = operador.calcularParametros(parametros, simbolo, this.tablaTipos, this.errores );
         resultadoParametros = operador.convertirArregloObjeto_Parametro(resultadoParametros);
+        resultadoParametros = operador.convertirTIPODATO_Parametro(resultadoParametros);
+
+        simbolo.setParametrosO(operador.getParamsO());
         let funcion = null;
         //buscar Metodo
         if(lenguaje == TIPO_LENGUAJE.C){
             let cadena = id.split('.'); 
             if(cadena[0] == "PY"){
                 let identificadorMetodo = cadena[1];
-                funcion = this.tablaTipos.buscarFuncion(identificadorMetodo, null, TIPO_INSTRUCCION.FUNCION, resultadoParametros)
+                funcion = this.tablaTipos.buscarFuncion(identificadorMetodo, null, TIPO_INSTRUCCION.FUNCION, resultadoParametros);
+                simbolo.setFuncionReferencia(funcion.getInstruccion());
                 simbolo.setId(identificadorMetodo);
             }else if(cadena[0] == "JAVA"){
                 let identificadorVariable = cadena[1];
@@ -1105,17 +1316,32 @@ class Procesador{
                 let simboloVar = this.tablaTipos.buscarP(identificadorVariable, ambito, TIPO_INSTRUCCION.DECLARACION,instruccion.lenguaje);
                 if(simboloVar!=null){
                     let newAmbito = simboloVar.getTipo();
+                    simbolo.setVariableReferencia(simboloVar.getInstruccion());
                     if(newAmbito!=null){
-                        simbolo = this.tablaTipos.buscarFuncion(identificadorMetodo, newAmbito, TIPO_INSTRUCCION.FUNCION, resultadoParametros);
+                        funcion = this.tablaTipos.buscarFuncion(identificadorMetodo, newAmbito, TIPO_INSTRUCCION.FUNCION, resultadoParametros);
+                        if(funcion==null && newAmbito instanceof Clase){
+                            if(newAmbito.esExtendible()){
+                                let extension = newAmbito.getIdExtensionO();
+                                funcion = this.tablaTipos.buscarFuncion(identificadorMetodo, extension.getInstruccion(), TIPO_INSTRUCCION.FUNCION, resultadoParametros);
+                            }
+                        }
+                        simbolo.setFuncionReferencia(funcion.getInstruccion());                        
+                        simbolo.setId(identificadorMetodo);
                     }
                 }else{
                     this.errores.push(new ErrorSemantico("No se encontro ninguna variable en el contexto acutal", identificadorVariable, instruccion.linea, instruccion.columna));
                 }
-                simbolo.setId(identificadorMetodo);
             }
         }else if(lenguaje == TIPO_LENGUAJE.JAVA
             || lenguaje == TIPO_LENGUAJE.PYTHON){
             funcion = this.tablaTipos.buscarFuncion(id, ambito, TIPO_INSTRUCCION.FUNCION, resultadoParametros);
+            if(funcion == null && lenguaje == TIPO_LENGUAJE.JAVA){
+                if(ambito.esExtendible()){
+                    let extension = newAmbito.getIdExtensionO();
+                    funcion = this.tablaTipos.buscarFuncion(identificadorMetodo, extension.getInstruccion(), TIPO_INSTRUCCION.FUNCION, resultadoParametros);
+                }
+            }
+            simbolo.setFuncionReferencia(funcion.getInstruccion());
         }
         if(funcion==null){
             this.errores.push(new ErrorSemantico("No se encontro ningun metodo", id, instruccion.linea, instruccion.columna));
@@ -1128,43 +1354,16 @@ class Procesador{
     procesarScan(instruccion, ambito, paqueteria){
         let id = instruccion.id.valor;
         let cadena = instruccion.cadena;
+        let cadenas = [];
         let variable = this.tablaTipos.buscarP(id,ambito, TIPO_INSTRUCCION.DECLARACION, instruccion.lenguaje, paqueteria);
         if(variable == null){
             this.errores.push(new ErrorSemantico("La variable no existe", id, instruccion.linea, instruccion.columna));
             return null;
         }
-        if(cadena == TIPO_VALOR.CADENA){
-            let tipoVariable = null;
-            let auxCadena = cadena.split('');
-            let flag=false;
-
-            for(let index=0; index<auxCadena.length; index++){
-                if(flag){
-                    if(auxCadena[index] == 'd'){
-                        tipoVariable = Entero;
-                        break;
-                    }else if(auxCadena[index] == 'c'){
-                        tipoVariable = Caracter;
-                        break;
-                    }else if(auxCadena[index] == 'f'){
-                        tipoVariable = Decimal;
-                        break;
-                    }
-                    flag=false;
-                }
-                if(auxCadena[index] == "%"){
-                    flag=true;
-                }               
-            }
-            //Comparamos la variable con el parametro encontrado
-            let tipoComparacion = new Operador().generarValorVacioSegunTipo(variable.getTipo(), this.errores, instruccion.lenguaje);
-            if((tipoComparacion instanceof tipoVariable) == false){
-                this.errores.push(new ErrorSemantico("El tipo indicado en la cadena no es compatible", id, instruccion.linea, instruccion.columna));
-                return null;
-            }
-
+        if(cadena.tipo == TIPO_VALOR.CADENA){
+            
         }else{
-            this.errores.push("Se esperaba una literal string", "scanf", instruccion.linea, instruccion.columna);
+            this.errores.push(new ErrorSemantico("Se esperaba una literal string", "scanf", instruccion.linea, instruccion.columna));
             return null;
         }
         let simbolo = new Scanner(variable.getInstruccion(), cadena, instruccion.lenguaje, instruccion.linea, instruccion.columna, ambito, paqueteria);

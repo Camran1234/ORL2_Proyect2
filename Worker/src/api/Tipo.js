@@ -46,6 +46,9 @@ class Tipo{
     }
 
     getPosMemoria(){
+        if(this.lenguaje == 'JAVA'){
+            return this.posMemoria+1;
+        }
         return this.posMemoria;
     }
 

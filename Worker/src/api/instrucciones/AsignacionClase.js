@@ -1,12 +1,21 @@
-var Variable = require('./Variable');
+var Instruccion = require('./Instruccion');
 
-class AsignacionClase extends Variable{
+class AsignacionClase extends Instruccion{
 
     constructor(id,parametros,tipo, linea, columna, lenguaje, ambito, paqueteria){
-        super(null, null, linea, columna, lenguaje, ambito, paqueteria, null);
+        super( linea, columna, lenguaje, ambito, paqueteria, null);
         this.id = id;
         this.parametros = parametros;
         this.tipo = tipo;
+        this.constructor = null;
+    }
+
+    getConstructor(){
+        return this.constructor;
+    }
+
+    setConstructor(cons){
+        this.constructor = cons;
     }
 
     getParametros(){

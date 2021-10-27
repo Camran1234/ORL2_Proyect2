@@ -6,6 +6,15 @@ class Variable extends Instruccion{
         super(linea, columna, lenguaje, ambito, paqueteria, instrucciones);
         this.declaraciones = declaraciones;
         this.asignaciones = asignaciones;
+        this.ast = null;
+    }
+
+    setAst(ast){
+        this.ast = ast;
+    }
+
+    getAst(){
+        return this.ast;
     }
 
     getDeclaraciones(){

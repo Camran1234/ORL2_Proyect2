@@ -1,4 +1,6 @@
 var TIPO_INSTRUCCION = require('./Instrucciones').TIPO_INSTRUCCION;
+var TIPO_VALOR = require('./Instrucciones').TIPO_INSTRUCCION;
+var TIPO_LENGUAJE = require('./Instrucciones').TIPO_LENGUAJE;
 var TIPO_SWITCH = require('./Instrucciones').TIPO_SWITCH;
 var TIPO_EXPRESION = require('./Instrucciones').TIPO_EXPRESION;
 var TIPO_VISIBILIDAD = require('./Instrucciones').TIPO_VISIBILIDAD;
@@ -480,9 +482,14 @@ const instruccionesApi = {
 
     nuevoGetch: function(linea, columna){
         return{
-            rol: TIPO_INSTRUCCION.GETCH,
-            linea:linea, 
-            columna:columna
+            valor: 'scanf()',
+            magnitud:[],
+            tipo: TIPO_VALOR.INPUT_INT,
+            puntero: false,
+            lenguaje: TIPO_LENGUAJE.C,
+            linea: linea,
+            columna: columna,
+            rol:TIPO_INSTRUCCION.GETCH
         }
     },
 

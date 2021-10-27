@@ -14,6 +14,15 @@ class Else extends Instruccion{
     constructor(condicion, instrucciones, linea, columna, lenguaje, ambito,paqueteria ){
         super(linea, columna, lenguaje, ambito, paqueteria, instrucciones);
         this.condicion = condicion;
+        this.if_ = null;
+    }
+
+    getIf(){
+        return this.if_;
+    }
+
+    setIf(if_){
+        this.if_ = if_;
     }
 
     getCondicion(){

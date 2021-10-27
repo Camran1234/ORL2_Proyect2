@@ -519,7 +519,7 @@ expresion
     |expresion SUMA expresion {$$=instruccionesApi.operacionAritmetica($1,$3,TIPO_OPERACION.SUMA, lenguaje , linea(this._$.first_line), columna(this._$.first_column));}
     |expresion RESTA expresion {$$=instruccionesApi.operacionAritmetica($1,$3,TIPO_OPERACION.RESTA, lenguaje , linea(this._$.first_line), columna(this._$.first_column));}
     |expresion POR expresion  {$$= instruccionesApi.operacionAritmetica($1,$3, TIPO_OPERACION.MULTIPLICACION, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
-    |expresion DIV expresion {$$=instruccionesApi.operacionAritmetica($1,$3, TIPO_OPERACION.DIV, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+    |expresion DIV expresion {$$=instruccionesApi.operacionAritmetica($1,$3, TIPO_OPERACION.DIVISION, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
     |expresion MOD expresion {$$=instruccionesApi.operacionAritmetica($1,$3, TIPO_OPERACION.MOD, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
     |expresion POW expresion {$$=instruccionesApi.operacionAritmetica($1, $3, TIPO_OPERACION.POW, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
     |RESTA expresion %prec UMINUS {$$=instruccionesApi.operacionUnaria($2, TIPO_OPERACION.NEGATIVO, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}

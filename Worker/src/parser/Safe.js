@@ -1,28 +1,45 @@
-function safeFile(paqueteria, codigo){
-    return{
-        paqueteria:paqueteria,
-        codigo:codigo
-    }
-}
 
 class Safe{
 
     constructor(){
-        this.files=[];
+        this.dir = "./data";
+        this.dir3D = "./data/codigo3d.mlg";
+        this.createDirectory(this.dir);
+    }   
+    
+    obtenerCodigo3D(){
+        let fs = require('fs');
+        let codigo = "Sin codigo 3D";
+        codigo = fs.readFileSync(this.dir3D, 'utf8');
+        
+        /*fs.readFileSync(this.dir3D, (err, data) => {
+            if (err) throw err;
+            codigo = data.toString();
+        });*/
+        return codigo;
+        
     }
 
-    crearSafe(paqueteria, astPython, astJava, astC){
-        let fileAst = safeFile(paqueteria, astPython, astJava, astC);
-        this.files.push(fileAst);
+    guardarCodigo3D(content){
+        let fs = require('fs');
+
+        fs.writeFile(this.dir3D, content, function (err) {
+            if (err) throw err;
+            console.log('GUARDADO');
+        });
     }
 
-    findSafe(dirPaquete){
+    createDirectory(dir){
+        let fs = require('fs');
 
+        if (!fs.existsSync(dir)){
+            fs.mkdirSync(dir);
+            console.log("Creating")
+        }
     }
+
+    
 
 }
 
-module.exports = {
-    Safe,
-    safeFile
-};
+module.exports = Safe;

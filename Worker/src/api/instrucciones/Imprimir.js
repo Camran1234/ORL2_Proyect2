@@ -5,6 +5,24 @@ class Imprimir extends Instruccion{
         super(linea, columna, lenguaje, ambito, paqueteria, instrucciones);
         this.tipo = tipo;
         this.parametros = parametros;
+        this.paramsO=[];
+        this.cadenas = [];
+    }
+
+    setCadenas(cad){
+        this.cadenas = cad;
+    }
+
+    getCadenas(){
+        return this.cadenas;
+    }
+
+    addParamsO(param){
+        this.paramsO.push(param);
+    }
+
+    getParamsO(){
+        return this.paramsO;
     }
 
     getTipo(){

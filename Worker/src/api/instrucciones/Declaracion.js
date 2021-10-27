@@ -1,15 +1,45 @@
 var Instruccion = require('./Instruccion');
 var Variable = require('./Variable');
 
-class Declaracion extends Variable{
+class Declaracion extends Instruccion{
 
     constructor(visibilidad, id, magnitud, tipo, lenguaje, linea, columna, ambito, paqueteria){
-        super(null, null, linea, columna, lenguaje, ambito, paqueteria, null);
+        super( linea, columna, lenguaje, ambito, paqueteria, null);
         this.visibilidad = visibilidad;
         this.id = id;
         this.magnitud = magnitud;
         this.tipo = tipo;
         this.asignado = 0;
+        this.magnitudO = [];
+        this.esArreglo = false;
+        this.puntero = false;
+    }
+
+    getVariableReferencia(){
+        return this;
+    }
+
+    setPuntero(puntero){
+        this.puntero = puntero;
+    }
+
+    getPuntero(){
+        return this.puntero;
+    }
+
+    isArray(){
+        return this.esArreglo;
+    }
+
+    setMagnitudO(magnitud){
+        this.magnitudO = magnitud;
+        if(magnitud.length>0){
+            this.esArreglo = true;
+        }
+    }
+
+    getMagnitudO(){
+        return this.magnitudO;
     }
 
     addAsignacion(){
@@ -18,6 +48,10 @@ class Declaracion extends Variable{
         }
         this.asignado++;
         return true;
+    }
+
+    setTipo(tipo){
+        this.tipo = tipo;
     }
 
     getVisibilidad(){

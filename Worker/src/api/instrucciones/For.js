@@ -7,10 +7,28 @@ class For extends Instruccion{
         this.valor_inicial = valor_inicial;
         this.condicion = condicion;
         this.accion_post = accion_post;
+        this.puntoInicial = "";
+        this.puntoFinal = "";
     }
 
     setValorInicial(valor){
         this.valor_inicial = valor;
+    }
+
+    setPuntoFinal(punto){
+        this.puntoFinal = punto;
+    }
+
+    getPuntoFinal(){
+        return this.puntoFinal;
+    }
+
+    setPuntoInicial(punto){
+        this.puntoInicial = punto;
+    }
+
+    getPuntoInicial(){
+        return this.puntoInicial;
     }
 
     setCondicion(condicion){

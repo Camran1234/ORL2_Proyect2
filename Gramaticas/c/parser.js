@@ -1,5 +1,5 @@
 var fs = require('fs'); 
-var parser = require('./C');
+var parser = require('../../Worker/src/parser/general/c/C');
 
 
 fs.readFile('./entrada.txt', (err, data) => {

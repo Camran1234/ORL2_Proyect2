@@ -1,0 +1,89 @@
+ptr = 0;
+h = 0;
+stack [1000000] ;
+heap [1000000] ; 
+com_paquete1_funcion_ANY_ANY_ANY_ {
+t0= ptr + 2;
+stack[t0] = 2 ;
+t1= ptr + 0;
+stack[t1] = 3 ;
+t2= ptr + 3;
+stack[t2] = scan() ;
+t3 = ptr +0;
+t4= stack[t3];
+t5 = ptr +2;
+t6= stack[t5];
+if t4==t6 goto et3;
+goto et4;
+et3:
+t7 = 1;
+goto et2;
+et4:
+t7 = 0;
+goto et2;
+if t7> 0 goto et5;
+goto et6;
+et5:
+ts0[] = "ASIDOJAOWJDOIAWJDOIAJWID";
+ print(ts0);
+ts1[] = "WOLLOLOLOLOLO";
+ t7 = ptr +0;
+t8= stack[t7];
+t9 = ptr +1;
+t10= stack[t9];
+print(ts1, t8, t10, " \n ");
+goto et1;
+et6:
+et1:
+et0 : 
+}
+com_paquete1_Calculadora__{
+t11 = ptr + 0;
+stack[t11] = h;
+h = h + 2;
+t11 = ptr + 0 ;
+t12= stack[t11];
+t13 = t12 + 1;
+Heap[t13] = 0; 
+t14 = ptr + 0 ;
+t15= stack[t14];
+t16 = t15 + 0;
+Heap[t16] = 0; 
+}
+com_paquete1_Calculadora_proceso2_INT_INT_INT {
+ts2[] = "Algo";
+ print(ts2, " \n ");
+et7 : 
+}
+ptr = ptr + 3;
+com_paquete1_Calculadora__() ;
+ptr = ptr - 3;
+t17 = ptr + 3;
+t18 = t17 + 0;
+t19 = stack[t18];
+t20 = ptr + 0;
+stack[t20] = t19;
+t21 = ptr + 0;
+t22= stack[t21];
+t23= ptr + 3;
+t24 = t23 + 0;
+stack[t24] = t22 ;
+t24 = ptr +3;
+t25 = t24 + 1;
+stack[t25] = 4;
+ptr = ptr + 3;
+com_paquete1_Calculadora_proceso2_INT_INT_INT();
+ptr = ptr - 3;
+t26 = ptr +3;
+ptr = ptr + 3;
+com_paquete1_funcion_ANY_ANY_ANY_();
+ptr = ptr - 3;
+t27 = 4*8;
+t28 = 2+null;
+t29 = 9/5;
+t30 = t29*4;
+t31 = t30%3;
+t32 = t28+t31;
+t33= ptr + 1;
+stack[t33] = t32 ;
+scan();

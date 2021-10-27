@@ -14,6 +14,13 @@ export class CodeService {
         
     }
 
+    public get3D(): Observable<any>{
+        let parseUrl = this.url+"getCodigo3d";
+        let body = {
+
+        };
+        return this.http.post<any>(parseUrl,JSON.stringify(body));
+    }
 
     public parse(codigo:JSON): Observable<any> {
         let parseUrl = this.url+"parse";

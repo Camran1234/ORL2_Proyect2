@@ -6,6 +6,75 @@ class Clase extends Instruccion{
         this.id = id;
         this.idExtension = idExtension;
         this.visibilidad = visibilidad;
+        this.constructores = [];
+        this.variables = [];
+        this.idExtensionO = null;
+    }
+
+    getIdExtensionO(){
+        return this.idExtensionO;
+    }
+
+    esExtendible(){
+        if(this.idExtensionO!=null){
+            return true;
+        }
+        return false;
+    }
+    
+
+    setClaseExtendida(tabla){
+        if(this.idExtension!=null){
+            if(this.idExtension != ""){
+                this.idExtensionO = tabla.buscarClase(this.idExtension,this.paqueteria);
+            }
+        }        
+    }
+
+    getConstructores(){
+        return this.constructores;
+    }
+
+    getVariables(){
+        return this.variables;
+    }
+
+    pushConstructor(cons){
+        this.constructores.push(cons);
+    }
+
+    
+
+    mergeConstructors(){
+        //Encontramos todo aquello que no sea un constructor
+        let instrucciones = this.instrucciones;
+        const Constructor = require('./Constructor');
+        const Function = require('./Function');
+        let variables = [];
+        let constructores = [];
+        for(let index = 0; index<instrucciones.length; index++){
+            let instruccion = instrucciones[index];
+            if(instruccion instanceof Constructor
+                || instruccion instanceof Function){
+                constructores.push(instruccion);
+            }else{
+                //SOn variables
+                variables.push(instruccion);
+            }
+        }
+        //Agregamos las instrucciones a los constructores
+        for(let index=0; index<constructores.length; index++){
+            let constructor = constructores[index];
+            for(let indexV = 0; indexV< variables.length; indexV++){
+                //Agregamos
+                if(constructor instanceof Constructor){
+                    let variable = variables[indexV];
+                    constructor.unshiftInstruccion(variable);
+                }
+            }
+        }
+        this.constructores = constructores;
+        this.variables = variables;
     }
 
     getId(){

@@ -13,7 +13,7 @@ function convertirVariable(tipoIdentificador){
         resultado = TIPO_VALOR.DECIMAL;
     }else if(tipoIdentificador == TIPO_DATO.CHAR){
         resultado = TIPO_VALOR.CARACTER;
-    }else if(tipoIdentificador = TIPO_DATO.STRING){
+    }else if(tipoIdentificador == TIPO_DATO.STRING){
         resultado = TIPO_VALOR.CADENA;
     }else if(tipoIdentificador == TIPO_DATO.BOOLEAN){
         resultado = TIPO_VALOR.BOOLEAN;

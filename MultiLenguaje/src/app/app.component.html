@@ -30,21 +30,21 @@
   <div class="wp-block-columns">
     <div class="sidebar-wrapper">
       <button mat-raised-button color="primary"  (click)="parseCode()" ><mat-icon>arrow_forward_ios</mat-icon>Run</button>
-      <button mat-raised-button color="accent"  (click)="parseCode()" ><mat-icon>save</mat-icon>3D</button>
-      <button mat-raised-button color="accent"  (click)="parseCode()" ><mat-icon>save</mat-icon>3D Op</button>
-      <button mat-raised-button color="accent"  (click)="parseCode()" ><mat-icon>save</mat-icon>Assembler</button>
-      <button mat-raised-button color="warn"  (click)="parseCode()" ><mat-icon>save</mat-icon>Guardar</button>
+      <button mat-raised-button color="accent" ><mat-icon>save</mat-icon>3D</button>
+      <button mat-raised-button color="accent"   ><mat-icon>save</mat-icon>3D Op</button>
+      <button mat-raised-button color="accent"   ><mat-icon>save</mat-icon>Assembler</button>
+      <button mat-raised-button color="warn"   ><mat-icon>save</mat-icon>Guardar</button>
     </div>
     <div class="editor-wrapper">
       <div class="editor-desktop-top-bar">
-        <button mat-stroked-button color="primary" >Nuevo Proyecto</button>
-        <button mat-stroked-button color="primary" >Abrir Proyecto</button>
-        <button mat-stroked-button color="primary" >Cerrar Proyecto</button>
+        <button mat-stroked-button color="accent" >Nuevo Proyecto</button>
+        <button mat-stroked-button color="accent" >Abrir Proyecto</button>
+        <button mat-stroked-button color="accent" >Cerrar Proyecto</button>
         <button mat-stroked-button color="accent" >Nuevo Archivo</button>
         <button mat-stroked-button color="accent" >Abrir Archivo</button>
       </div>
       <div class="wp-block-column">
-        <div class="app-ace-editor-entry" name="entry" #editor (click)="getCurrentLineAndNumber()"  (keyup)="getCurrentLineAndNumber()" >
+        <div class="app-ace-editor-entry" name="entry" #editor (click)="getCurrentLineAndNumber()"  (keyup)="getCurrentLineAndNumber()"  >
           {{texto}}
         </div>
         <label class="lineIndicator"for="entry" >{{line}}</label>
@@ -109,7 +109,20 @@
       <tr mat-row *matRowDef="let row; columns: tableCols"></tr>
     </table>
   
+    
 
+  <div class="wp-block-columns">
+    <div class="wp-block-column">
+      <button mat-raised-button color="primary"  (click)="mostrar3D()" ><mat-icon>cloud_download</mat-icon>  Obtener Codigo 3D</button>
+      <div class="app-ace-editor-entry" name="entry" #editor2>
+      </div>
+    </div>
+    <div class="wp-block-column">
+      <button mat-raised-button color="accent"  ><mat-icon>cloud_download</mat-icon>  Obtener Codigo 3D Optimizado</button>
+      <div class="app-ace-editor-entry" name="entry" #editor3>
+      </div>
+    </div>
+  </div>
 
   <svg id="clouds" xmlns="http://www.w3.org/2000/svg" width="2611.084" height="485.677" viewBox="0 0 2611.084 485.677">
     <title>Gray Clouds Background</title>

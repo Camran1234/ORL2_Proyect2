@@ -1,4 +1,4 @@
-var OperacionAritmetica = require('../OperacionAritmetica');
+var OperacionCondicional = require('../OperacionCondicional');
 const Booleano = require('../../operadores/Booleano');
 const Cadena = require('../../operadores/Cadena');
 const Caracter = require('../../operadores/Caracter');
@@ -7,10 +7,99 @@ const Entero = require('../../operadores/Entero');
 const Number = require('../../operadores/Number');
 const ErrorSemantico = require('../../../error/SemanticError');
 const  TIPO_LENGUAJE  = require('../../Instrucciones').TIPO_LENGUAJE;
-class Negativo extends OperacionAritmetica {
+class Negativo extends OperacionCondicional {
 
     constructor(operadorL, operadorR, linea, columna, lenguaje){
         super(operadorL, operadorR, linea, columna, lenguaje);
+    }
+
+    incluirLastOperacion(){
+        return super.incluirLastOperacion();
+     }
+ 
+     noIncluirLastOperacion(){
+         return super.noIncluirLastOperacion();
+     }
+ 
+     getTipo(){
+         return super.getTipo();
+     }
+ 
+     setTipo(tipo){
+         return super.setTipo(tipo)
+     }
+ 
+     setOperacionFinal(operacion){
+         return  super.setOperacionFinal(operacion);
+     }
+ 
+     getOperacionFinal(){
+         return  super.getOperacionFinal();
+     }
+ 
+     setNombre(t){
+         return super.setNombre(t);
+     }
+ 
+     getNombre(){
+         return  super.getNombre();
+     }
+ 
+     crearError(errores, token, verbo){
+         return super.crearError(errores, token, verbo);
+     }
+ 
+     drawT(t){
+         return  super.drawT(t);
+     }
+ 
+     drawEt(e){
+         return super.drawEt(e);
+     }
+
+    generarExpresion(tablaTipos){
+        let cadena = "";
+        let operadorL = null;
+        let resultadoL = "";
+        let operacion = "";
+
+        if(this.operadorL instanceof Operacion){
+            operadorL = this.operadorL.generarExpresion(tablaTipos);
+            resultadoL = this.operadorL.getNombre();
+            cadena += operadorL;
+        }else if(!(this.operadorL instanceof Operacion)){
+            operadorL = this.operadorL;
+            cadena += operadorL.codigo3D(tablaTipos);
+            resultadoL = this.operadorL.parse(null,null);            
+        }        
+        //Operar
+        operacion = this.operador+resultadoL;
+
+        let tName = tablaTipos.drawT();
+        tablaTipos.addT();
+        let etVer = tablaTipos.drawEt();
+        tablaTipos.addEt();
+        let etFalsa = tablaTipos.drawEt();
+        tablaTipos.addEt();
+        let etSalida = tablaTipos.drawEt();
+        tablaTipos.addEt();
+
+        cadena += "if "+resultadoL+" > 0 goto "+etVer+";\n";
+        cadena += "goto "+etFalsa;
+        
+        cadena += etEntrada+":\n"; // verdadero
+        cadena += tName+ " = 0" ;
+        cadena += "goto "+etSalida;
+
+        cadena += etFalsa+":\n";
+        cadena += tName + " = 1";
+        cadena += "goto "+etSalida;
+
+        cadena += etSalida+":\n";
+
+        this.setNombre(tName);
+        this.setOperacionFinal(operacion);
+        return cadena;
     }
 
     operar(errores){

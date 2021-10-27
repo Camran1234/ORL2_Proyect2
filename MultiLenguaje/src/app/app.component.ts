@@ -100,6 +100,8 @@ export class AppComponent implements AfterViewInit {
 
   // 3️⃣
   @ViewChild("editor") private editor: ElementRef<HTMLElement>;
+  @ViewChild("editor2") private editor2: ElementRef<HTMLElement>;
+  @ViewChild("editor3") private editor3: ElementRef<HTMLElement>;
   // 3️⃣
 
   generarErrores(){
@@ -120,9 +122,13 @@ export class AppComponent implements AfterViewInit {
     ace.config.set("fontSize", "14px");
     ace.config.set('basePath', 'https://unpkg.com/ace-builds@1.4.12/src-noconflict');
     const aceEditor = ace.edit(this.editor.nativeElement);
+    const aceEditor2 = ace.edit(this.editor2.nativeElement);
+    const aceEditor3 = ace.edit(this.editor3.nativeElement);
     // 🚨 Added
     aceEditor.setTheme('ace/theme/twilight');
     aceEditor.session.setMode('ace/mode/html');
+    aceEditor2.setTheme('ace/theme/terminal');
+    aceEditor3.setTheme('ace/theme/terminal');
     //Outputs
     aceEditor.on("change", () => {
       this.salida=aceEditor.getValue();
@@ -134,6 +140,16 @@ export class AppComponent implements AfterViewInit {
     var currentLineNumber = aceEditor.selection.getCursor().row +1;      
     var currentColumnNumber = aceEditor.selection.getCursor().column;    
     this.line="Linea: "+currentLineNumber+" Columna: "+currentColumnNumber;
+  }
+
+  async mostrar3D(){
+    const aceEditor2 = ace.edit(this.editor2.nativeElement);
+    let codigo3D = "";
+    await this.codeService.get3D().toPromise().then(response => {
+      let code = JSON.parse(JSON.stringify(response));
+      codigo3D = code.codigo;
+    });
+    aceEditor2.setValue(codigo3D);    
   }
 
   async parseCode(){

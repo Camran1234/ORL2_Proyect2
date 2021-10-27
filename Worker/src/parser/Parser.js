@@ -31,9 +31,11 @@ class Parser{
         return this.ast;
     }
 
-    getCodigo3D(){
-        
+    imprimirAst(){
+        console.log(JSON.stringify(this.ast));
     }
+
+    
 
     getErrores(){
         let errores = [];
@@ -74,10 +76,6 @@ class Parser{
 
     procesarAST(astC, astJava, astPython, paqueteria){
         if(!this.haveErrores()){
-            let ast = [];
-            this.push(astC, ast);
-            this.push(astJava, ast);
-            this.push(astPython, ast);
             let Procesador = require('./Procesador');
             let procesador = new Procesador(this.tablaTipos, this.erroresSemanticos);
             let helper = null;
@@ -97,6 +95,23 @@ class Parser{
                 this.unificarAst(helper);
             }
         }
+    }
+
+    reversaArreglo(arr){
+        let aux = [];
+        for(let index=arr.length-1; index>=0; index--){
+            aux.push(arr[index]);
+        }
+        return aux;
+    }
+
+    getCodigo3D(){
+        if(this.haveErrores() == false){
+            let Cuarteto = require('../parser/general/Cuarteto');
+            let cuartetoF = new Cuarteto(this.tablaTipos);
+            let resultado = cuartetoF.procesar(this.reversaArreglo(this.ast), 1);
+            return resultado;
+        }       
     }
 
     parse(codigo){
@@ -137,6 +152,7 @@ class Parser{
             //Getin ast of C
             let astC = this.parseC(lineC, columnC, codigoC);            
             this.procesarAST(astC, astJava, astPython, dirPaquete);
+            console.log(astC,astJava,astPython)
             console.log("Errores Lexicos POST: "+JSON.stringify(erroresLexicos));
             console.log("Errores Sintacticos POST: "+JSON.stringify(erroresSintacticos));
             console.log("Errores Semanticos POST: "+JSON.stringify(this.erroresSemanticos));

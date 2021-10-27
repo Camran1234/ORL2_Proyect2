@@ -17,6 +17,7 @@ const TIPO_LENGUAJE = require('./Instrucciones').TIPO_LENGUAJE;
 const Clase = require('../api/instrucciones/Clase');
 const Constructor = require('../api/instrucciones/Constructor');
 const Funcion = require('../api/instrucciones/Function');
+const Main = require('../api/instrucciones/Main');
 
 var Tipo = require('./Tipo');
 var ErrorSemantico = require('../error/SemanticError');
@@ -42,6 +43,106 @@ class TablaTipos{
         this.memoriaTemporal = 0;
         this.tipos = [];
         this.mainFounded=false;
+        //para generar codigo
+        this.t = 0;
+        this.et = 0;
+        this.ar=0;
+        this.c = 0;
+        this.s = 0;
+    }
+
+    drawS(){
+        return "ts"+this.s;
+    }
+
+    getS(){
+        return this.s;
+    }
+
+    addS(){
+        this.s++;
+    }
+
+    getC(){
+        return this.c;
+    }
+
+    drawC(){
+        return "tc"+this.c;
+    }
+
+    addC(){
+        this.c++;
+    }
+
+    drawAr(){
+        return "arr"+this.ar;
+    }
+
+    addAr(){
+        this.ar++;
+    }
+
+    getAr(){
+        return this.ar;
+    }
+
+    sizeAmbito(ambito){
+        let size = 0;
+        let tabla = this.tipos;
+        for(let index=tabla.length-1; index>=0; index--){
+            let tipo = tabla[index];
+            let ambitoContenedor = tipo.getInstruccion().ambitoMayor(); // El ambito Contenedor
+            if(ambitoContenedor!=null){
+                if(ambito == ambitoContenedor){
+                    size++;
+                }
+            }
+        }
+        if(ambito instanceof Clase){
+            if(ambito.esExtendible()){
+                //Agregamos tamanio extra
+                let extension = ambito.getIdExtensionO().getInstruccion();
+                size += this.sizeAmbito(extension);
+            }
+        }
+
+        return size;
+    }
+
+    addT(){
+        this.t++;
+    }
+
+    addEt(){
+        this.et++;
+    }
+
+    getT(){
+        return this.t;
+    }
+
+    getEt(){
+        return this.et;
+    }
+
+    drawT(){
+        return "t"+this.t;
+    }
+
+    drawEt(){
+        return "et"+this.et;
+    }
+
+    getPosMemoria(){
+        return this.posMemoria;
+    }
+
+    getPosMemoriaMax(){
+        let tipos = this.tipos;
+        for(let index=0; index<tipos.length; index++){
+            
+        }
     }
 
     crear(visibilidad, id, tipo, ambito, longitud, esArreglo, rol, paquete, instruccion, lenguaje){
@@ -49,22 +150,33 @@ class TablaTipos{
     }
 
     agregarTipo(tipo){
-        console.log("AGREGANDO id: %s, ambito: %s", tipo.getId(), JSON.stringify(tipo.getAmbito()));
         let ambito = tipo.getAmbito();
         if(ambito !=null){
-            let theAmbit = ambito.ambitoEnClase();
+            let theAmbit = ambito.ambitoMayor();
+            let instruccion = tipo.getInstruccion();
             //Comprobamos si esta dentro de una clase para colocarlo en el heap
-            if(theAmbit!=null){
-                if(theAmbit instanceof Clase){
+            if(theAmbit!=null){//Verificar si esta contenida en algun lugar
+                if(instruccion instanceof Clase
+                    || instruccion instanceof Funcion
+                    || instruccion instanceof Constructor
+                    || instruccion instanceof Main){
                     tipo.setPosMemoria(null);
+                    this.memoriaTemporal = 0;
                     this.tipos.push(tipo);
+                }else{
+                    tipo.setPosMemoria(this.memoriaTemporal);
+                    this.tipos.push(tipo);
+                    this.memoriaTemporal++;
+                    theAmbit.addMemoria();
                 }
             }else{
+                //No esta dentro de una clase, funcion o constructor
                 this.memoriaTemporal = 0;
                 this.tipos.push(tipo);
                 this.posMemoria++;    
             }
         }else{
+            //Esta en un estado nulo, declaraciones globales
             this.memoriaTemporal = 0;
             this.tipos.push(tipo);
             this.posMemoria++;
@@ -101,7 +213,9 @@ class TablaTipos{
                 if(parametrosL.length == parametrosR.length){
                     for(let index=0; index<parametrosL.length; index++){
                         if(parametrosL[index].tipo != parametrosR[index].tipo){
-                            return false;
+                            if(parametrosR[index].tipo != TIPO_DATO.ANY){
+                                return false;
+                            }
                         }
                     }
                     return true;
@@ -135,14 +249,13 @@ class TablaTipos{
 
     imprimirSimbolos(){
         console.log("IMPRIMIENDO SIMBOLOS .....");
-        console.log(this.tipos);
     }
 
     imprimir(){
         console.log("TABLA TIPOS %d", this.tipos.length);
         for(let index=this.tipos.length-1; index>=0; index--){
             let tipo = this.tipos[index];
-            console.log("ID %s, Rol %s", tipo.getId(), tipo.getRol());
+            console.log("ID %s, Rol %s, POS MEMORIA %d", tipo.getId(), tipo.getRol(), tipo.getPosMemoria());
         }
     }
 
@@ -150,7 +263,6 @@ class TablaTipos{
     buscarP(id, ambito, rol, lenguaje, paquete){
         let tipoEncontrado = null;
         console.log("\n\n");
-        console.log("ID %s, ambito %o", id,ambito);
         this.imprimir();
         if(lenguaje == TIPO_LENGUAJE.JAVA){
             if(ambito == null && rol == TIPO_INSTRUCCION.CLASE){
@@ -222,6 +334,16 @@ class TablaTipos{
         return resultado;
     }
 
+    buscarInstruccion(instruccion){
+        let tabla = this.tipos;
+        for(let index=tabla.length-1; index>=0; index--){
+            let tipo = tabla[index];
+            if(tipo.getInstruccion() == instruccion){
+                return tipo;
+            }
+        }
+    }
+
     buscarClase(id, paquete){
         console.log('BUSCANDO CLASES en %s, BUSCANDO: %s ................', paquete, id);
         let tabla = this.tipos;
@@ -273,8 +395,6 @@ class TablaTipos{
             }
             //Scope back
             if(ambito!=null){
-                console.log("AMBITO PYTHON");
-                console.log(JSON.stringify(ambito));
                 let newAmbito = ambito.getAmbito();
                 return this.busquedaPython(id, newAmbito, rol);
             }
