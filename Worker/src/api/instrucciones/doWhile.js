@@ -5,15 +5,24 @@ class doWhile extends Instruccion{
     constructor(instrucciones, condicion, linea, columna, lenguaje, ambito, paqueteria){
         super(linea, columna, lenguaje, ambito, paqueteria, instrucciones);
         this.condicion = condicion;
-        this.punto = "";
+        this.puntoInicial = "";
+        this.puntoFinal = "";
     }
 
     setPuntoInicial(punto){
-        this.punto = punto;
+        this.puntoInicial = punto;
     }
 
     getPuntoInicial(){
-        return this.punto;
+        return this.puntoInicial;
+    }
+
+    setPuntoFinal(punto){
+        this.puntoFinal = punto;
+    }
+
+    getPuntoFinal(){
+        return this.puntoFinal;
     }
 
     getCondicion(){

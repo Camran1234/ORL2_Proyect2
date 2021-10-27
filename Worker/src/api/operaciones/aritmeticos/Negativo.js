@@ -62,7 +62,7 @@ class Negativo extends OperacionAritmetica {
         let operadorL = null;
         let resultadoL = "";
         let operacion = "";
-
+        const Operacion = require('../Operacion');
         if(this.operadorL instanceof Operacion){
             operadorL = this.operadorL.generarExpresion(tablaTipos);
             resultadoL = this.operadorL.getNombre();

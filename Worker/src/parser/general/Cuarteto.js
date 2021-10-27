@@ -109,13 +109,13 @@ class Cuarteto {
         }else if(instruccion instanceof Imprimir){
             cuarteto += this.procesarImprimir(instruccion)
         }else if(instruccion instanceof Include){
-            cuarteto += this.procesarInclue(instruccion)
+            cuarteto += this.procesarInclude(instruccion)
         }else if(instruccion instanceof Main){
             cuarteto += this.procesarMain(instruccion)
         }else if(instruccion instanceof Metodo){
             cuarteto += this.procesarMetodo(instruccion)
         }else if(instruccion instanceof Retornar){
-            cuarteto += this.procesaRetornar(instruccion)
+            cuarteto += this.procesarRetornar(instruccion)
         }else if(instruccion instanceof Scanner){
             cuarteto += this.procesarScanner(instruccion)
         }else if(instruccion instanceof Switch){
@@ -228,7 +228,7 @@ class Cuarteto {
         let cadena="";
         if(ambito instanceof For || ambito instanceof While
             || ambito instanceof doWhile){
-                cadena += "goto "+ambito.getPuntoSalida()+";\n";
+                cadena += "goto "+ambito.getPuntoFinal()+";\n";
         }
         return cadena;
     }
@@ -465,6 +465,8 @@ class Cuarteto {
         this.tabla.addEt();
         let etFalse = this.tabla.drawEt();
         this.tabla.addEt();
+        instruccion.setPuntoInicial(etCond);
+        instruccion.setPuntoFinal(etFalse);
         let cuarteto_ = new Cuarteto(this.tabla);
         let instrucciones = instruccion.getInstrucciones();
         //Procesamos la variable inicial
@@ -711,7 +713,7 @@ class Cuarteto {
         t = funcionInstruccion.getReturnName();
         cadena += "stack[t"+t+"]" + " = "+expresionO.getNombre()+";\n";
         //terminamos el retornar
-        cadena += "goto "+instruccion.getEtSalida()+ " ; \n";
+        cadena += "goto "+funcionInstruccion.getEtSalida()+ " ; \n";
         return cadena;
     }
 

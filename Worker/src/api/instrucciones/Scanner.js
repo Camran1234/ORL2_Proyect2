@@ -3,7 +3,7 @@ var Instruccion = require('./Instruccion');
 class Scanner extends Instruccion{
 
     constructor(variable, expresion, lenguaje, linea, columna, ambito, paqueteria){
-        super(linea, columna, lenguaje, ambito, paqueteria, instrucciones);
+        super(linea, columna, lenguaje, ambito, paqueteria, null);
         this.variable = variable;
         this.expresion = expresion;
     }

@@ -397,7 +397,7 @@ const instruccionesApi = {
      * @returns 
      */
     nuevoWhile: function(expresion, instrucciones, lenguaje, linea, columna){
-        if(instrucciones == undefined){
+        if(instrucciones == null){
             instrucciones = [];
         }
         return{

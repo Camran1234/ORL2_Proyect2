@@ -281,6 +281,9 @@ class Procesador{
         console.log("CREANDO DECLARACION");
         let visibilidad = instruccion.visibilidad;
         let id = instruccion.id.valor;
+        if(id == null){
+            id = instruccion.id;
+        }
         console.log("PROCESANDO DECLARACION ID %s", JSON.stringify(id));
         let tipo = instruccion.tipo;
         let longitud = instruccion.magnitud;
@@ -619,6 +622,11 @@ class Procesador{
         console.log('PROCESANDO ASIGNACION');
         let visibilidad = TIPO_VISIBILIDAD.LOCAL;
         let id = instruccion.id.valor;
+        let flag_ = false;
+        if(id == null){
+            id = instruccion.id;
+            flag_=true;
+        }
         let magnitud = instruccion.magnitud;
         let rol = instruccion.rol;
         let operador = instruccion.operador;
@@ -664,7 +672,7 @@ class Procesador{
             }            
         }
         let newExpresion = expresion;
-        let newValor = instruccionesApi.nuevoValor(instruccion.id.valor, magnitud, tipoCreado.getTipo(), instruccion.lenguaje, instruccion.linea, instruccion.columna);
+        let newValor = instruccionesApi.nuevoValor(id, magnitud, tipoCreado.getTipo(), instruccion.lenguaje, instruccion.linea, instruccion.columna);
         if(operador == TIPO_OPERACION.IGUAL){
             newExpresion = expresion;
         }else if(operador == TIPO_OPERACION.SUMA){
@@ -913,7 +921,7 @@ class Procesador{
             let expresion = caso.condicion;
             let resultado = null;
             
-            if(caso == TIPO_SWITCH.CASE){
+            if(caso.rol == TIPO_SWITCH.CASE){
                 resultado = operador.procesarOperaciones(expresion, ambito, this.tablaTipos, this.errores);
                 
                 if((resultado instanceof tipo) == false){
@@ -926,7 +934,7 @@ class Procesador{
                     newCase.setInstrucciones(instrucciones);
                     simbolo.setCase(newCase);
                 }
-            }else if(caso == TIPO_SWITCH.DEFAULT){
+            }else if(caso.rol == TIPO_SWITCH.DEFAULT){
                 let newDefault = new Default(instruccion.linea, instruccion.columna, instruccion.lenguaje, simbolo, paqueteria, null);
                 let instrucciones = procesador_1.procesar(caso.instrucciones, paqueteria, newDefault);
                 newDefault.setInstrucciones(instrucciones);;
@@ -936,7 +944,7 @@ class Procesador{
             }
         }        
 
-        if(!returnThen){
+        if(returnThen){
             return simbolo;
         }   
         return null;
@@ -972,7 +980,7 @@ class Procesador{
             //procesando accion_post
             post = procesador_1.procesar(accionPost, paqueteria, simbolo);
         }else if(instruccion.lenguaje == TIPO_LENGUAJE.PYTHON){
-            inicio = procesador_1.procesar(valorInicial, paqueteria, simbolo);
+            //inicio = procesador_1.procesar(valorInicial, paqueteria, simbolo);
             if(Array.isArray(condicion)){
                 if(condicion.length==1){
                     //Declaracion y asignacion
@@ -987,7 +995,7 @@ class Procesador{
                         instruccion.linea, instruccion.columna);
                     let operadorR = condicion[0];
                     let auxCondicion = instruccionesApi.operacionAritmetica(operadorL, operadorR, TIPO_OPERACION.MENOR, instruccion.lenguaje, instruccion.linea, instruccion.columna);
-                    let resultado = operador.procesarOperaciones(auxCondicion, ambito, this.tablaTipos);
+                    let resultado = operador.procesarOperaciones(auxCondicion, simbolo, this.tablaTipos);
                     simbolo.setExpresionO(operador.getOperacion());
                     if((resultado instanceof Number) == false){
                         this.errores.push(new ErrorSemantico("La condicion no es un numero", "range(", instruccion.linea, instruccion.columna));
@@ -1007,7 +1015,7 @@ class Procesador{
                         instruccion.linea, instruccion.columna);
                     let operadorR = condicion[1];
                     let auxCondicion = instruccionesApi.operacionAritmetica(operadorL, operadorR, TIPO_OPERACION.MENOR, instruccion.lenguaje, instruccion.linea, instruccion.columna);                        
-                    let resultado = operador.procesarOperaciones(auxCondicion, ambito, this.tablaTipos, this.errores);
+                    let resultado = operador.procesarOperaciones(auxCondicion, simbolo, this.tablaTipos, this.errores);
                     simbolo.setExpresionO(operador.getOperacion());
                     if((resultado instanceof Number) == false){
                         this.errores.push(new ErrorSemantico("La condicion no es un numero", "range(", instruccion.linea, instruccion.columna));
@@ -1027,7 +1035,7 @@ class Procesador{
                         instruccion.linea, instruccion.columna);
                     let operadorR = condicion[1];
                     let auxCondicion = instruccionesApi.operacionAritmetica(operadorL, operadorR, TIPO_OPERACION.MENOR, instruccion.lenguaje, instruccion.linea, instruccion.columna);                        
-                    let resultado = operador.procesarOperaciones(auxCondicion, ambito, this.tablaTipos, this.errores);
+                    let resultado = operador.procesarOperaciones(auxCondicion, simbolo, this.tablaTipos, this.errores);
                     simbolo.setExpresionO(operador.getOperacion());
                     if((resultado instanceof Number) == false){
                         this.errores.push(new ErrorSemantico("La condicion no es un numero", "range(", instruccion.linea, instruccion.columna));
@@ -1176,12 +1184,13 @@ class Procesador{
                     console.log('IAJFWOIJFOAIWJFOIAWJIOFWAJOIFAJW[FJWAIFKOPAWKK');
                     cadenas.push(estructura);
                 }
-                if(arreglo.length == parametros.length-1){
+                if(arreglo.length == parametros.length-1
+                    || arreglo.length == 0){
                     simbolo.setCadenas(cadenas);
                     for(let index=0; index<parametros.length; index++){
                         let resultado = operador.procesarOperaciones(parametros[index], ambito, this.tablaTipos, this.errores)
                         simbolo.addParamsO(operador.getOperacion());
-                        if(index!=0){
+                        if(index!=0 && arreglo.length != 0){
                             if((resultado instanceof arreglo[index-1])==false){
                                 this.errores.push(new ErrorSemantico("Se esperaba que el parametro fuera de tipo "+this.checkTipo(arreglo[index-1]), "printf", instruccion.linea, instruccion.columna));
                                 return null;

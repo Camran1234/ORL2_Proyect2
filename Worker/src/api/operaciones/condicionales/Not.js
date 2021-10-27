@@ -62,7 +62,7 @@ class Negativo extends OperacionCondicional {
         let operadorL = null;
         let resultadoL = "";
         let operacion = "";
-
+        const Operacion = require('../Operacion');
         if(this.operadorL instanceof Operacion){
             operadorL = this.operadorL.generarExpresion(tablaTipos);
             resultadoL = this.operadorL.getNombre();
@@ -85,15 +85,15 @@ class Negativo extends OperacionCondicional {
         tablaTipos.addEt();
 
         cadena += "if "+resultadoL+" > 0 goto "+etVer+";\n";
-        cadena += "goto "+etFalsa;
+        cadena += "goto "+etFalsa+";\n";
         
-        cadena += etEntrada+":\n"; // verdadero
-        cadena += tName+ " = 0" ;
-        cadena += "goto "+etSalida;
+        cadena += etVer+":\n"; // verdadero
+        cadena += tName+ " = 0 \n" ;
+        cadena += "goto "+etSalida+";\n";
 
         cadena += etFalsa+":\n";
-        cadena += tName + " = 1";
-        cadena += "goto "+etSalida;
+        cadena += tName + " = 1\n";
+        cadena += "goto "+etSalida+";\n";
 
         cadena += etSalida+":\n";
 

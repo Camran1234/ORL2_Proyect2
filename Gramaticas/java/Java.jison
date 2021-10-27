@@ -854,13 +854,12 @@ cases_stmt
     }
     | CASE error cases_stmt {addSyntaxError("Se esperaba una expresion", $2, linea(this._$.first_line), columna(this._$.first_column));$$=$3;}
     | CASE expresion error cases_stmt  {addSyntaxError("Se esperaba \':\'", $3, linea(this._$.first_line), columna(this._$.first_column));$$=$4;}
-    | DEFAULT SEMI_COLON default_instructions CLOSE_CURLY {
-        var arreglo = [];
-        arreglo.push(instruccionesApi.nuevoDefault(reversaArreglo($3), lenguaje, linea(this._$.first_line), columna(this._$.first_column)));
-        $$=arreglo;
+    | DEFAULT SEMI_COLON default_instructions {
+        var defaultArray = [];
+        defaultArray.push(instruccionesApi.nuevoDefault(reversaArreglo($3), lenguaje, linea(this._$.first_line), columna(this._$.first_column)));
+        $$=defaultArray;
     }
     | DEFAULT error {addSyntaxError("Se esperaba \':\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
-    | DEFAULT SEMI_COLON default_instructions error {addSyntaxError("Se esperaba \'}\'", $4, linea(this._$.first_line), columna(this._$.first_column));}
     | error cases_stmt {addSyntaxError("Se esperaba un caso o \'}\'", $1, linea(this._$.first_line), columna(this._$.first_column));$$=$2;}
     | CLOSE_CURLY {$$=[];}
     ;
@@ -900,16 +899,16 @@ declaraciones_post_re
         $$=$3;
         }
     |error declaraciones_post_re {addSyntaxError("Se esperaba \';\'", $1, linea(this._$.first_line), columna(this._$.first_column));$$=$2;}
-    | COLON {$$=[];}
+    | CLOSE_PARENTHESIS {$$=[];}
     ;
 
 declaracion_for
     : data_type this_stmt asignacion declaracion_for_re{
-        for(var index=0; index<$2.length; index++){
-                $2[index].id = $1;
+        for(var index=0; index<$3.length; index++){
+                $3[index].id = $2;
             }
-        $2.push(instruccionesApi.nuevaDeclaracion(TIPO_VISIBILIDAD.LOCAL, $2,[], $1, lenguaje, linea(this._$.first_line), columna(this._$.first_column)));            
-        $$ = reversaArreglo($2);
+        $4.push(instruccionesApi.nuevaDeclaracion(TIPO_VISIBILIDAD.LOCAL, $2,[], $1, lenguaje, linea(this._$.first_line), columna(this._$.first_column)));            
+        $$ = reversaArreglo($4);
     }
     | data_type error {addSyntaxError("Se esperaba un identificador", $2, linea(this._$.first_line), columna(this._$.first_column));}
     | this_asignacion declaracion_for_re {$2.push($1); $$=reversaArreglo($2);}
@@ -952,8 +951,7 @@ for_condition
     ;
 
 for_asignacion
-    : declaraciones_post CLOSE_PARENTHESIS {$$=$1;}
-    | declaraciones_post error {addSyntaxError("Se esperaba \'(\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
+    : declaraciones_post  {$$=$1;}
     ;
 
 

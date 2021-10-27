@@ -110,34 +110,47 @@ class Operador{
         let resultadoL=null;
         let resultadoR = null;
         
-        if(operadorL.rol == TIPO_EXPRESION.OPERACION && operadorR.rol == TIPO_EXPRESION.OPERACION){
-            let newOperadorL = new Operador();
-            let newOperadorR = new Operador();
-            resultadoL = newOperadorL.procesarOperacion(operadorL, ambito, tablaTipos, errores);
-            resultadoR = newOperadorR.procesarOperacion(operadorR, ambito, tablaTipos, errores);
-            //Operar siemre al final
-            this.operacion = this.crearTipo(operacion.operador, newOperadorL.getOperacion(), newOperadorR.getOperacion(), operacion.linea, operacion.columna, operacion.lenguaje);
-        }else if(operadorL.rol == TIPO_EXPRESION.OPERACION && operadorR.rol == TIPO_EXPRESION.VALOR){
-            let newOperadorL = new Operador();
-            resultadoL = newOperadorL.procesarOperacion(operadorL, ambito, tablaTipos, errores);
-            resultadoR = this.procesarValor(operadorR, ambito, tablaTipos, errores, lenguaje);
-            this.operacion = this.crearTipo(operacion.operador, newOperadorL.getOperacion(), resultadoR, operacion.linea, operacion.columna, operacion.lenguaje);
-        }else if(operadorL.rol == TIPO_EXPRESION.VALOR && operadorR.rol == TIPO_EXPRESION.OPERACION){
-            let newOperadorR = new Operador();
-            resultadoL = this.procesarValor(operadorL, ambito, tablaTipos, errores, lenguaje);
-            resultadoR = newOperadorR.procesarOperacion(operadorR, ambito, tablaTipos, errores);
-            //operando
-            this.operacion = this.crearTipo(operacion.operador, resultadoL,newOperadorR.getOperacion(), operacion.linea, operacion.columna, operacion.lenguaje );
-        }else if(operadorL.rol ==TIPO_EXPRESION.VALOR && operadorR.rol == TIPO_EXPRESION.VALOR){
-            resultadoL = this.procesarValor(operadorL, ambito, tablaTipos, errores, lenguaje);
-            resultadoR = this.procesarValor(operadorR, ambito, tablaTipos, errores, lenguaje);
-            this.operacion = this.crearTipo(operacion.operador, resultadoL, resultadoR, operacion.linea, operacion.columna);
+        if(operadorR!=null){
+            if(operadorL.rol == TIPO_EXPRESION.OPERACION && operadorR.rol == TIPO_EXPRESION.OPERACION){
+                let newOperadorL = new Operador();
+                let newOperadorR = new Operador();
+                resultadoL = newOperadorL.procesarOperacion(operadorL, ambito, tablaTipos, errores);
+                resultadoR = newOperadorR.procesarOperacion(operadorR, ambito, tablaTipos, errores);
+                //Operar siemre al final
+                this.operacion = this.crearTipo(operacion.operador, newOperadorL.getOperacion(), newOperadorR.getOperacion(), operacion.linea, operacion.columna, operacion.lenguaje);
+            }else if(operadorL.rol == TIPO_EXPRESION.OPERACION && operadorR.rol == TIPO_EXPRESION.VALOR){
+                let newOperadorL = new Operador();
+                resultadoL = newOperadorL.procesarOperacion(operadorL, ambito, tablaTipos, errores);
+                resultadoR = this.procesarValor(operadorR, ambito, tablaTipos, errores, lenguaje);
+                this.operacion = this.crearTipo(operacion.operador, newOperadorL.getOperacion(), resultadoR, operacion.linea, operacion.columna, operacion.lenguaje);
+            }else if(operadorL.rol == TIPO_EXPRESION.VALOR && operadorR.rol == TIPO_EXPRESION.OPERACION){
+                let newOperadorR = new Operador();
+                resultadoL = this.procesarValor(operadorL, ambito, tablaTipos, errores, lenguaje);
+                resultadoR = newOperadorR.procesarOperacion(operadorR, ambito, tablaTipos, errores);
+                //operando
+                this.operacion = this.crearTipo(operacion.operador, resultadoL,newOperadorR.getOperacion(), operacion.linea, operacion.columna, operacion.lenguaje );
+            }else if(operadorL.rol ==TIPO_EXPRESION.VALOR && operadorR.rol == TIPO_EXPRESION.VALOR){
+                resultadoL = this.procesarValor(operadorL, ambito, tablaTipos, errores, lenguaje);
+                resultadoR = this.procesarValor(operadorR, ambito, tablaTipos, errores, lenguaje);
+                this.operacion = this.crearTipo(operacion.operador, resultadoL, resultadoR, operacion.linea, operacion.columna);
+            }
+            if(resultadoL == null){
+                return null;
+            }else if(resultadoR == null){
+                return null;
+            }
+        }else{
+            if(operadorL.rol == TIPO_EXPRESION.OPERACION){
+                let newOperadorL = new Operador();
+                resultadoL = newOperadorL.procesarOperacion(operadorL, ambito, tablaTipos, errores);
+                this.operacion = this.crearTipo(operacion.operador, newOperadorL.getOperacion(), null, operacion.linea, operacion.columna, operacion.lenguaje);
+            }else if(operadorL.rol == TIPO_EXPRESION.VALOR){
+                resultadoL = this.procesarValor(operadorL, ambito, tablaTipos, errores, lenguaje);
+                this.operacion = this.crearTipo(operacion.operador, resultadoL, null, operacion.linea, operacion.columna);
+            }
         }
-        if(resultadoL == null){
-            return null;
-        }else if(resultadoR == null){
-            return null;
-        }
+
+        
         let operador = this.crearTipo(operacion.operador, resultadoL, resultadoR, operacion.linea, operacion.columna, operacion.lenguaje);
         if(operador == null){
             return null;

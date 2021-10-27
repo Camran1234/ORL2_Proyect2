@@ -63,6 +63,7 @@ class And extends OperacionCondicional {
         let resultadoL = "";
         let resultadoR = "";
         let operacion = "";
+        const Operacion = require('../Operacion');
         if(this.operadorL instanceof Operacion && this.operadorR instanceof Operacion){
             operadorL = this.operadorL.generarExpresion( tablaTipos, instruccion);
             resultadoL = this.operadorL.getNombre();
@@ -83,7 +84,7 @@ class And extends OperacionCondicional {
             operadorR = this.operadorR.generarExpresion( tablaTipos, instruccion);
             cadena += operadorR;
             resultadoL = this.operadorL.parse(this.operadorR.getTipo(), tablaTipos);
-            resultadoR = this.operadorL.getNombre();
+            resultadoR = this.operadorR.getNombre();
         }else if(!(this.operadorL instanceof Operacion) && !(this.operadorR instanceof Operacion)){
             operadorL = this.operadorL;// Valor comun puede ser una instancia BOoleano, Entero, etc
             operadorR = this.operadorR;//Estos solo son valores comunes
