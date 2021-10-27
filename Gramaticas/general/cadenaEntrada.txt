@@ -1,0 +1,91 @@
+paquete com.paquete1 //Igual al de paquetes en java
+%%PY
+def funcion(&x,y):
+    z = 2
+    x = 3
+    nuevaVariable = input()
+    
+    for m in range(7,4):
+        print("NUEVO")
+    
+    if x == z :
+        print("ASIDOJAOWJDOIAWJDOIAJWID")
+        println("WOLLOLOLOLOLO", x, y)
+%%JAVA
+public class Calculadora{
+    public int valor1 = 0;
+    private int valor2 = 0;
+    
+    public Calculadora(){
+    
+    }
+    
+    public int proceso2(int x, int &y){
+        println("Algo");
+        this.valor1 = 45;
+        if(y==0){
+            return y;
+        }
+        for(int index=0; index<4; index++){
+            print("ASD en PROCESO2");
+        }
+        
+        switch(y){
+            case 4:
+                print("CASO EN PROCESO2","CASO 4");
+                break;
+                
+            case x:
+                print ("CASO EN PROCESO2", "CASO X");
+                break;
+            default:
+                println ("CASO DEFAULT");
+        }
+        
+        return x;
+    }
+}
+    
+%%PROGRAMA
+#include "PY"
+#include "JAVA"
+
+
+
+void main(){
+    
+    JAVA.Calculadora calculadora();
+    JAVA.calculadora.proceso2(4,4);
+    PY.funcion(4,4);
+    float x = 2+4*8+9/5*4%3;
+    getch();
+    scanf("ASD", &x);
+    for(int index=0; index<4; index++){
+        printf("SOMETHING", index);
+        continue;
+        break;
+    }
+    
+    do{
+        printf("ASD");
+    }while(x>4);
+    
+    int y = 0*-4;
+    while(x<4 && !(y==3)){
+        printf("NUEVO");
+    }
+    
+    switch(x){
+        case 1+3:
+            printf("CASO 1");
+            break;
+        case 2:
+            printf("CASO 2");
+            break;
+        default:
+            printf("DEFAULT IN C");
+    
+    }
+    
+    
+}

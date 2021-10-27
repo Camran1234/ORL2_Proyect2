@@ -1,0 +1,25 @@
+paquete com.paquete1
+%%PY
+    Funciones y Procedimientos en Python
+        
+%%JAVA
+    public class HelloWorld {
+
+    }
+
+    public class ASD extends NEWVALUE {
+
+    }
+%%PROGRAMA
+    #include "PY"
+    #include "PY.dir_a_paquete.archivo"
+    #include "JAVA.*" 
+    #include "JAVA.nombre"
+    #include "JAVA.dir_a_paquete.nombre"
+    #include "JAVA.dir_a_paquete.*" 
+    const int x = 2;
+    
+    void main()
+    {
+        
+    }

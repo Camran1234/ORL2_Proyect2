@@ -1,0 +1,58 @@
+
+//Clase nuevniaowo
+public class prueba {
+
+    public int calcularAlgo(int x, float y){
+        print("Valor Nuevo: ", x); //Esto es un comentario
+        println("Valor xD: ", Y);
+        for(int index=0; index<x; index++){
+            if(index==0){
+
+            }else if(index == 1){
+                continue;
+            }else{
+                break;
+            }
+        }   
+        continue;
+        while(true){
+            int valor = 2;
+            switch(valor){
+                case 1:
+                    println("Caso 1");
+                break;
+                case 2:
+                    println("Caso 2");
+                break;
+                default:
+                    println("Default");
+            }
+            break;
+        }
+
+        do{
+            println("Imprimir", x);
+            x++;
+            switch(x){
+                case 1:
+                break;
+                case 'a':
+                break;
+                case "nuevo":
+                break;
+                case "GENERAL":
+                break;
+                //Error sintactico
+                println("Nuevo");
+
+            }
+
+        }while(x<2);
+    }
+}
+
+public class clase{
+    public void metodo(){
+        char x = 'aa';
+    }
+}
