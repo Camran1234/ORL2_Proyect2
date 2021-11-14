@@ -36,6 +36,7 @@ const Caracter = require('../api/operadores/Caracter');
 const Cadena = require('../api/operadores/Cadena');
 const Booleano = require('../api/operadores/Booleano');
 const Number = require('../api/operadores/Number');
+const Any = require('../api/operadores/Any');
 const Objeto = require('../api/operadores/Object');
 
 const Clean = require('../api/instrucciones/Clean');
@@ -265,7 +266,7 @@ class Procesador{
             this.tablaTipos.agregarTipo(tipo);
             return tipo.getInstruccion();
         }
-        console.log("No se agrego ningun tipo nuevo");
+        
         return null;
     }
 
@@ -278,13 +279,13 @@ class Procesador{
     }
 
     procesarDeclaracion(instruccion, ambito, paqueteria){
-        console.log("CREANDO DECLARACION");
+        
         let visibilidad = instruccion.visibilidad;
         let id = instruccion.id.valor;
         if(id == null){
             id = instruccion.id;
         }
-        console.log("PROCESANDO DECLARACION ID %s", JSON.stringify(id));
+        
         let tipo = instruccion.tipo;
         let longitud = instruccion.magnitud;
         let rol = instruccion.rol;
@@ -312,9 +313,9 @@ class Procesador{
         let newTipo = this.tablaTipos.crear(visibilidad, id, tipo, ambito, longitud, esArreglo, rol, paquete, simbolo, lenguaje);
         let resultado = this.tablaTipos.buscar(newTipo);
         if(resultado==null){
-            console.log("VARIABLE %s NO ENCONTRADA", id);
+            //console.log("VARIABLE %s NO ENCONTRADA", id);
         }else{
-            console.log("RESULTADO = ID: %s, ROL %s, Paquete %s ", resultado.getId(), resultado.getRol(), resultado.getPaquete());
+            //console.log("RESULTADO = ID: %s, ROL %s, Paquete %s ", resultado.getId(), resultado.getRol(), resultado.getPaquete());
 
         }
         return this.agregar(resultado, newTipo, instruccion);
@@ -328,7 +329,7 @@ class Procesador{
             //op something
             //set instrucciones
         }else if(cadena.length == 1){
-            console.log("AQUI");
+            
             if(cadena[0] == 'PY'){
                 this.accesPython = true;
             }else if(cadena[0] == 'JAVA'){
@@ -388,7 +389,6 @@ class Procesador{
         let lenguaje = instruccion.lenguaje;
         let simbolo = new Function(visibilidad, id, tipo, null, longitud, lenguaje, instruccion.linea, instruccion.columna, ambito, paqueteria);
         let params = this.declaracionParametros(instruccion, simbolo);
-        console.log("EJECUTANDO PARAMETROS FUNCION......");
         let procesador_1 = new Procesador(this.tablaTipos, this.errores);
         procesador_1.setAccesJava(this.accesJava);
         procesador_1.setAccesPython(this.accesPython);
@@ -397,14 +397,25 @@ class Procesador{
         simbolo.setParametrosO(paramsO);//SOn declaraciones
         let instrucciones = procesador_1.procesar(instruccion.instrucciones, paqueteria, simbolo);
         simbolo.setInstrucciones(instrucciones);
-        if(tipo != TIPO_DATO.VOID && tipo!=TIPO_DATO.ANY){
+        /*if(tipo != TIPO_DATO.VOID && tipo!=TIPO_DATO.ANY){
             //checar returns
-            
-        }
+        }*/
         let newTipo = this.tablaTipos.crear(visibilidad, id, tipo, ambito, longitud, esArreglo, rol, paquete, simbolo, lenguaje);
         let resultado = this.tablaTipos.buscarFuncion(id, ambito, rol, longitud);
             
         return this.agregar(resultado, newTipo, instruccion);
+    }
+
+    parserDato_Valor(dato){
+        if(dato == TIPO_DATO.INT){
+            return TIPO_VALOR.ENTERO;
+        }else if(dato == TIPO_DATO.CHAR){
+            return TIPO_VALOR.CARACTER;
+        }else if(dato == TIPO_DATO.FLOAT){
+            return TIPO_VALOR.DECIMAL;
+        }else{
+            return TIPO_VALOR.VOID;
+        }
     }
 
     procesarMain(instruccion, ambito,paqueteria){
@@ -412,16 +423,17 @@ class Procesador{
             this.errores.push(new ErrorSemantico("Solo puede existir un main por archivo","main()", instruccion.linea, instruccion.columna));
             return null;
         }
-        console.log("EJECUTANDO MAIN");
+
         let visibilidad = TIPO_VISIBILIDAD.PUBLIC;
         let id = "main";
-        let tipo = TIPO_VALOR.VOID;
+        let tipo = this.parserDato_Valor(instruccion.tipo);
         let longitud = 1;
         let esArreglo = false;
         let rol = instruccion.rol;
         let paquete = paqueteria;
         let lenguaje = instruccion.lenguaje;
-        let simbolo = new Main(instruccion.linea, instruccion.columna, instruccion.lenguaje, ambito, paqueteria, null);
+        let simbolo = new Main(instruccion.linea, instruccion.columna,tipo, instruccion.lenguaje, ambito, paqueteria, null);
+        
         let newTipo = this.tablaTipos.crear(visibilidad, id, tipo, ambito, longitud, esArreglo, rol, paquete, simbolo, lenguaje);
         let resultado = this.tablaTipos.buscar(newTipo);
         let finalResult = this.agregar(resultado, newTipo, instruccion);
@@ -433,7 +445,6 @@ class Procesador{
         procesador_1.setAccesPython(this.accesPython);
         let instrucciones = procesador_1.procesar(instruccion.instrucciones, paqueteria, simbolo);
         simbolo.setInstrucciones(instrucciones);
-        console.log("FIN MAIN");
         return finalResult;
     }
 
@@ -456,7 +467,6 @@ class Procesador{
         }
         let simbolo = new Constructor(id, visibilidad, null, longitud, instruccion.linea, instruccion.columna, lenguaje, ambito, paqueteria);
         let params = this.declaracionParametros(instruccion, simbolo);
-        console.log("EJECUTANDO PARAMETROS CONSTRUCTOR...........");
         let procesador_1 = new Procesador(this.tablaTipos, this.errores);
         procesador_1.setAccesJava(this.accesJava);
         procesador_1.setAccesPython(this.accesPython);
@@ -511,7 +521,6 @@ class Procesador{
         if(tipo!=null){
             let aux = tipo.split(".");
             let nombreClase = aux[1];
-            console.error(nombreClase);
             clase = this.tablaTipos.buscarClase(nombreClase, paqueteria);
             if(clase == null){
                 clase = this.tablaTipos.buscarClase_C(nombreClase);
@@ -619,7 +628,7 @@ class Procesador{
     }
 
     procesarAsignacion(instruccion, ambito, paqueteria){
-        console.log('PROCESANDO ASIGNACION');
+
         let visibilidad = TIPO_VISIBILIDAD.LOCAL;
         let id = instruccion.id.valor;
         let flag_ = false;
@@ -642,11 +651,11 @@ class Procesador{
         }
         let theAmbit_ = ambito;
         if(instruccion.id.tipo!=null){
-            console.log("DENTRO AMBITO");
+            
             let asdTipo = instruccion.id.tipo;
             if(asdTipo == TIPO_VALOR.THIS_IDENTIFICADOR ){
                 theAmbit_ = ambito.ambitoEnClase();
-                console.log("THIS_AMBITO");
+                
             }
         }
         
@@ -699,7 +708,7 @@ class Procesador{
         
         if(newTipo == null){
             //Agregamos el nuevo tipo
-            console.log("Procesando Tipo nuevo ANY");
+            
             if(expresion.tipo == TIPO_VALOR.INPUT){
                 /*nothing*/ 
                 let expresion_ = new Entero("scan()", instruccion.linea, instruccion.columna, instruccion.lenguaje);
@@ -715,12 +724,12 @@ class Procesador{
                 let resultado = operador_.procesarOperaciones(expresion, ambito, this.tablaTipos, this.errores);
                 let tipo = operador_.convertirObjeto_Tipo(resultado);
                 if(tipo!=null){
-                    console.log("ES ");
+                    
                     tipoCreado.setTipo(tipo);                    
                 }
                 try {
                     this.tablaTipos.agregarTipo(tipoCreado);
-                    console.log("FIN ASIGNACION");
+                    
                     simbolo.setExpresionO(operador_.getOperacion());
                     
                     return simbolo;    
@@ -733,7 +742,8 @@ class Procesador{
         }else{
             if(expresion.tipo == TIPO_VALOR.INPUT_INT){
                 if(newTipo.getTipo() == TIPO_VALOR.ENTERO
-                || newTipo.getTipo() == TIPO_VALOR.DECIMAL){
+                || newTipo.getTipo() == TIPO_VALOR.DECIMAL
+                || newTipo.getTipo() == TIPO_VALOR.ANY){
                     let expresion_ = new Entero("scan()", instruccion.linea, instruccion.columna, instruccion.lenguaje);
                     expresion_.setInstruccion(instruccion);
                     expresion_.setEstado(0);
@@ -742,13 +752,14 @@ class Procesador{
                     simbolo.setExpresionO(expresion_);
                     return simbolo;
                 }else{
-                    this.errores.push(new ErrorSemantico("Los tipos no son compatibles ", id, instruccion.linea, instruccion.columna));
+                    this.errores.push(new ErrorSemantico("Los tipos no son compatibles, esperado"+expresion.tipo+", encontrado: "+newTipo.getTipo(), id, instruccion.linea, instruccion.columna));
                     return null;
                 }
             }else if(expresion.tipo == TIPO_VALOR.INPUT_CHAR){
                 if(newTipo.getTipo() == TIPO_VALOR.ENTERO
                 || newTipo.getTipo() == TIPO_VALOR.DECIMAL
-                || newTipo.getTipo() == TIPO_VALOR.CARACTER ){
+                || newTipo.getTipo() == TIPO_VALOR.CARACTER
+                || newTipo.getTipo() == TIPO_VALOR.ANY ){
                     let expresion_ = new Caracter("scan()", instruccion.linea, instruccion.columna, instruccion.lenguaje);
                     expresion_.setInstruccion(instruccion);
                     expresion_.setEstado(0);
@@ -757,11 +768,12 @@ class Procesador{
                     simbolo.setExpresionO(expresion_);
                     return simbolo;
                 }else{
-                    this.errores.push(new ErrorSemantico("Los tipos no son compatibles", id, instruccion.linea, instruccion.columna));
+                    this.errores.push(new ErrorSemantico("Los tipos no son compatibles, esperado"+expresion.tipo+", encontrado: "+newTipo.getTipo(), id, instruccion.linea, instruccion.columna));
                     return null;
                 }
             }else if(expresion.tipo == TIPO_VALOR.INPUT_FLOAT){
-                if(newTipo.getTipo() == TIPO_VALOR.DECIMAL){
+                if(newTipo.getTipo() == TIPO_VALOR.DECIMAL
+                || newTipo.getTipo() == TIPO_VALOR.ANY){
                     let expresion_ = new Decimal("scan()", instruccion.linea, instruccion.columna, instruccion.lenguaje);
                     expresion_.setInstruccion(instruccion);
                     expresion_.setEstado(0);
@@ -770,7 +782,7 @@ class Procesador{
                     simbolo.setExpresionO(expresion_);
                     return simbolo;
                 }else{
-                    this.errores.push(new ErrorSemantico("Los tipos no son compatibles", id, instruccion.linea, instruccion.columna));
+                    this.errores.push(new ErrorSemantico("Los tipos no son compatibles, esperado"+expresion.tipo+", encontrado: "+newTipo.getTipo(), id, instruccion.linea, instruccion.columna));
                     return null;
                 }
             }else{
@@ -779,43 +791,43 @@ class Procesador{
                 let helper_ = operador_.convertirObjeto_Tipo(resultado);
                 if(helper_ == newTipo.getTipo()
                 || newTipo.getTipo() == TIPO_VALOR.ANY) {
-                    console.log("FIN ASIGNACION");
+                    
                     if(newTipo.getTipo() == TIPO_VALOR.ANY){
                         newTipo.setTipo(helper_);
                     }
                     return simbolo;
                 }
                 if(newTipo.getTipo() == TIPO_VALOR.ENTERO || newTipo.getTipo() == TIPO_DATO.INT){
-                    if((resultado instanceof Entero)==false){
-                        this.errores.push(new ErrorSemantico("Los tipos no son compatibles", id, instruccion.linea, instruccion.columna));
+                    if((resultado instanceof Entero || resultado instanceof Any)==false){
+                        this.errores.push(new ErrorSemantico("Los tipos no son compatibles, esperado"+expresion.tipo+", encontrado: "+newTipo.getTipo(), id, instruccion.linea, instruccion.columna));
                         return null;
                     }
                 }else if(newTipo.getTipo() == TIPO_VALOR.DECIMAL || newTipo.getTipo() == TIPO_DATO.FLOAT){
-                    if((resultado instanceof Decimal)==false){
-                        this.errores.push(new ErrorSemantico("Los tipos no son compatibles", id, instruccion.linea, instruccion.columna));
+                    if((resultado instanceof Decimal|| resultado instanceof Any)==false){
+                        this.errores.push(new ErrorSemantico("Los tipos no son compatibles, esperado"+expresion.tipo+", encontrado: "+newTipo.getTipo(), id, instruccion.linea, instruccion.columna));
                         return null;
                     }
                 }else if(newTipo.getTipo() == TIPO_VALOR.CARACTER || newTipo.getTipo() == TIPO_DATO.CHAR){
-                    if((resultado instanceof Caracter)==false){
-                        this.errores.push(new ErrorSemantico("Los tipos no son compatibles", id, instruccion.linea, instruccion.columna));
+                    if((resultado instanceof Caracter || resultado instanceof Any)==false){
+                        this.errores.push(new ErrorSemantico("Los tipos no son compatibles, esperado"+expresion.tipo+", encontrado: "+newTipo.getTipo(), id, instruccion.linea, instruccion.columna));
                         return null;
                     }
                 }else if(newTipo.getTipo() == TIPO_VALOR.CADENA || newTipo.getTipo() == TIPO_DATO.STRING){
                     if((resultado instanceof Cadena)==false){
-                        this.errores.push(new ErrorSemantico("Los tipos no son compatibles", id, instruccion.linea, instruccion.columna));
+                        this.errores.push(new ErrorSemantico("Los tipos no son compatibles, esperado"+expresion.tipo+", encontrado: "+newTipo.getTipo(), id, instruccion.linea, instruccion.columna));
                         return null;
                     }
                 }else if(newTipo.getTipo() == TIPO_VALOR.BOOLEAN || newTipo.getTipo() == TIPO_DATO.BOOLEAN){
-                    if((resultado instanceof Booleano)==false){
-                        this.errores.push(new ErrorSemantico("Los tipos no son compatibles", id, instruccion.linea, instruccion.columna));
+                    if((resultado instanceof Booleano || resultado instanceof Any)==false){
+                        this.errores.push(new ErrorSemantico("Los tipos no son compatibles, esperado"+expresion.tipo+", encontrado: "+newTipo.getTipo(), id, instruccion.linea, instruccion.columna));
                         return null;
                     }
                 }
-                console.log("FIN ASIGNACION");
+                
                 return simbolo;
             }
         }
-        console.log("FIN ASIGNACION");
+        
         return simbolo;
     }
 
@@ -951,7 +963,7 @@ class Procesador{
     }
 
     procesarFor(instruccion, ambito, paqueteria){
-        console.log('PROCESANDO FOR');
+        
         let valorInicial = instruccion.valor_inicial;
         let condicion = instruccion.condicion;
         let accionPost = instruccion.accion_post;
@@ -968,7 +980,7 @@ class Procesador{
             || instruccion.lenguaje == TIPO_LENGUAJE.C){
             //procesando condicion
             //procesando valor inicial
-            console.log("VALORES INICIALES FOR");
+            
 
             inicio = procesador_1.procesar(valorInicial, paqueteria, simbolo);//Son instrucciones
             let resultado = operador.procesarOperaciones(condicion, simbolo, this.tablaTipos, this.errores);
@@ -1058,7 +1070,7 @@ class Procesador{
         simbolo.setAccionPost(post);        
         let instrucciones = procesador_1.procesar(instruccion.instrucciones, paqueteria, simbolo);
         simbolo.setInstrucciones(instrucciones);
-        console.log("FIN FOR");
+        
         return simbolo;
     }
 
@@ -1181,7 +1193,7 @@ class Procesador{
                     }
                 }
                 if((estructura != "")){
-                    console.log('IAJFWOIJFOAIWJFOIAWJIOFWAJOIFAJW[FJWAIFKOPAWKK');
+                    
                     cadenas.push(estructura);
                 }
                 if(arreglo.length == parametros.length-1
@@ -1238,7 +1250,7 @@ class Procesador{
         }else if(tipo == TIPO_DATO.BOOLEAN){
             return Booleano;
         }else if(tipo == TIPO_DATO.ANY){
-            return Objeto;
+            return Any;
         }
         return null;
     }
@@ -1264,7 +1276,7 @@ class Procesador{
     }
 
     procesarReturn(instruccion, ambito, paqueteria){
-        let ambitoFuncion = ambito.ambitoEnFuncion();
+        let ambitoFuncion = ambito.ambitoEnFuncion() || ambito.ambitoEnMain();
         let expresion = instruccion.expresion;
         //Chequeo de tipo de retorno
         let expresionO = null;
@@ -1280,7 +1292,7 @@ class Procesador{
                     this.errores.push(new ErrorSemantico("La funcion es void no puede devolver parametros", "return" , instruccion.linea, instruccion.columna));
                     return null;
                 }
-                if((resultado instanceof tipoFuncion) == false){
+                if((resultado instanceof tipoFuncion || tipoFuncion == Any) == false){
                     this.errores.push(new ErrorSemantico("La funcion no es compatible con el return", "return", instruccion.linea, instruccion.columna));
                     return null;
                 }
@@ -1317,8 +1329,13 @@ class Procesador{
             if(cadena[0] == "PY"){
                 let identificadorMetodo = cadena[1];
                 funcion = this.tablaTipos.buscarFuncion(identificadorMetodo, null, TIPO_INSTRUCCION.FUNCION, resultadoParametros);
-                simbolo.setFuncionReferencia(funcion.getInstruccion());
-                simbolo.setId(identificadorMetodo);
+                if(funcion!=null){
+                    simbolo.setFuncionReferencia(funcion.getInstruccion());
+                    simbolo.setId(identificadorMetodo);
+                }else{
+                    this.errores.push(new ErrorSemantico("La funcion no se ha declarado", identificadorMetodo, instruccion.linea, instruccion.columna));
+                }
+                return null;
             }else if(cadena[0] == "JAVA"){
                 let identificadorVariable = cadena[1];
                 let identificadorMetodo = cadena[2];
@@ -1334,8 +1351,10 @@ class Procesador{
                                 funcion = this.tablaTipos.buscarFuncion(identificadorMetodo, extension.getInstruccion(), TIPO_INSTRUCCION.FUNCION, resultadoParametros);
                             }
                         }
-                        simbolo.setFuncionReferencia(funcion.getInstruccion());                        
-                        simbolo.setId(identificadorMetodo);
+                        if(funcion!=null){
+                            simbolo.setFuncionReferencia(funcion.getInstruccion());                        
+                            simbolo.setId(identificadorMetodo);
+                        }
                     }
                 }else{
                     this.errores.push(new ErrorSemantico("No se encontro ninguna variable en el contexto acutal", identificadorVariable, instruccion.linea, instruccion.columna));
@@ -1350,7 +1369,6 @@ class Procesador{
                     funcion = this.tablaTipos.buscarFuncion(identificadorMetodo, extension.getInstruccion(), TIPO_INSTRUCCION.FUNCION, resultadoParametros);
                 }
             }
-            simbolo.setFuncionReferencia(funcion.getInstruccion());
         }
         if(funcion==null){
             this.errores.push(new ErrorSemantico("No se encontro ningun metodo", id, instruccion.linea, instruccion.columna));

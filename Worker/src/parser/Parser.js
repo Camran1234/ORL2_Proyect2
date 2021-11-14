@@ -1,7 +1,7 @@
 
 class Parser{
     constructor(tablaTipos, estado){
-        console.log("limpieza");
+        
         this.resultados = [];
         this.erroresLexicos = [];
         this.erroresSintacticos = [];
@@ -75,25 +75,22 @@ class Parser{
     }
 
     procesarAST(astC, astJava, astPython, paqueteria){
-        if(!this.haveErrores()){
-            let Procesador = require('./Procesador');
-            let procesador = new Procesador(this.tablaTipos, this.erroresSemanticos);
-            let helper = null;
-            if(this.estado ==0){
-                
-                helper = procesador.procesar(astPython, paqueteria, null);
-                this.unificarAst(helper);
-                helper = procesador.procesar(astJava, paqueteria, null);
-                this.unificarAst(helper);
-                helper = procesador.procesar(astC, paqueteria, null);
-                this.unificarAst(helper);
-            }else if(this.estado == 1){
-                helper = procesador.procesar(astPython, paqueteria, null);
-                this.unificarAst(helper);
-            }else if(this.estado == 2){
-                helper = procesador.procesar(astJava, paqueteria, null);
-                this.unificarAst(helper);
-            }
+        let Procesador = require('./Procesador');
+        let procesador = new Procesador(this.tablaTipos, this.erroresSemanticos);
+        let helper = null;
+        if(this.estado ==0){
+            helper = procesador.procesar(astPython, paqueteria, null);
+            this.unificarAst(helper);
+            helper = procesador.procesar(astJava, paqueteria, null);
+            this.unificarAst(helper);
+            helper = procesador.procesar(astC, paqueteria, null);
+            this.unificarAst(helper);
+        }else if(this.estado == 1){
+            helper = procesador.procesar(astPython, paqueteria, null);
+            this.unificarAst(helper);
+        }else if(this.estado == 2){
+            helper = procesador.procesar(astJava, paqueteria, null);
+            this.unificarAst(helper);
         }
     }
 
@@ -152,7 +149,6 @@ class Parser{
             //Getin ast of C
             let astC = this.parseC(lineC, columnC, codigoC);            
             this.procesarAST(astC, astJava, astPython, dirPaquete);
-            console.log(astC,astJava,astPython)
             console.log("Errores Lexicos POST: "+JSON.stringify(erroresLexicos));
             console.log("Errores Sintacticos POST: "+JSON.stringify(erroresSintacticos));
             console.log("Errores Semanticos POST: "+JSON.stringify(this.erroresSemanticos));

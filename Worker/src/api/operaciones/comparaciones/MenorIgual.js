@@ -3,6 +3,7 @@ const Booleano = require('../../operadores/Booleano');
 const Cadena = require('../../operadores/Cadena');
 const Number = require('../../operadores/Number');
 const Entero = require('../../operadores/Entero');
+const Any = require('../../operadores/Any');
 const ErrorSemantico = require('../../../error/SemanticError');
 const TIPO_LENGUAJE  = require('../../Instrucciones').TIPO_LENGUAJE;
 
@@ -64,11 +65,18 @@ class MenorIgual extends OperacionComparacion {
                 if(this.operadorL instanceof Booleano || this.operadorL instanceof Booleano){
                     errores.push(new ErrorSemantico("Los operadores no pueden ser booleanos", "<=", this.linea, this.columna));
                 }else{
-                    return new Booleano("", this.linea, this.columna, this.lenguaje);
+                    let answer = new Booleano("", this.linea, this.columna, this.lenguaje);
+                    this.tipo = answer;
+                    return answer;
                 }
             }else{
-                return new Entero("", this.linea, this.columna, this.lenguaje);
+                let answer = new Entero("", this.linea, this.columna, this.lenguaje);
+                this.tipo = answer;
+                return answer;
             }
+        }else if(this.operadorL instanceof Any && this.operadorR instanceof Any){
+            this.tipo = this.operadorL;
+            return this.operadorL;
         }else{
             errores.push(new ErrorSemantico("Los operadores no son compatibles, numericos con numericos", "<=", this.linea, this.columna));
         }

@@ -26,8 +26,10 @@ class Decimal extends Number{
         }
     }
 
-    tryParse(operador){        
-        if(operador instanceof Number){
+    tryParse(operador){     
+        const Any = require('./Any');   
+        if(operador instanceof Number
+            || operador instanceof Any){
             return new Decimal(this.valor, this.linea, this.columna, this.lenguaje);
         }
         return null;

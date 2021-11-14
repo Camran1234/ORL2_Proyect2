@@ -113,14 +113,7 @@ class Instruccion{
         return this.instrucciones;
     }
 
-    ambitoEnMain(){
-        let retorna = null;
-        let Main = require('./Main');
-        if(this.ambito ){
-
-        }
-        return retorna;
-    }
+    
 
     perteneceAmbito(ambito){
         let retornar = false;
@@ -147,8 +140,6 @@ class Instruccion{
                 retornar = this;
         }else{
             if(this.ambito!=null){
-                console.log(this);
-                console.log(this.ambito);
                 retornar = this.ambito.ambitoMayor();
             }
         }
@@ -182,6 +173,19 @@ class Instruccion{
             }
         }        
         return retornar;
+    }
+
+    ambitoEnMain(){
+        let retorna = null;
+        let Main = require('./Main');
+        if(this instanceof Main){
+            retorna = this;
+        }else{
+            if(this.ambito!=null){
+                retorna = this.ambito.ambitoEnMain();
+            }
+        }
+        return retorna;
     }
 
     /**

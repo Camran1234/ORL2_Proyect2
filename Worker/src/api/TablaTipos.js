@@ -189,7 +189,6 @@ class TablaTipos{
         let rol = tipo.getRol();
         let lenguaje = tipo.getLenguaje();
         let paquete = tipo.getPaquete();
-        console.log("BUSCANDOOOO");
         let resultado = this.buscarP(id, ambito, rol, lenguaje, paquete);
         if(lenguaje == TIPO_LENGUAJE.JAVA){
             if(resultado!=null && ambito!=null){
@@ -247,23 +246,9 @@ class TablaTipos{
         return null;
     }
 
-    imprimirSimbolos(){
-        console.log("IMPRIMIENDO SIMBOLOS .....");
-    }
-
-    imprimir(){
-        console.log("TABLA TIPOS %d", this.tipos.length);
-        for(let index=this.tipos.length-1; index>=0; index--){
-            let tipo = this.tipos[index];
-            console.log("ID %s, Rol %s, POS MEMORIA %d", tipo.getId(), tipo.getRol(), tipo.getPosMemoria());
-        }
-    }
-
     //Ambito sera un objeto siempre, haremos comparaciones por direcciones de memoria
     buscarP(id, ambito, rol, lenguaje, paquete){
         let tipoEncontrado = null;
-        console.log("\n\n");
-        this.imprimir();
         if(lenguaje == TIPO_LENGUAJE.JAVA){
             if(ambito == null && rol == TIPO_INSTRUCCION.CLASE){
                 tipoEncontrado = this.busquedaJava_C(id, ambito, rol, paquete);
@@ -345,12 +330,11 @@ class TablaTipos{
     }
 
     buscarClase(id, paquete){
-        console.log('BUSCANDO CLASES en %s, BUSCANDO: %s ................', paquete, id);
+        
         let tabla = this.tipos;
         for(let index=tabla.length-1; index>=0; index--){
             let tipo = tabla[index];
-            console.error("ID %s, ROL %s, PAQUETE %s",tipo.getId(), tipo.getRol(), tipo.getPaquete())
-            console.error("COMPARANDO CON ID %s, ROL %S, PAQUETE %s\n",id, TIPO_INSTRUCCION.CLASE, paquete)
+            
             if(id == tipo.getId() && tipo.getRol() == TIPO_INSTRUCCION.CLASE
             && paquete == tipo.getPaquete()){
                 return tipo;

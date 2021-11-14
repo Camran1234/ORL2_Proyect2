@@ -49,8 +49,6 @@ const instruccionesApi = {
      */
     operacionAritmetica: function(operadorL, operadorR, operador, lenguaje, linea, columna){
         let result = nuevaOperacion(operadorL, operadorR, operador, lenguaje, linea, columna);
-        console.log("NUEVA OPERACION ARITMETICA");
-        console.log(result);
         return result;
     },
 
@@ -176,12 +174,13 @@ const instruccionesApi = {
         }
     },
 
-    nuevoMain: function(instrucciones, lenguaje, linea, columna){
+    nuevoMain: function(instrucciones,tipo, lenguaje, linea, columna){
         if(instrucciones == undefined){
             instrucciones = [];
         }
         return {
             instrucciones: instrucciones,
+            tipo: tipo,
             lenguaje:lenguaje,
             linea:linea,
             columna:columna,

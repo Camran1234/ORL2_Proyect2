@@ -2,307 +2,222 @@ ptr = 0;
 h = 0;
 stack [1000000] ;
 heap [1000000] ; 
-com_paquete1_funcion_ANY_ANY_ANY_ {
-t0= ptr + 2;
-stack[t0] = 2 ;
-t1 = ptr + 0; 
-t2 = stack[t1];
-stack[t2] = 3;
-t3= ptr + 3;
-stack[t3] = scan() ;
-t4= ptr + 4;
-stack[t4] = 7 ;
-et1 :
-t5 = ptr +4;
-t6= stack[t5];
-if t6<4 goto et5;
-goto et6;
-et5:
-t7 = 1;
-goto et4;
-et6:
-t7 = 0;
-goto et4;
- if t7 > 0 goto et2;
-goto et3;
-et2 :
-ts0[] = "NUEVO";
- print(ts0);
-t7 = m+1;
-t8= ptr + 4;
-stack[t8] = t7 ;
-goto et1;
-et3 :
-t9= ptr +0;
-t10= stack[t9];
-t11 = stack[t10];
-t12 = ptr +2;
-t13= stack[t12];
-if t11==t13 goto et9;
-goto et10;
-et9:
-t14 = 1;
-goto et8;
-et10:
-t14 = 0;
-goto et8;
-if t14> 0 goto et11;
-goto et12;
-et11:
-ts1[] = "ASIDOJAOWJDOIAWJDOIAJWID";
- print(ts1);
-ts2[] = "WOLLOLOLOLOLO";
- t14= ptr +0;
-t15= stack[t14];
-t16 = stack[t15];
-t17 = ptr +1;
-t18= stack[t17];
-print(ts2, t16, t18, " \n ");
-goto et7;
-et12:
-et7:
+com_Saludo_ANY__ {
+ts0[] = "Segundo Proyecto de Compiladores 2";
+ print(ts0, " \n ");
 et0 : 
 }
-com_paquete1_Calculadora__{
-t19 = ptr + 0;
-stack[t19] = h;
-h = h + 2;
-t19 = ptr + 0 ;
+com_edadmeses_ANY_ANY_ANY_ {
+ts1[] = "Ingrese su edad:";
+ print(ts1, " \n ");
+t0= ptr + 0;
+stack[t0] = null ;
+t1 = ptr +0;
+t2= stack[t1];
+t3 = t2*12;
+t4= ptr + 1;
+stack[t4] = t3 ;
+ts2[] = "meses = ";
+ t5 = ptr +1;
+t6= stack[t5];
+print(ts2, t6);
+et1 : 
+}
+com_edadmeses_ANY_ANY_ANY_ANY_ {
+ts3[] = "ASD";
+ stack[t7] = ts3;
+goto et2 ; 
+et2 : 
+}
+com_Factorial_ANY_ANY_ {
+t8= ptr + 1;
+stack[t8] = 0 ;
+t9= ptr + 2;
+stack[t9] = 0 ;
+t10 = ptr +0;
+t11= stack[t10];
+t12= ptr + 2;
+stack[t12] = t11 ;
+t13 = ptr +0;
+t14= stack[t13];
+if t14==0 goto et6;
+goto et7;
+et6:
+t15 = 1;
+goto et5;
+et7:
+t15 = 0;
+goto et5;
+if t15> 0 goto et8;
+goto et9;
+et8:
+stack[t15] = 1;
+goto et3 ; 
+goto et4;
+et9:
+t16= ptr + 1;
+stack[t16] = 1 ;
+t17 = ptr +0;
+t18= stack[t17];
+if t18>1 goto et14;
+goto et15;
+et14:
+t19 = 1;
+goto et13;
+et15:
+t19 = 0;
+goto et13;
+et10 :
+if t19 > 0 goto et11;
+goto et12;
+et11 :
+t19 = ptr +1;
 t20= stack[t19];
-t21 = t20 + 1;
-Heap[t21] = 0; 
-t22 = ptr + 0 ;
-t23= stack[t22];
-t24 = t23 + 0;
-Heap[t24] = 0; 
-}
-com_paquete1_Calculadora_proceso2_INT_INT_INT {
-ts3[] = "Algo";
- print(ts3, " \n ");
-t25 = ptr + 0 ;
+t21 = ptr +0;
+t22= stack[t21];
+t23 = t20*t22;
+t24= ptr + 1;
+stack[t24] = t23 ;
+t25 = ptr +0;
 t26= stack[t25];
-t27 = t26 + 0;
-Heap[t27] = 45; 
-t28= ptr +2;
-t29= stack[t28];
-t30 = stack[t29];
-if t30==0 goto et16;
-goto et17;
-et16:
-t31 = 1;
-goto et15;
-et17:
-t31 = 0;
-goto et15;
-if t31> 0 goto et18;
-goto et19;
-et18:
-t31= ptr +2;
-t32= stack[t31];
-t33 = stack[t32];
-stack[t34] = t33;
-goto et13 ; 
-goto et14;
-et19:
-et14:
-et20 :
-t35 = ptr +4;
-t36= stack[t35];
-if t36<4 goto et24;
-goto et25;
-et24:
-t37 = 1;
-goto et23;
-et25:
-t37 = 0;
-goto et23;
- if t37 > 0 goto et21;
-goto et22;
-et21 :
-ts4[] = "ASD en PROCESO2";
- print(ts4);
-goto et20;
-et22 :
-et14:
-t37 = ptr + 2;
-t38 = stack[t37] ;
-if t38 == 4 goto et27;
-goto et28;
-et27 :
-ts5[] = "CASO EN PROCESO2";
- ts6[] = "CASO 4";
- print(ts5, ts6);
-goto et26;
-et28 :
-t39 = ptr +1;
-t40= stack[t39];
-if t38 == t40 goto et29;
-goto et30;
-et29 :
-ts7[] = "CASO EN PROCESO2";
- ts8[] = "CASO X";
- print(ts7, ts8);
-goto et26;
-et30 :
-ts9[] = "CASO DEFAULT";
- print(ts9, " \n ");
-et26 :
-et14:
-t41 = ptr +1;
-t42= stack[t41];
-stack[t34] = t42;
-goto et13 ; 
-et14:
-et13 : 
+t27 = t26-1;
+t28= ptr + 0;
+stack[t28] = t27 ;
+goto et10;
+et12 :
+t29 = ptr +1;
+t30= stack[t29];
+stack[t15] = t30;
+goto et3 ; 
+goto et4;
+et4:
+et4:
+et3 : 
 }
-ptr = ptr + 5;
-com_paquete1_Calculadora__() ;
-ptr = ptr - 5;
-t43 = ptr + 5;
+com_algo_holaMundo_ENTERO_ {
+ts4[] = "Hola Mundo!!";
+ print(ts4, " \n ");
+stack[t31] = 1;
+goto et16 ; 
+et16 : 
+}
+com_algo__{
+t32 = ptr + 0;
+stack[t32] = h;
+h = h + 0;
+}
+t32= ptr + 5;
+stack[t32] = 10 ;
+t33 = 1 * 4;
+t34 = t33 + 4;
+arr0[t34];
+t35 = arr0;
+t36 = ptr + 6;
+stack[t36] = t35 ;
+ptr = ptr + 0;
+com_algo__() ;
+ptr = ptr - 0;
+t37 = ptr + 0;
+t38 = t37 + 0;
+t39 = stack[t38];
+t40 = ptr + 7;
+stack[t40] = t39;
+ clrscr();
+t41 = ptr + 7;
+t42= stack[t41];
+t43= ptr + 1;
 t44 = t43 + 0;
-t45 = stack[t44];
-t46 = ptr + 0;
-stack[t46] = t45;
-t47 = ptr + 0;
-t48= stack[t47];
-t49= ptr + 5;
-t50 = t49 + 0;
-stack[t50] = t48 ;
-t50 = ptr +5;
-t51 = t50 + 1;
-stack[t51] = 4;
-ptr = ptr + 5;
-com_paquete1_Calculadora_proceso2_INT_INT_INT();
-ptr = ptr - 5;
-t52 = ptr +5;
-ptr = ptr + 5;
-com_paquete1_funcion_ANY_ANY_ANY_();
-ptr = ptr - 5;
-t53 = 4*8;
-t54 = 2+t53;
-t55 = 9/5;
-t56 = t55*4;
-t57 = t56%3;
-t58 = t54+t57;
-t59= ptr + 1;
-stack[t59] = t58 ;
+stack[t44] = t42 ;
+t44 = ptr +1;
+ptr = ptr + 1;
+com_algo_holaMundo_ENTERO_();
+ptr = ptr - 1;
 scan();
-t60 = ptr 1;
+ts5[] = "Bienvenido";
+ print(ts5, " \n ");
+ts6[] = "Ingrese el primer valor entero";
+ print(ts6, " \n ");
+t45 = ptr 12;
+t46 = stack[t45];
+scanf([object Object], &t46);
+ts7[] = "Ingrese el segudo valor entero";
+ print(ts7, " \n ");
+t47 = ptr 8;
+t48 = stack[t47];
+scanf([object Object], &t48);
+t49 = ptr + 1;
+ptr = ptr + 1;
+com_Factorial_ANY_ANY_();
+ptr = ptr - 1;
+t50= ptr + 1;
+t51 = t50 + t15;
+t52= ptr + 10;
+stack[t52] = t51 ;
+t53 = ptr +12;
+t54= stack[t53];
+t55 = ptr +8;
+t56= stack[t55];
+t57 = t54+t56;
+t58= ptr + 11;
+stack[t58] = t57 ;
+ts8[] = "El factorial de %d es %d";
+ t59= ptr +11;
+t60= stack[t59];
 t61 = stack[t60];
-scanf([object Object], &t61);
-t62= ptr + 2;
-stack[t62] = 0 ;
-et31 :
-t63 = ptr +2;
-t64= stack[t63];
-if t64<4 goto et35;
-goto et36;
-et35:
-t65 = 1;
-goto et34;
-et36:
-t65 = 0;
-goto et34;
- if t65 > 0 goto et32;
-goto et33;
-et32 :
-ts10[] = "SOMETHING";
- t65 = ptr +2;
-t66= stack[t65];
-print(ts10, t66, " \n ");
-goto et31;
-goto et33;
-t67 = index+1;
-t68= ptr + 2;
-stack[t68] = t67 ;
-goto et31;
-et33 :
-goto et37;
-t69 = ptr +1;
-t70= stack[t69];
-if t70>4 goto et41;
-goto et42;
-et41:
-t71 = 1;
-goto et40;
-et42:
-t71 = 0;
-goto et40;
-et38:
-if t71 > 0  goto et37;
-goto et39;
-et37 :
-ts11[] = "ASD";
- print(ts11, " \n ");
-goto et38;
-et39 :
-t71 = -4;
-t72 = 0*t71;
-t73= ptr + 3;
-stack[t73] = t72 ;
-t74 = ptr +1;
+t62= ptr +10;
+t63= stack[t62];
+t64 = stack[t63];
+print(ts8, t61, t64, " \n ");
+ts9[] = "Conversion de años a meses";
+ print(ts9, " \n ");
+scan();
+t65= ptr + 6;
+t66 = 1 * 1;
+t67 = t66 + 1;
+t68 =  stack [t65];
+t68[t67] = 0 ;
+t69= ptr + 9;
+stack[t69] = 0 ;
+et17 :
+t70 = ptr +9;
+t71= stack[t70];
+t72 = ptr +8;
+t73= stack[t72];
+if t71<=t73 goto et21;
+goto et22;
+et21:
+t74 = 1;
+goto et20;
+et22:
+t74 = 0;
+goto et20;
+ if t74 > 0 goto et18;
+goto et19;
+et18 :
+t74 = ptr +10;
 t75= stack[t74];
-if t75<4 goto et47;
-goto et48;
-et47:
-t76 = 1;
-goto et46;
-et48:
-t76 = 0;
-goto et46;
-t76 = ptr +3;
+t76 = ptr +12;
 t77= stack[t76];
-if t77==3 goto et50;
-goto et51;
-et50:
-t78 = 1;
-goto et49;
-et51:
-t78 = 0;
-goto et49;
-if t78 > 0 goto et52;
-goto et53;
-et52:
-t78 = 0 
-goto et54;
-et53:
-t78 = 1
-goto et54;
-et54:
-t79= 0;
-if t76 > 0 goto et56;
-goto et55;
-et56 :
-if t78 > 0 goto et57;
-goto et55;
-et57:
-t79 = 1;
-et55:
-et43 :
-if t79 > 0 goto et44;
-goto et45;
-et44 :
-ts12[] = "NUEVO";
- print(ts12, " \n ");
-goto et43;
-et45 :
-t80 = ptr + 1;
-t81 = stack[t80] ;
-t82 = 1+3;
-if t81 == t82 goto et59;
-goto et60;
-et59 :
-ts13[] = "CASO 1";
- print(ts13, " \n ");
-goto et58;
-et60 :
-if t81 == 2 goto et61;
-goto et62;
-et61 :
-ts14[] = "CASO 2";
- print(ts14, " \n ");
-goto et58;
-et62 :
-ts15[] = "DEFAULT IN C";
- print(ts15, " \n ");
-et58 :
+t78 = t75*t77;
+t79= ptr + 10;
+stack[t79] = t78 ;
+t80 = ptr +9;
+t81= stack[t80];
+t82 = t81+1;
+t83= ptr + 9;
+stack[t83] = t82 ;
+goto et17;
+et19 :
+ts10[] = "%d ";
+ t84 = ptr +12;
+t85= stack[t84];
+print(ts10, t85, " \n ");
+ts11[] = "^ %d";
+ t86 = ptr +8;
+t87= stack[t86];
+print(ts11, t87, " \n ");
+ts12[] = " = %d";
+ t88 = ptr +10;
+t89= stack[t88];
+print(ts12, t89, " \n ");
+scan();

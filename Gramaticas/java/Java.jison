@@ -483,7 +483,7 @@ function_stmt
         :  IDENTIFICADOR OPEN_PARENTHESIS function_parameters OPEN_CURLY instructions {            
             $$ = instruccionesApi.nuevaFuncion(null, $1,null, reversaArreglo($5), $3, lenguaje, linea(this._$.first_line), columna(this._$.first_column))
         }
-        | IDENTIFICADOR error  {addSyntaxError("Se esperaba \'(\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
+        | IDENTIFICADOR error  {addSyntaxError("Se esperaba \'(\' en caso de funcion o \';\' en caso de variable", $2, linea(this._$.first_line), columna(this._$.first_column));}
         | IDENTIFICADOR OPEN_PARENTHESIS error {addSyntaxError("Se esperaba parametros o \')\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
         | IDENTIFICADOR OPEN_PARENTHESIS function_parameters error {addSyntaxError("No es una declaracion", $4, linea(this._$.first_line), columna(this._$.first_column));} 
         ;
@@ -503,6 +503,7 @@ variable_stmt
 variable_stmt_re
         :  COMA IDENTIFICADOR asignacion_variable variable_stmt_re{
             var id = instruccionesApi.nuevoValor($2,null, TIPO_VALOR.IDENTIFICADOR,lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+            
             for(var index=0; index<$3.length; index++){
                 $3[index].id = id;
                 $4.push($3[index]);
@@ -592,7 +593,9 @@ increm
 
 valor_variable
     :expresion {$$=$1;}
-    |entry_stmt {$$=$1;}
+    |entry_stmt OPEN_PARENTHESIS CLOSE_PARENTHESIS {$$=instruccionesApi.nuevoValor("input()",null,$1, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+    |entry_stmt error {addSyntaxError("Se esperaba \'(\'", $2, linea(this._$.first_line), columna(this._$.first_column));}
+    |entry_stmt OPEN_PARENTHESIS error {addSyntaxError("Se esperaba \')\'", $3, linea(this._$.first_line), columna(this._$.first_column));}
     |error {addSyntaxError("Se esperaba una expresion o valor par asignar", $1, linea(this._$.first_line), columna(this._$.first_column));}
     ;
 
@@ -670,7 +673,7 @@ nombre_variables_re
         $$=$4;
     }
     |  COMA error nombre_variables_re  {addSyntaxError("Se esperaba una variable", $2, linea(this._$.first_line), columna(this._$.first_column));$$=$3;}
-    | error {addSyntaxError("Se esperaba \';\'", $1, linea(this._$.first_line), columna(this._$.first_column));}
+    | error {addSyntaxError("Se esperaba \';\'", $1, linea(this._$.first_line), columna(this._$.first_column)); $$=[];}
     | COLON {$$=[];}
     ;
 

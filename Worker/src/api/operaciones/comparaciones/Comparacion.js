@@ -5,6 +5,7 @@ const Number = require('../../operadores/Number');
 const Entero = require('../../operadores/Entero');
 const ErrorSemantico = require('../../../error/SemanticError');
 const TIPO_LENGUAJE  = require('../../Instrucciones').TIPO_LENGUAJE;
+const Any = require('../../operadores/Any');
 
 class Comparacion extends OperacionComparacion {
 
@@ -60,7 +61,9 @@ class Comparacion extends OperacionComparacion {
     operar(errores){
         //Condicion de operacion
         let answer = null;
-        if(this.operadorL instanceof Number && this.operadorR instanceof Number){
+        if(this.operadorL instanceof Number && this.operadorR instanceof Number
+            || this.operadorL instanceof Any && this.operadorR instanceof Number
+            || this.operadorL instanceof Number && this.operadorR instanceof Any){
             if(this.lenguaje == TIPO_LENGUAJE.JAVA){
                 answer = new Booleano("", this.linea, this.columna, this.lenguaje);
                 this.tipo = answer;
@@ -70,7 +73,9 @@ class Comparacion extends OperacionComparacion {
                 this.tipo = answer;
                 return answer;
             }
-        }else if(this.operadorL instanceof Cadena && this.operadorR instanceof Cadena){
+        }else if(this.operadorL instanceof Cadena && this.operadorR instanceof Cadena
+            || this.operadorL instanceof Any && this.operadorR instanceof Cadena
+            || this.operadorL instanceof Cadena && this.operadorR instanceof Any){
             if(this.lenguaje == TIPO_LENGUAJE.JAVA){
                 answer = new Booleano("", this.linea, this.columna, this.lenguaje);
                 this.tipo = answer;
@@ -80,6 +85,10 @@ class Comparacion extends OperacionComparacion {
                 this.tipo = answer;
                 return answer;
             }
+        }else if(this.operadorL instanceof Any && this.operadorR instanceof Any){
+            answer = this.operadorL;
+            this.tipo = answer;
+            return answer;
         }else{
             errores.push(new ErrorSemantico("Los operadores no son compatibles, numericos con numericos, cadenas con cadenas", "==", this.linea, this.columna));
         }

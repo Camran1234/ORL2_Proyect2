@@ -140,7 +140,7 @@ nombre_paqueteria [aA-zZ|"_"|"-"|0-9|","|"$"|"\("|"\)"|"\["|"\]"|"\{"|"\}"]+
 paqueteria {nombre_paqueteria}(["."]{nombre_paqueteria})*
 chunk [^ \n\t]+
 commentary "//".*
-block_commentary [/][*][^*]*[*]+([^/*][^*]*[*]+)*[/]	
+block_commentary [/][*][^*]*[*]+([^/*][^*]*[*]+)*[/]
 %%
 
 "paquete" {

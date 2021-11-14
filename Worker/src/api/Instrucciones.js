@@ -26,10 +26,10 @@ const TIPO_LENGUAJE = {
  * Para identificadores y funciones
  */
 const TIPO_DATO = {
-    INT : 'INT',
-    FLOAT : 'FLOAT',
-    CHAR : 'CHAR',
-    STRING : 'STRING',
+    INT : 'ENTERO',
+    FLOAT : 'DECIMAL',
+    CHAR : 'CARACTER',
+    STRING : 'CADENA',
     BOOLEAN : 'BOOLEAN',
     VOID : 'VOID',
     ANY: 'ANY'  

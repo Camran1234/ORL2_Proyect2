@@ -27,7 +27,9 @@ class Caracter extends Entero {
     }
 
     tryParse(operador){
-        if(operador instanceof Caracter){
+        const Any = require('./Any');
+        if(operador instanceof Caracter
+            || operador instanceof Any){
             return new Caracter(this.valor, this.linea, this.columna, this.lenguaje);
         }
         return null;

@@ -5,6 +5,7 @@ const Caracter = require('../../operadores/Caracter');
 const Decimal = require('../../operadores/Decimal');
 const Entero = require('../../operadores/Entero');
 const Number = require('../../operadores/Number');
+const Any = require('../../operadores/Any');
 const ErrorSemantico = require('../../../error/SemanticError');
 const  TIPO_LENGUAJE  = require('../../Instrucciones').TIPO_LENGUAJE;
 class Negativo extends OperacionCondicional {
@@ -112,7 +113,12 @@ class Negativo extends OperacionCondicional {
             }
         }else{
             if(this.operadorL instanceof Number){
-                return new Entero("", this.linea, this.columna, this.lenguaje);
+                let answer = new Entero("", this.linea, this.columna, this.lenguaje);
+                this.tipo = answer;
+                return answer;
+            }else if(this.operadorL instanceof Any ){
+                this.tipo = this.operadorL;
+                return this.operadorL;
             }else{
                 errores.push(new ErrorSemantico("Los operadores no son compatibles, unicamente se permiten numericos", "!", this.linea, this.columna));
             }

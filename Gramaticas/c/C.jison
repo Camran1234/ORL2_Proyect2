@@ -51,23 +51,26 @@
 commentary	"//".*
 block_commentary	[/][*][^*]*[*]+([^/*][^*]*[*]+)*[/]	
 lit_entero	[0-9]+\b
-lit_decimal [0-9]+("."[0-9]+)\b
+lit_decimal [0-9]+["."(0-9)+]\b
 lit_caracter \'[^\']\'
 lit_string \"[^\"]*\"
-identificador [aA-zZ|"_"|"$"][aA-zZ|0-9|"_"|"$"]*
-clase ("JAVA")"."{identificador}
+libreria "<"[^">"]*">"
+identificador [a-zA-Z"_""$"][a-zA-Z0-9"_"$]*
+clase "JAVA""."{identificador}
 metodo_clase {clase}"."{identificador}
-metodo ("PY")"."{identificador}
-
+metodo "PY""."{identificador}
 %%
 
 \s+											// se ignoran espacios en blanco
+{commentary}		/*ignore*/;
+{block_commentary}	/*ignore*/;
 "["		return 'OPEN_BRACKET';
 "]"		return 'CLOSE_BRACKET';
 "{"		return 'OPEN_CURLY';
 "}"		return 'CLOSE_CURLY';
 "("		return 'OPEN_PARENTHESIS';
 ")"		return 'CLOSE_PARENTHESIS';
+{libreria} return 'LIBRERIA';
 {metodo_clase}	console.log("metodo clase: "+yytext);return 'METODO_CLASE';
 {metodo}	console.log("metodo: "+yytext);return 'METODO';
 {clase}		console.log("clas: "+yytext);return 'CLASE';
@@ -111,6 +114,8 @@ metodo ("PY")"."{identificador}
 {identificador} return 'IDENTIFICADOR';
 
 //Comparaciones
+"<=" return 'MENOR_IGUAL';
+">=" return 'MAYOR_IGUAL';
 ">"	return 'MAYOR';
 "<"	return 'MENOR';
 "=="	return 'COMPARACION';
@@ -141,8 +146,7 @@ metodo ("PY")"."{identificador}
 
 
 <<EOF>>				return 'EOF';
-{commentary}		/*ignore*/;
-{block_commentary}	/*ignore*/;
+
 .+					{ 
 	addLexicalError(yytext, linea(yylloc.first_line), columna(yylloc.first_column));
 	}
@@ -182,12 +186,13 @@ metodo ("PY")"."{identificador}
 	%left 'IDENTIFICADOR' 'CHAR' 'FLOAT' 'INT' 'CONST'
 	%left 'OR'
 	%left 'AND'
-	%left 'MAYOR' 'MENOR' 'COMPARACION' 'DIFERENTE'
+	%left 'MAYOR' 'MENOR' 'MAYOR_IGUAL' 'MENOR_IGUAL' 'COMPARACION' 'DIFERENTE'
 	%left 'NOT' 
 	%left 'SUMA' 'RESTA' 
 	%left 'POR' 'DIV' 'MOD' 
 	%left 'UMINUS' 'UPUNTERO'
 	%left 'OPEN_PARENTHESIS' 'CLOSE_PARENTHESIS'
+	%left 'MAIN'
 
 %start ini
 
@@ -363,6 +368,8 @@ expresion
 	| NOT expresion {$$=instruccionesApi.operacionUnaria($2, TIPO_OPERACION.NOT, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
 	| expresion MAYOR expresion	{$$=instruccionesApi.operacionAritmetica($1, $3, TIPO_OPERACION.MAYOR, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
 	| expresion MENOR expresion	{$$=instruccionesApi.operacionAritmetica($1,$3, TIPO_OPERACION.MENOR, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+	| expresion MAYOR_IGUAL expresion {$$=instruccionesApi.operacionAritmetica($1,$3,TIPO_OPERACION.MAYOR_IGUAL, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+	| expresion MENOR_IGUAL expresion {$$=instruccionesApi.operacionAritmetica($1, $3, TIPO_OPERACION.MENOR_IGUAL, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
 	| expresion COMPARACION expresion	{$$=instruccionesApi.operacionAritmetica($1,$3, TIPO_OPERACION.COMPARACION, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
 	| expresion DIFERENTE expresion	{$$=instruccionesApi.operacionAritmetica($1,$3, TIPO_OPERACION.DIFERENTE, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
 	| expresion SUMA expresion	{$$=instruccionesApi.operacionAritmetica($1,$3, TIPO_OPERACION.SUMA, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
@@ -389,6 +396,7 @@ ini
 
 paqueteria
 	: INCLUDE LIT_STRING  {$$=instruccionesApi.nuevoInclude($2, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
+	| INCLUDE LIBRERIA {$$=instruccionesApi.nuevoInclude($2, lenguaje, linea(this._$.first_line), columna(this._$.first_column));}
 	| INCLUDE error {addSyntaxError("Se esperaba una direccion de paqueteria",$2,linea(this._$.first_line), columna(this._$.first_column));}
 	;
 
@@ -408,14 +416,13 @@ code_c
 
 /*Start of Main*/
 main
-	: VOID MAIN OPEN_PARENTHESIS CLOSE_PARENTHESIS OPEN_CURLY statements{
-		$$=instruccionesApi.nuevoMain(reversaArreglo($6), lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+	: data_type MAIN OPEN_PARENTHESIS CLOSE_PARENTHESIS OPEN_CURLY statements{
+		$$=instruccionesApi.nuevoMain(reversaArreglo($6),$1, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
 	}
-	| VOID error {addSyntaxError("Se esperaba la palabra \'main\'",$2,linea(this._$.first_line), columna(this._$.first_column));}
-	| VOID MAIN error {addSyntaxError("Se esperaba \'(\'",$3,linea(this._$.first_line), columna(this._$.first_column));}
-	| VOID MAIN OPEN_PARENTHESIS error {addSyntaxError("Se esperaba \')\'",$4,linea(this._$.first_line), columna(this._$.first_column));}
-	| VOID MAIN OPEN_PARENTHESIS CLOSE_PARENTHESIS error {addSyntaxError("Se esperaba \'{\'",$5,linea(this._$.first_line), columna(this._$.first_column));}
-	| VOID MAIN OPEN_PARENTHESIS CLOSE_PARENTHESIS OPEN_CURLY error {addSyntaxError("Se esperaba \'}\'",$6,linea(this._$.first_line), columna(this._$.first_column));}
+	| data_type MAIN error {addSyntaxError("Se esperaba \'(\'",$3,linea(this._$.first_line), columna(this._$.first_column));}
+	| data_type MAIN OPEN_PARENTHESIS error {addSyntaxError("Se esperaba \')\'",$4,linea(this._$.first_line), columna(this._$.first_column));}
+	| data_type MAIN OPEN_PARENTHESIS CLOSE_PARENTHESIS error {addSyntaxError("Se esperaba \'{\'",$5,linea(this._$.first_line), columna(this._$.first_column));}
+	| data_type MAIN OPEN_PARENTHESIS CLOSE_PARENTHESIS OPEN_CURLY error {addSyntaxError("Se esperaba \'}\'",$6,linea(this._$.first_line), columna(this._$.first_column));}
 	;
 
 /*End of Main*/
@@ -517,6 +524,7 @@ data_type
 	: INT {$$=TIPO_DATO.INT;}
 	| FLOAT	{$$=TIPO_DATO.FLOAT;}
 	| CHAR	{$$=TIPO_DATO.CHAR;}
+	| VOID {$$= TIPO_DATO.VOID;}
 	;
 
 const_data
@@ -554,36 +562,48 @@ valor_asignacion
 	: IGUAL expresion{
 		var arreglo = [];
 		arreglo.push(instruccionesApi.nuevaAsignacion_O(null, null, TIPO_OPERACION.IGUAL, $2, lenguaje, linea(this._$.first_line), columna(this._$.first_column)));
-		console.log("IGUAL EXPRESION");
 		$$=arreglo;
 	}
 	| IGUAL getch_stmt {
 		var arreglo = [];
 		arreglo.push(instruccionesApi.nuevaAsignacion_O(null, null, TIPO_OPERACION.IGUAL, $2, lenguaje, linea(this._$.first_line), columna(this._$.first_column)));
-		console.log("IGUAL getch");
 		$$=arreglo;
 	}
 	| IGUAL error  {addSyntaxError("Se esperaba un valor par asignar",$2,linea(this._$.first_line), columna(this._$.first_column));}
 	| INCREMENTO	{
 		var arreglo = [];
 		arreglo.push(instruccionesApi.nuevaAsignacion_O(null, null, TIPO_OPERACION.INCREMENTO, null, lenguaje, linea(this._$.first_line), columna(this._$.first_column)));
-		console.log("INCREMENTO");
 		$$ = arreglo;
 		}
 	| DECREMENTO	{
 		var arreglo = [];
 		arreglo.push(instruccionesApi.nuevaAsignacion_O(null, null, TIPO_OPERACION.DECREMENTO, null, lenguaje, linea(this._$.first_line), columna(this._$.first_column)));
-		console.log("DECREMENTO");
+
 		$$ = arreglo;
 		}
 	| /*empty*/ {$$=[];}
 	;
 
+var_stmt_re
+	: COMA IDENTIFICADOR arreglo valor_asignacion var_stmt_re{
+		var id = instruccionesApi.nuevoValor($2, $3, TIPO_VALOR.IDENTIFICADOR, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+		if($4.length>0){
+			$4[0].id = id;
+			$4[0].magnitud= $3;
+		}		
+		$4.push(instruccionesApi.nuevaDeclaracion("", id, $3, "", lenguaje, linea(this._$.first_line), columna(this._$.fist_column)));
+		for(let index=0; index<$4.length; index++){
+			$5.push($4[index]);
+		}
+		$$ = $5;
+	}
+	| COMA error var_stmt_re {$$=$3;}
+	| /*empty*/ {$$=[];}
+	;
+
 var_stmt
-	: const_data IDENTIFICADOR arreglo valor_asignacion{
+	: const_data IDENTIFICADOR arreglo valor_asignacion var_stmt_re{
 		var id = instruccionesApi.nuevoValor($2,$3, TIPO_VALOR.IDENTIFICADOR, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
-		console.log(".....................................................................................");
-		console.log($2);
 		if($4.length>0){
 			$4[0].id = id;
 			$4[0].magnitud = $3;
@@ -597,12 +617,25 @@ var_stmt
 			tipo = $1[1];
 		}
 		$4.push(instruccionesApi.nuevaDeclaracion(visibilidad, id, $3, tipo, lenguaje, linea(this._$.first_line), columna(this._$.first_column)));
-		$$=instruccionesApi.nuevaVariable(reversaArreglo($4), lenguaje, linea, columna);
+		if($5.length>0){
+			for(let index=0; index<$5.length; index++){
+				let variableAuxiliar = $5[index];
+				if(variableAuxiliar.rol == TIPO_INSTRUCCION.DECLARACION){
+					variableAuxiliar.tipo = tipo;
+					variableAuxiliar.visibilidad = visibilidad;
+				}
+				//Esto son las variables extras que vienen despues de la coma
+				$4.push(variableAuxiliar);
+			}
+		}
+		if(tipo == TIPO_DATO.VOID){
+			addSyntaxError("Una variable no puede ser de tipo void", tipo, linea(this._$.first_line), columna(this._$.first_column));
+		}else{
+			$$=instruccionesApi.nuevaVariable(reversaArreglo($4), lenguaje, linea, columna);
+		}		
 	}
 	| const_data error  {addSyntaxError("Se esperaba un identificador",$2,linea(this._$.first_line), columna(this._$.first_column));}
 	| IDENTIFICADOR arreglo valor_asignacion{
-		console.log(".....................................................................................");
-		console.log($1);
 		if($3.length>0){
 			$3[0].id = instruccionesApi.nuevoValor($1, $2, TIPO_VALOR.IDENTIFICADOR,lenguaje, linea(this._$.first_line), columna(this._$.first_column));
 			$3[0].magnitud = $2;
@@ -610,6 +643,7 @@ var_stmt
 		$$=instruccionesApi.nuevaVariable(reversaArreglo($3), lenguaje, linea, columna);
 	}
 	;
+
 /*End of Statement*/
 
 /*Start of IF*/

@@ -35,7 +35,9 @@ class Booleano extends Entero{
 
     tryParse(operador){
         const Booleano = require('./Booleano');
-        if(operador instanceof Booleano){
+        const Any = require('./Any');
+        if(operador instanceof Booleano
+            || operador instanceof Any){
             return new Booleano(this.valor, this.linea, this.columna, this.lenguaje);
         }
         return null;

@@ -1,44 +1,30 @@
 
-const Decimal = require('./Decimal');
 
-const TIPO_LENGUAJE  = require('../Instrucciones').TIPO_LENGUAJE;
-class Entero extends Decimal {
+
+const Object = require('./Object');
+
+class Any extends Object{
 
     constructor(valor, linea, columna, lenguaje){
-        super(valor,linea, columna, lenguaje);
-        this.tipo = Entero;        
+        super(valor, linea, columna, lenguaje);
+        this.esCadena = true;
+        this.tipo = Any;
     }
 
     type(){
-        return "entero";
+        return "any";
     }
 
     parse(operador, tablaTipos){
-        let valor = this.generarValor(tablaTipos);
-        const Cadena = require('./Cadena');
-        if(this.nombre != null ){
-            return this.nombre;
-        }else{
-            if(operador instanceof Cadena){
-                return "\""+valor+"\""
-            }
-            return valor;
-        }
+        return this.nombre;
     }
 
     tryParse(operador){
-        const Booleano = require('./Booleano');
-        const Any = require('./Any');
-        if(this.lenguaje == TIPO_LENGUAJE.JAVA){
-            if(operador instanceof Booleano){
-                return null;
-            }
-        }
-        if(operador instanceof Entero
-            || operador instanceof Any){
-            return new Entero(this.valor, this.linea, this.columna, this.lenguaje);
-        }
         return null;
+    }
+
+    setTipo(type){
+        return super.setTipo(type);
     }
 
     getThisTipo(){
@@ -94,10 +80,6 @@ class Entero extends Decimal {
         return super.buscarTipo(tablaTipos)
     }
 
-    setTipo(type){
-        return super.setTipo(type);
-    }
-
     generarExpresion(tablaTipos, instruccion){
         return super.generarExpresion(tablaTipos, instruccion)
     }
@@ -137,7 +119,6 @@ class Entero extends Decimal {
     getLenguaje(){
         return super.getLenguaje()
     }
-
 }
 
-module.exports = Entero;
+module.exports = Any;

@@ -48,6 +48,26 @@
         }                  
     }
 
+    function addSyntaxErrorStmt(stmt, line, column){
+        try{
+            let stmtRol = stmt.rol;
+            if(stmtRol == TIPO_INSTRUCCION.VARIABLE){
+                var errorSintactico = new ErrorSintactico("Se esperaba que estuviera dentro de una declaracion contenedora",stmt.id, line, column);
+                erroresSintacticos.push(errorSintactico);
+            }else if (stmtRol == TIPO_INSTRUCCION.FUNCION){
+                var errorSintactico = new ErrorSintactico("Se esperaba que estuviera dentro de una declaracion contenedora",stmt.id, line, column);
+                erroresSintacticos.push(errorSintactico);
+            }else{
+                var errorSintactico = new ErrorSintactico("Se esperaba que estuviera dentro de una declaracion contenedora",stmt.rol, line, column);
+                erroresSintacticos.push(errorSintactico);
+            }
+            
+        }catch(ex){
+            var errorSintactico = new ErrorSintactico(ex, stmt.rol, line, column);
+            console.log(ex);
+        }
+    }
+
     function addSyntaxError(descripcion, token, line, column){
 		try{
 			var errorSintactico = new ErrorSintactico(descripcion, token, line, column);
@@ -406,73 +426,92 @@
         return array;
     }
 
-    function agregarInstruccionAcumulada(stmt, linea, columna){
-        var helper = instruccionAcumulada.length-1;
-        var helperInstructions = instruccionAcumulada[helper].instrucciones;
-        var actualstmt = instruccionAcumulada[helper].instrucciones[helperInstructions.length-1];
-        if(actualstmt.rol == TIPO_INSTRUCCION.IF ||
-        actualstmt.rol == TIPO_INSTRUCCION.ELSE ||
-        actualstmt.rol == TIPO_INSTRUCCION.WHILE ||
-        actualstmt.rol == TIPO_INSTRUCCION.FOR ){
-            instruccionAcumulada.push(actualstmt);
-            instruccionAcumulada[instruccionAcumulada.length-1].instrucciones.push(stmt);            
-        }else{
-            addSyntaxError("Bloque de indentacion esperado para la declaracion", stmt.rol, linea, columna);
+     function agregarInstruccionAcumulada(stmt, linea, columna){
+        
+        try{
+            var helper = instruccionAcumulada.length-1;
+            var helperInstructions = instruccionAcumulada[helper].instrucciones;        
+            var actualstmt = instruccionAcumulada[helper].instrucciones[helperInstructions.length-1];
+            if(actualstmt.rol == TIPO_INSTRUCCION.IF ||
+                actualstmt.rol == TIPO_INSTRUCCION.ELSE ||
+                actualstmt.rol == TIPO_INSTRUCCION.WHILE ||
+                actualstmt.rol == TIPO_INSTRUCCION.FOR ){
+                    instruccionAcumulada.push(actualstmt);
+                    instruccionAcumulada[instruccionAcumulada.length-1].instrucciones.push(stmt);            
+                }else{
+                    addSyntaxError("Bloque de indentacion esperado para la declaracion", stmt.rol, linea, columna);
+                }
+        }catch(ex){
+            addSyntaxErrorStmt(stmt);
         }
+      
     }
 
     function agregarInstrucciones(stmt, arreglo, linea, columna){
-        if(indentacionActual.length==0){
-            if(indentacionAcumulada==0){
-                addSyntaxError("Bloque de indentacion esperado para la declaracion", stmt.rol, linea, columna);
-            }else{
-                indentacionActual.push(indentacionAcumulada);
-                instruccionAcumulada[instruccionAcumulada.length-1].instrucciones.push(stmt);
-            }
-        }else {
-            if(indentacionAcumulada==0){
-                addSyntaxError("Error de indentacion: Bloque de indentacion esperado para la declaracion", stmt.rol, linea, columna);
-            }else if(indentacionAcumulada > indentacionActual[indentacionActual.length-1]){
-                indentacionActual.push(indentacionAcumulada);
-                agregarInstruccionAcumulada(stmt, linea,columna);
-            }else if(indentacionAcumulada < indentacionActual[indentacionActual.length-1]){
-                var aux = [];
-                //creamos una copia
-                for(var index=0; index<indentacionActual.length; index++){
-                    aux.push(indentacionActual[index]);
-                }
-                //Manejamos y buscamos la nueva indentacion
-                var flag = false;
-                var instruccionesEliminadas=0;
-                for(var index=indentacionActual.length-1; index>=0; index--){
-                    if(indentacionAcumulada==indentacionActual[index]){
-                        flag=true;
-                        break;
-                    }else{  
-                        aux.pop();
-                        instruccionesEliminadas++;
-                    }
-                }
-                if(flag){
-                    indentacionActual = aux;
-                    if(instruccionesEliminadas != 0){
-                        for(var index=0; index<instruccionesEliminadas; index++){
-                            instruccionAcumulada.pop();
-                        }
-                        instruccionAcumulada[instruccionAcumulada.length-1].instrucciones.push(stmt);
-                    }else{
-                        addSyntaxError("Se esperaba una instruccion", stmt.rol, linea, column);
-                    }
-                    
+        try{
+            if(indentacionActual.length==0){
+                if(indentacionAcumulada==0){
+                    addSyntaxError("Bloque de indentacion esperado para la declaracion", stmt.rol, linea, columna);
                 }else{
-                    addSyntaxError("Error de indentacion: se requiere un bloque de indentacion del mismo nivel que las demas declaraciones",stmt.rol, linea, columna);
+                    indentacionActual.push(indentacionAcumulada);
+                    instruccionAcumulada[instruccionAcumulada.length-1].instrucciones.push(stmt);
                 }
-            }else if(indentacionAcumulada == indentacionActual[indentacionActual.length-1]){
-                instruccionAcumulada[instruccionAcumulada.length-1].instrucciones.push(stmt);
+            }else {
+                if(indentacionAcumulada==0){
+                    addSyntaxError("Error de indentacion: Bloque de indentacion esperado para la declaracion", stmt.rol, linea, columna);
+                }else if(indentacionAcumulada > indentacionActual[indentacionActual.length-1]){
+                    indentacionActual.push(indentacionAcumulada);
+                    agregarInstruccionAcumulada(stmt, linea,columna);
+                }else if(indentacionAcumulada < indentacionActual[indentacionActual.length-1]){
+                    var aux = [];
+                    //creamos una copia
+                    for(var index=0; index<indentacionActual.length; index++){
+                        aux.push(indentacionActual[index]);
+                    }
+                    //Manejamos y buscamos la nueva indentacion
+                    var flag = false;
+                    var instruccionesEliminadas=0;
+                    for(var index=indentacionActual.length-1; index>=0; index--){
+                        if(indentacionAcumulada==indentacionActual[index]){
+                            flag=true;
+                            break;
+                        }else{  
+                            aux.pop();
+                            instruccionesEliminadas++;
+                        }
+                    }
+                    if(flag){
+                        indentacionActual = aux;
+                        if(instruccionesEliminadas != 0){
+                            for(var index=0; index<instruccionesEliminadas; index++){
+                                instruccionAcumulada.pop();
+                            }
+                            try{
+                                instruccionAcumulada[instruccionAcumulada.length-1].instrucciones.push(stmt);
+                            }catch(ex){
+                                addSyntaxErrorStmt(stmt);
+                            }
+                            
+                        }else{
+                            addSyntaxError("Se esperaba una instruccion", stmt.rol, linea, column);
+                        }
+                        
+                    }else{
+                        addSyntaxError("Error de indentacion: se requiere un bloque de indentacion del mismo nivel que las demas declaraciones",stmt.rol, linea, columna);
+                    }
+                }else if(indentacionAcumulada == indentacionActual[indentacionActual.length-1]){
+                    try{
+                        instruccionAcumulada[instruccionAcumulada.length-1].instrucciones.push(stmt);
+                    }catch(ex){
+                        addSyntaxErrorStmt(stmt, linea, columna);
+                    }
+                }
             }
+            indentacionAcumulada=0;
+            return arreglo;
+        }catch(ex){
+            addSyntaxErrorStmt(stmt);
         }
-        indentacionAcumulada=0;
-        return arreglo;
     }
 
  function linea(linea){

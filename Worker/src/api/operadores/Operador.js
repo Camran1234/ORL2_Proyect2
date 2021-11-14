@@ -10,6 +10,7 @@ const Caracter = require('../operadores/Caracter');
 const Decimal = require('../operadores/Decimal');
 const Entero = require('../operadores/Entero');
 const Object = require('../operadores/Object');
+const Any = require("../operadores/Any");
 const ProcesadorTipos = require('../ProcesadorTipos');
 //Operadores
 //Aritmeticos
@@ -65,7 +66,7 @@ class Operador{
      * @returns 
      */
     procesarOperaciones(operacion, ambito, tablaTipos, errores){
-        console.log("PROCESANDO OPERACIONES");
+        
         this.paramsO = [];
         if(Array.isArray(operacion)){
             let ast = [];
@@ -225,7 +226,7 @@ class Operador{
         }else if(parametro == TIPO_VALOR.BOOLEAN || parametro == TIPO_DATO.BOOLEAN){
             return Booleano;
         }else if(parametro == TIPO_VALOR.ANY || parametro == TIPO_DATO.ANY){
-            return Object;
+            return Any;
         }
         return null;
     }
@@ -269,7 +270,6 @@ class Operador{
             flag=true;
             //Buscar localmente
             simbolo = tablaTipos.buscarP(valor, ambito, TIPO_INSTRUCCION.DECLARACION, lenguaje, paqueteria);//La declaracion
-            tablaTipos.imprimirSimbolos();
             if(tipo == TIPO_VALOR.IDENTIFICADOR){
                 opcion = 1;
             }else{
@@ -304,7 +304,7 @@ class Operador{
             let idMetodo = metodo.id;
             let parametrosMetodo = metodo.parametros;
             let operadorNuevo = new Operador();
-            let newParametros = operadorNuevo.calcularParametros(parametrosMetodo);    
+            let newParametros = operadorNuevo.calcularParametros(parametrosMetodo, ambito, tablaTipos, errores);    
             newParametros = operadorNuevo.convertirArregloObjeto_Parametro(newParametros);
             newParametros = operadorNuevo.convertirTIPODATO_Parametro(newParametros);
             let lenguajeMetodo = metodo.lenguaje;
@@ -321,7 +321,9 @@ class Operador{
                     simbolo = tablaTipos.buscarFuncion(identificadorMetodo, null, TIPO_INSTRUCCION.FUNCION,newParametros )
                     opcion = 4;
                     metodoInstruccion.setId(identificadorMetodo);
-                    metodoInstruccion.setFuncionReferencia(simbolo.getInstruccion());
+                    if(simbolo!=null){
+                        metodoInstruccion.setFuncionReferencia(simbolo.getInstruccion());
+                    }
                 }else if(cadenas[0] == "JAVA"){
                     opcion = 5;
                     let identificadorVar = cadenas[1];
@@ -332,8 +334,10 @@ class Operador{
                         metodoInstruccion.setVariableReferencia(simboloVar.getInstruccion());
                         if(newAmbito!=null){
                             simbolo = tablaTipos.buscarFuncion(identificadorMetodo, newAmbito, TIPO_INSTRUCCION.FUNCION, newParametros);
-                            metodoInstruccion.setFuncionReferencia(simbolo.getInstruccion());
-                            metodoInstruccion.setId(identificadorMetodo);
+                            if(simbolo!=null){
+                                metodoInstruccion.setFuncionReferencia(simbolo.getInstruccion());
+                                metodoInstruccion.setId(identificadorMetodo);
+                            }
                         }
                     }else{
                         errores.push(new ErrorSemantico("No se encontro la variable en el contexto actual",identificadorVar, instruccion.linea, instruccion.columna ));
@@ -343,7 +347,9 @@ class Operador{
                 //Java y Python
                 opcion = 4;
                 simbolo = tablaTipos.buscarFuncion(idMetodo, ambito, TIPO_INSTRUCCION.FUNCION, newParametros);
-                metodoInstruccion.setFuncionReferencia(simbolo.getInstruccion());
+                if(simbolo!=null){
+                    metodoInstruccion.setFuncionReferencia(simbolo.getInstruccion());
+                }
             }
         }
         let instruccion = metodoInstruccion;
@@ -380,7 +386,7 @@ class Operador{
                 return new Entero(undefined, undefined, undefined, undefined);
             }
         }else if(tipo == TIPO_VALOR.ANY){
-            return new Object(undefined, undefined, undefined, undefined);
+            return new Any(undefined, undefined, undefined, undefined);
         }else if(tipo == TIPO_INSTRUCCION.GETCH){
             return new Entero(undefined, undefined, undefined, undefined);
         }else{
@@ -390,14 +396,15 @@ class Operador{
     }
 
     generarValorSegunTipo_(operacion, tipo, errores, instruccion, estado, magnitudO){
-        if(tipo == TIPO_VALOR.DECIMAL || tipo == TIPO_DATO.FLOAT){
-            console.log(tipo);
+        if(tipo == TIPO_VALOR.DECIMAL || tipo == TIPO_DATO.FLOAT
+            || tipo == TIPO_VALOR.INPUT_FLOAT){
             let decimal = new Decimal(operacion.valor, operacion.linea, operacion.columna, operacion.lenguaje);
             decimal.setInstruccion(instruccion);
             decimal.setEstado(estado);
             decimal.setParamsO(magnitudO);
             return decimal;
-        }else if(tipo == TIPO_VALOR.ENTERO || tipo == TIPO_DATO.INT){
+        }else if(tipo == TIPO_VALOR.ENTERO || tipo == TIPO_DATO.INT
+            || tipo == TIPO_VALOR.INPUT_INT){
             let entero = new Entero(operacion.valor, operacion.linea, operacion.columna, operacion.lenguaje);
             entero.setInstruccion(instruccion);
             entero.setEstado(estado);
@@ -409,7 +416,8 @@ class Operador{
             cadena.setEstado(estado);
             cadena.setParamsO(magnitudO);
             return cadena;
-        }else if(tipo == TIPO_VALOR.CARACTER || tipo == TIPO_DATO.CHAR){
+        }else if(tipo == TIPO_VALOR.CARACTER || tipo == TIPO_DATO.CHAR
+            || tipo == TIPO_VALOR.INPUT_CHAR){
             let caracter = new Caracter(operacion.valor, operacion.linea, operacion.columna, operacion.lenguaje);
             caracter.setInstruccion(instruccion);
             caracter.setEstado(estado);
@@ -429,8 +437,8 @@ class Operador{
                 entero.setParamsO(magnitudO);
                 return entero;
             }
-        }else if(tipo == TIPO_VALOR.ANY){
-            let objeto = new Object(operacion.valor, operacion.linea, operacion.columna, operacion.lenguaje);
+        }else if(tipo == TIPO_VALOR.ANY || tipo == TIPO_VALOR.INPUT){
+            let objeto = new Any(operacion.valor, operacion.linea, operacion.columna, operacion.lenguaje);
             objeto.setInstruccion(instruccion);
             objeto.setEstado(estado);
             objeto.setParamsO(magnitudO);
@@ -463,7 +471,7 @@ class Operador{
                 return new Entero(operacion.valor, operacion.linea, operacion.columna, operacion.lenguaje);
             }
         }else if(tipo == TIPO_VALOR.ANY){
-            return new Object(operacion.valor, operacion.linea, operacion.columna, operacion.lenguaje);
+            return new Any(operacion.valor, operacion.linea, operacion.columna, operacion.lenguaje);
         }else if(tipo == TIPO_INSTRUCCION.GETCH){
             return new Entero(operacion.valor, operacion.linea, operacion.columna, operacion.lenguaje);
         }else{
@@ -521,9 +529,8 @@ class Operador{
             return TIPO_DATO.FLOAT;
         }else if(tipo instanceof String){
             return TIPO_DATO.STRING;
-        }
-        if(Array.isArray(tipo)){
-            console.log(tipo);
+        }else if( tipo instanceof Any){
+            return TIPO_DATO.ANY;
         }
         return null;
     }
