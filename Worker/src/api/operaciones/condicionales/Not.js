@@ -85,7 +85,7 @@ class Negativo extends OperacionCondicional {
         let etSalida = tablaTipos.drawEt();
         tablaTipos.addEt();
 
-        cadena += "if "+resultadoL+" > 0 goto "+etVer+";\n";
+        cadena += "if ("+resultadoL+" > 0) goto "+etVer+";\n";
         cadena += "goto "+etFalsa+";\n";
         
         cadena += etVer+":\n"; // verdadero

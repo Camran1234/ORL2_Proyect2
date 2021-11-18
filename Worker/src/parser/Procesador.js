@@ -718,6 +718,7 @@ class Procesador{
                 tipoCreado.setTipo(tipo);
                 this.tablaTipos.agregarTipo(tipoCreado);
                 simbolo.setExpresionO(expresion_);
+                simbolo.setScan();
                 return simbolo;
             }else{            
                 //No importa el resultado porque la variable es any 
@@ -750,9 +751,10 @@ class Procesador{
                     let tipo = operador_.convertirObjeto_Tipo(expresion_);
                     tipoCreado.setTipo(tipo);
                     simbolo.setExpresionO(expresion_);
+                    simbolo.setScan();
                     return simbolo;
                 }else{
-                    this.errores.push(new ErrorSemantico("Los tipos no son compatibles, esperado"+expresion.tipo+", encontrado: "+newTipo.getTipo(), id, instruccion.linea, instruccion.columna));
+                    this.errores.push(new ErrorSemantico("Los tipos no son compatibles, esperado: "+expresion.tipo+", encontrado: "+newTipo.getTipo(), id, instruccion.linea, instruccion.columna));
                     return null;
                 }
             }else if(expresion.tipo == TIPO_VALOR.INPUT_CHAR){
@@ -766,9 +768,10 @@ class Procesador{
                     let tipo = operador_.convertirObjeto_Tipo(expresion_);
                     tipoCreado.setTipo(tipo);
                     simbolo.setExpresionO(expresion_);
+                    simbolo.setScan();
                     return simbolo;
                 }else{
-                    this.errores.push(new ErrorSemantico("Los tipos no son compatibles, esperado"+expresion.tipo+", encontrado: "+newTipo.getTipo(), id, instruccion.linea, instruccion.columna));
+                    this.errores.push(new ErrorSemantico("Los tipos no son compatibles, esperado: "+expresion.tipo+", encontrado: "+newTipo.getTipo(), id, instruccion.linea, instruccion.columna));
                     return null;
                 }
             }else if(expresion.tipo == TIPO_VALOR.INPUT_FLOAT){
@@ -780,9 +783,10 @@ class Procesador{
                     let tipo = operador_.convertirObjeto_Tipo(expresion_);
                     tipoCreado.setTipo(tipo);
                     simbolo.setExpresionO(expresion_);
+                    simbolo.setScan();
                     return simbolo;
                 }else{
-                    this.errores.push(new ErrorSemantico("Los tipos no son compatibles, esperado"+expresion.tipo+", encontrado: "+newTipo.getTipo(), id, instruccion.linea, instruccion.columna));
+                    this.errores.push(new ErrorSemantico("Los tipos no son compatibles, esperado: "+expresion.tipo+", encontrado: "+newTipo.getTipo(), id, instruccion.linea, instruccion.columna));
                     return null;
                 }
             }else{
@@ -797,29 +801,42 @@ class Procesador{
                     }
                     return simbolo;
                 }
+                let execute = function (type){
+                    if (type instanceof Caracter){
+                        return "char";
+                    }else if(type instanceof Booleano){
+                        return "boolean";
+                    }else if(type instanceof Entero){
+                        return "int";
+                    }else if(type instanceof Decimal){
+                        return "float";
+                    }else if(type instanceof Cadena){
+                        return "string";
+                    }
+                };
                 if(newTipo.getTipo() == TIPO_VALOR.ENTERO || newTipo.getTipo() == TIPO_DATO.INT){
                     if((resultado instanceof Entero || resultado instanceof Any)==false){
-                        this.errores.push(new ErrorSemantico("Los tipos no son compatibles, esperado"+expresion.tipo+", encontrado: "+newTipo.getTipo(), id, instruccion.linea, instruccion.columna));
+                        this.errores.push(new ErrorSemantico("Los tipos no son compatibles, esperado: "+execute(resultado)+", encontrado: "+newTipo.getTipo(), id, instruccion.linea, instruccion.columna));
                         return null;
                     }
                 }else if(newTipo.getTipo() == TIPO_VALOR.DECIMAL || newTipo.getTipo() == TIPO_DATO.FLOAT){
                     if((resultado instanceof Decimal|| resultado instanceof Any)==false){
-                        this.errores.push(new ErrorSemantico("Los tipos no son compatibles, esperado"+expresion.tipo+", encontrado: "+newTipo.getTipo(), id, instruccion.linea, instruccion.columna));
+                        this.errores.push(new ErrorSemantico("Los tipos no son compatibles, esperado: "+execute(resultado)+", encontrado: "+newTipo.getTipo(), id, instruccion.linea, instruccion.columna));
                         return null;
                     }
                 }else if(newTipo.getTipo() == TIPO_VALOR.CARACTER || newTipo.getTipo() == TIPO_DATO.CHAR){
                     if((resultado instanceof Caracter || resultado instanceof Any)==false){
-                        this.errores.push(new ErrorSemantico("Los tipos no son compatibles, esperado"+expresion.tipo+", encontrado: "+newTipo.getTipo(), id, instruccion.linea, instruccion.columna));
+                        this.errores.push(new ErrorSemantico("Los tipos no son compatibles, esperado: "+execute(resultado)+", encontrado: "+newTipo.getTipo(), id, instruccion.linea, instruccion.columna));
                         return null;
                     }
                 }else if(newTipo.getTipo() == TIPO_VALOR.CADENA || newTipo.getTipo() == TIPO_DATO.STRING){
                     if((resultado instanceof Cadena)==false){
-                        this.errores.push(new ErrorSemantico("Los tipos no son compatibles, esperado"+expresion.tipo+", encontrado: "+newTipo.getTipo(), id, instruccion.linea, instruccion.columna));
+                        this.errores.push(new ErrorSemantico("Los tipos no son compatibles, esperado: "+execute(resultado)+", encontrado: "+newTipo.getTipo(), id, instruccion.linea, instruccion.columna));
                         return null;
                     }
                 }else if(newTipo.getTipo() == TIPO_VALOR.BOOLEAN || newTipo.getTipo() == TIPO_DATO.BOOLEAN){
                     if((resultado instanceof Booleano || resultado instanceof Any)==false){
-                        this.errores.push(new ErrorSemantico("Los tipos no son compatibles, esperado"+expresion.tipo+", encontrado: "+newTipo.getTipo(), id, instruccion.linea, instruccion.columna));
+                        this.errores.push(new ErrorSemantico("Los tipos no son compatibles, esperado: "+execute(resultado)+", encontrado: "+newTipo.getTipo(), id, instruccion.linea, instruccion.columna));
                         return null;
                     }
                 }
@@ -1146,7 +1163,7 @@ class Procesador{
                 for(let index=0; index<parametros.length; index++){
                     let resultado = operador.procesarOperaciones(parametros[index], ambito, this.tablaTipos, this.errores)
                     simbolo.addParamsO(operador.getOperacion());
-
+                    simbolo.addResults(resultado);
                     if(resultado == null){
                         this.errores.push(new ErrorSemantico("No se puede usar la expresion en el print", tipo, instruccion.linea, instruccion.columna));
                         return null;
@@ -1202,16 +1219,37 @@ class Procesador{
                     for(let index=0; index<parametros.length; index++){
                         let resultado = operador.procesarOperaciones(parametros[index], ambito, this.tablaTipos, this.errores)
                         simbolo.addParamsO(operador.getOperacion());
+                        simbolo.addResults(resultado);
                         if(index!=0 && arreglo.length != 0){
                             if((resultado instanceof arreglo[index-1])==false){
                                 this.errores.push(new ErrorSemantico("Se esperaba que el parametro fuera de tipo "+this.checkTipo(arreglo[index-1]), "printf", instruccion.linea, instruccion.columna));
                                 return null;
                             }
                         }
+                        if(resultado == null){
+                            this.errores.push(new ErrorSemantico("No se puede usar la expresion en el print", tipo, instruccion.linea, instruccion.columna));
+                            return null;
+                        }else if(resultado instanceof Booleano){
+                            this.errores.push(new ErrorSemantico("No se puede usar la expresion en el print", tipo, instruccion.linea, instruccion.columna));
+                            return null;
+                        }
                     }
                 }else{
                     this.errores.push(new ErrorSemantico("La cantidad de parametros especificados en el print debe de ser igual que al numero de %param establecidos en la cadena", "printf", instruccion.linea, instruccion.columna));
                     return null;
+                }
+            }else{
+                for(let index=0; index<parametros.length; index++){
+                    let resultado = operador.procesarOperaciones(parametros[index], ambito, this.tablaTipos, this.errores);
+                    simbolo.addParamsO(operador.getOperacion());
+                    simbolo.addResults(resultado);
+                    if(resultado == null){
+                        this.errores.push(new ErrorSemantico("No se puede usar la expresion en el print", tipo, instruccion.linea, instruccion.columna));
+                        return null;
+                    }else if(resultado instanceof Booleano){
+                        this.errores.push(new ErrorSemantico("No se puede usar la expresion en el print", tipo, instruccion.linea, instruccion.columna));
+                        return null;
+                    }
                 }
             }
             
@@ -1306,8 +1344,17 @@ class Procesador{
         let simbolo = new Retornar(expresion, instruccion.linea, instruccion.columna, instruccion.lenguaje, ambito, paqueteria, null);
         simbolo.setExpresionO(expresionO);
         let nuevoTipo = this.tablaTipos.crear(TIPO_VISIBILIDAD.LOCAL, "return", finalType,ambito, 1, false, instruccion.rol, paqueteria, simbolo, instruccion.lenguaje );
-        let resultado = this.tablaTipos.buscar(nuevoTipo);
-        return this.agregar(resultado, nuevoTipo, instruccion);
+        let resultado = this.tablaTipos.searchReturn(ambitoFuncion);
+        if (resultado != null){
+            //Establecemos la pos de memoria
+            nuevoTipo.setPosMemoria(resultado.getPosMemoria());
+            this.tablaTipos.forcePush(nuevoTipo);
+        }else{
+            this.tablaTipos.agregarTipo(nuevoTipo);
+        }
+        
+        return nuevoTipo.getInstruccion();
+        //return this.agregar(resultado, nuevoTipo, instruccion);
     }
 
     procesarMetodo(instruccion, ambito, paqueteria){
@@ -1334,8 +1381,8 @@ class Procesador{
                     simbolo.setId(identificadorMetodo);
                 }else{
                     this.errores.push(new ErrorSemantico("La funcion no se ha declarado", identificadorMetodo, instruccion.linea, instruccion.columna));
+                    return null;
                 }
-                return null;
             }else if(cadena[0] == "JAVA"){
                 let identificadorVariable = cadena[1];
                 let identificadorMetodo = cadena[2];
@@ -1387,9 +1434,7 @@ class Procesador{
             this.errores.push(new ErrorSemantico("La variable no existe", id, instruccion.linea, instruccion.columna));
             return null;
         }
-        if(cadena.tipo == TIPO_VALOR.CADENA){
-            
-        }else{
+        if(cadena.tipo != TIPO_VALOR.CADENA){
             this.errores.push(new ErrorSemantico("Se esperaba una literal string", "scanf", instruccion.linea, instruccion.columna));
             return null;
         }

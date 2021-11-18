@@ -137,7 +137,7 @@ class And extends OperacionCondicional {
         tablaTipos.addEt();
 
         cadena = tName+"= 0;\n";
-        cadena += "if "+resultadoL+" > 0 goto "+etVerdadero+";\n";
+        cadena += "if ("+resultadoL+" > 0) goto "+etVerdadero+";\n";
         cadena += "goto "+etFalso+";\n";
 
         cadena += etVerdadero+":\n";
@@ -145,7 +145,7 @@ class And extends OperacionCondicional {
         cadena += "goto "+etSalida+";\n";
 
         cadena += etFalso+":\n";
-        cadena += "if "+resultadoR+" > 0 goto "+etVerdadero+";\n";
+        cadena += "if ("+resultadoR+" > 0) goto "+etVerdadero+";\n";
         cadena += "goto "+etSalida+";\n";
         
         cadena += etSalida+":\n";

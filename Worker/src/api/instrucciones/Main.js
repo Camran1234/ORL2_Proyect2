@@ -15,6 +15,8 @@ class Main extends Instruccion{
         this.tipo = tipo;
     }
 
+    
+
 }
 
 module.exports = Main;

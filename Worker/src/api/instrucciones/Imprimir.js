@@ -6,7 +6,16 @@ class Imprimir extends Instruccion{
         this.tipo = tipo;
         this.parametros = parametros;
         this.paramsO=[];
+        this.results = [];
         this.cadenas = [];
+    }
+
+    addResults(result){
+        this.results.push(result);
+    }
+
+    getResults(){
+        return this.results;
     }
 
     setCadenas(cad){

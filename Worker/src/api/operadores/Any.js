@@ -27,8 +27,8 @@ class Any extends Object{
         return super.setTipo(type);
     }
 
-    getThisTipo(){
-        return  super.getThisTipo();
+    getTipo(){
+        return  super.getTipo();
     }
 
     setParamPuntero(op){

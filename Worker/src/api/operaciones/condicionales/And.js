@@ -104,14 +104,14 @@ class And extends OperacionCondicional {
         let etEntrada = tablaTipos.drawEt();
         tablaTipos.drawEt();
         cadena += tName+"= 0;\n"
-        cadena += "if "+resultadoL+" > 0 goto "+etEntrada+";\n";
+        cadena += "if ("+resultadoL+" > 0) goto "+etEntrada+";\n";
         tablaTipos.addEt();
         cadena += "goto "+etSalida+";\n";
 
         cadena += etEntrada+" :\n";
         etEntrada = tablaTipos.drawEt();
         tablaTipos.addEt();
-        cadena += "if "+resultadoR+" > 0 goto "+etEntrada+";\n";
+        cadena += "if ("+resultadoR+" > 0) goto "+etEntrada+";\n";
         cadena += "goto "+etSalida+";\n";
         
         cadena +=  etEntrada+":\n";

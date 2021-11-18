@@ -11,6 +11,14 @@ class Retornar extends Instruccion{
         return this.valor;
     }
 
+    isFromMain(){
+        let ambit = this.ambitoEnMain();
+        if (ambit !=null){
+            return true;
+        }
+        return false;
+    }
+
 }
 
 module.exports = Retornar;

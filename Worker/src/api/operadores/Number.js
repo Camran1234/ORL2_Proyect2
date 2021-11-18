@@ -19,8 +19,8 @@ class Number extends Object{
         
     }
 
-    getThisTipo(){
-        return  super.getThisTipo();
+    getTipo(){
+        return  super.getTipo();
     }
 
     setParamPuntero(op){

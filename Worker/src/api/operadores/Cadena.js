@@ -36,8 +36,8 @@ class Cadena extends Objeto {
         return new Cadena(this.valor, this.linea, this.columna, this.lenguaje);
     }
 
-    getThisTipo(){
-        return  super.getThisTipo();
+    getTipo(){
+        return  super.getTipo();
     }
 
     setParamPuntero(op){
@@ -90,7 +90,6 @@ class Cadena extends Objeto {
     }
 
     generarExpresion(tablaTipos, instruccion){
-        this.setTipo(this.tipo);
         return super.generarExpresion(tablaTipos, instruccion)
     }
 

@@ -1,223 +1,55 @@
 ptr = 0;
 h = 0;
-stack [1000000] ;
-heap [1000000] ; 
-com_Saludo_ANY__ {
-ts0[] = "Segundo Proyecto de Compiladores 2";
- print(ts0, " \n ");
+stack [];
+heap []; 
+com_calcular_ANY_ANY_ {
+t0 = ptr +0;
+t1= stack[t0];
+t2 = ptr + 1;
+stack[t2] = t1;
+goto et0 ; 
 et0 : 
 }
-com_edadmeses_ANY_ANY_ANY_ {
-ts1[] = "Ingrese su edad:";
- print(ts1, " \n ");
-t0= ptr + 0;
-stack[t0] = null ;
-t1 = ptr +0;
-t2= stack[t1];
-t3 = t2*12;
-t4= ptr + 1;
-stack[t4] = t3 ;
-ts2[] = "meses = ";
- t5 = ptr +1;
-t6= stack[t5];
-print(ts2, t6);
-et1 : 
-}
-com_edadmeses_ANY_ANY_ANY_ANY_ {
-ts3[] = "ASD";
- stack[t7] = ts3;
-goto et2 ; 
-et2 : 
-}
-com_Factorial_ANY_ANY_ {
-t8= ptr + 1;
-stack[t8] = 0 ;
-t9= ptr + 2;
-stack[t9] = 0 ;
-t10 = ptr +0;
-t11= stack[t10];
-t12= ptr + 2;
-stack[t12] = t11 ;
-t13 = ptr +0;
-t14= stack[t13];
-if t14==0 goto et6;
+com_clase_nuevo_VOID_ {
+t3 = 2+4;
+ts0 = "ASD";
+ t4 = t3+ts0;
+t5= ptr + 1;
+stack[t5] = t4 ;
+ts1 = "AH";
+ ts2 = "RE";
+ if ts1==ts2 goto et4;
+goto et5;
+et4:
+t6 = 1;
+goto et3;
+et5:
+t6 = 0;
+goto et3;
+if t6> 0 goto et6;
 goto et7;
 et6:
-t15 = 1;
-goto et5;
+goto et2;
 et7:
-t15 = 0;
-goto et5;
-if t15> 0 goto et8;
-goto et9;
-et8:
-stack[t15] = 1;
-goto et3 ; 
-goto et4;
-et9:
-t16= ptr + 1;
-stack[t16] = 1 ;
-t17 = ptr +0;
-t18= stack[t17];
-if t18>1 goto et14;
-goto et15;
-et14:
-t19 = 1;
-goto et13;
-et15:
-t19 = 0;
-goto et13;
-et10 :
-if t19 > 0 goto et11;
-goto et12;
-et11 :
-t19 = ptr +1;
-t20= stack[t19];
-t21 = ptr +0;
-t22= stack[t21];
-t23 = t20*t22;
-t24= ptr + 1;
-stack[t24] = t23 ;
-t25 = ptr +0;
-t26= stack[t25];
-t27 = t26-1;
-t28= ptr + 0;
-stack[t28] = t27 ;
-goto et10;
-et12 :
-t29 = ptr +1;
-t30= stack[t29];
-stack[t15] = t30;
-goto et3 ; 
-goto et4;
-et4:
-et4:
-et3 : 
+et2:
+et1 : 
 }
-com_algo_holaMundo_ENTERO_ {
-ts4[] = "Hola Mundo!!";
- print(ts4, " \n ");
-stack[t31] = 1;
-goto et16 ; 
-et16 : 
-}
-com_algo__{
-t32 = ptr + 0;
-stack[t32] = h;
+com_clase__{
+t7 = ptr + 0;
+stack[t7] = h;
 h = h + 0;
 }
-t32= ptr + 5;
-stack[t32] = 10 ;
-t33 = 1 * 4;
-t34 = t33 + 4;
-arr0[t34];
-t35 = arr0;
-t36 = ptr + 6;
-stack[t36] = t35 ;
-ptr = ptr + 0;
-com_algo__() ;
-ptr = ptr - 0;
-t37 = ptr + 0;
-t38 = t37 + 0;
-t39 = stack[t38];
-t40 = ptr + 7;
-stack[t40] = t39;
- clrscr();
-t41 = ptr + 7;
-t42= stack[t41];
-t43= ptr + 1;
-t44 = t43 + 0;
-stack[t44] = t42 ;
-t44 = ptr +1;
-ptr = ptr + 1;
-com_algo_holaMundo_ENTERO_();
-ptr = ptr - 1;
-scan();
-ts5[] = "Bienvenido";
- print(ts5, " \n ");
-ts6[] = "Ingrese el primer valor entero";
- print(ts6, " \n ");
-t45 = ptr 12;
-t46 = stack[t45];
-scanf([object Object], &t46);
-ts7[] = "Ingrese el segudo valor entero";
- print(ts7, " \n ");
-t47 = ptr 8;
-t48 = stack[t47];
-scanf([object Object], &t48);
-t49 = ptr + 1;
-ptr = ptr + 1;
-com_Factorial_ANY_ANY_();
-ptr = ptr - 1;
-t50= ptr + 1;
-t51 = t50 + t15;
-t52= ptr + 10;
-stack[t52] = t51 ;
-t53 = ptr +12;
-t54= stack[t53];
-t55 = ptr +8;
-t56= stack[t55];
-t57 = t54+t56;
-t58= ptr + 11;
-stack[t58] = t57 ;
-ts8[] = "El factorial de %d es %d";
- t59= ptr +11;
-t60= stack[t59];
-t61 = stack[t60];
-t62= ptr +10;
-t63= stack[t62];
-t64 = stack[t63];
-print(ts8, t61, t64, " \n ");
-ts9[] = "Conversion de años a meses";
- print(ts9, " \n ");
-scan();
-t65= ptr + 6;
-t66 = 1 * 1;
-t67 = t66 + 1;
-t68 =  stack [t65];
-t68[t67] = 0 ;
-t69= ptr + 9;
-stack[t69] = 0 ;
-et17 :
-t70 = ptr +9;
-t71= stack[t70];
-t72 = ptr +8;
-t73= stack[t72];
-if t71<=t73 goto et21;
-goto et22;
-et21:
-t74 = 1;
-goto et20;
-et22:
-t74 = 0;
-goto et20;
- if t74 > 0 goto et18;
-goto et19;
-et18 :
-t74 = ptr +10;
-t75= stack[t74];
-t76 = ptr +12;
-t77= stack[t76];
-t78 = t75*t77;
-t79= ptr + 10;
-stack[t79] = t78 ;
-t80 = ptr +9;
-t81= stack[t80];
-t82 = t81+1;
-t83= ptr + 9;
-stack[t83] = t82 ;
-goto et17;
-et19 :
-ts10[] = "%d ";
- t84 = ptr +12;
-t85= stack[t84];
-print(ts10, t85, " \n ");
-ts11[] = "^ %d";
- t86 = ptr +8;
-t87= stack[t86];
-print(ts11, t87, " \n ");
-ts12[] = " = %d";
- t88 = ptr +10;
-t89= stack[t88];
-print(ts12, t89, " \n ");
-scan();
+t7= ptr + 0;
+stack[t7] = 5 ;
+t8 = ptr +0;
+t9= stack[t8];
+t10 = ptr + 3;
+t11 = t10 + 0;
+stack[t11] = t9;
+ptr = ptr + 3;
+com_calcular_ANY_ANY_();
+ptr = ptr - 3;
+t12= ptr + 3;
+t13 = t12 + t1;
+t14= ptr + 1;
+stack[t14] = t13 ;

@@ -1,3 +1,4 @@
+const Cadena = require('../operadores/Cadena');
 var Operacion = require('./Operacion');
 
 class OperacionComparacion extends Operacion {
@@ -89,31 +90,96 @@ class OperacionComparacion extends Operacion {
             resultadoR = this.operadorR.parse(this.operadorL, tablaTipos);
         }
         //Operar
-        operacion = resultadoL + this.operador+resultadoR;
+        if(tablaTipos.isCompiler()){
+            if(operadorL.getTipo() instanceof Cadena || operadorR.getTipo() instanceof Cadena){
+                if(operadorL.getTipo() instanceof Cadena){
+                    let helper = resultadoL.split("");
+                    if(helper[0] == "t"){
+                        resultadoL = "(*((char **)"+resultadoL+"))";
+                    }
+                }else{
+                    let helper = resultadoL.split("");
+                    if(helper[0] == "t"){
+                        resultadoL = "(*((float*)"+resultadoL+"))";
+                    }
+                    resultadoL = "convertNumber_String("+resultadoL+")";
+                } 
+
+                if(operadorR.getTipo() instanceof Cadena){
+                    let helper = resultadoR.split("");
+                    if(helper[0] == "t"){
+                        resultadoR = "(*((char **)"+resultadoR+"))";
+                    }
+                }else{
+                    let helper = resultadoR.split("");
+                    if(helper[0] == "t"){
+                        resultadoR = "(*((float*)"+resultadoR+"))";
+                    }
+                    resultadoR = "convertNumber_String("+resultadoR+")";
+                }
+                operacion = "strcmp("+resultadoL+", "+resultadoR+") "+this.operador+" 0";
+            }else{
+                let helper = resultadoL.split("");
+                if(helper[0]=="t"){
+                    resultadoL = "(*((float *)"+resultadoL+"))";
+                }
+                helper = resultadoR.split("");
+                if(helper[0]=="t"){
+                    resultadoR = "(*((float *)"+resultadoR+"))";
+                }
+                operacion = resultadoL+this.operador+resultadoR;
+            }
+            
+            let tNombre = tablaTipos.drawT();
+            tablaTipos.addT();
+            let etSalida = tablaTipos.drawEt();        
+            tablaTipos.addEt();
+
+            cadena += "if ("+operacion +") goto "+tablaTipos.drawEt()+";\n"
+            let etTrue= tablaTipos.drawEt();
+            tablaTipos.addEt();
+            cadena += "goto "+tablaTipos.drawEt()+";\n";
+            let etFalse = tablaTipos.drawEt();
+            tablaTipos.addEt();
+            //t1 = 1
+            cadena += etTrue+":\n";
+            cadena += tNombre+" = 1;\n";
+            cadena += "goto "+etSalida+";\n";
+
+            //t1 = 0
+            cadena += etFalse+":\n";
+            cadena += tNombre+" = 0;\n";
+            cadena += "goto "+etSalida+";\n";
+
+            this.setNombre(tNombre);
+            this.setOperacionFinal(operacion);
+        }else{
+            operacion = resultadoL + this.operador+resultadoR;
     
-        let tNombre = tablaTipos.drawT();
-        tablaTipos.drawT();
-        let etSalida = tablaTipos.drawEt();        
-        tablaTipos.addEt();
+            let tNombre = tablaTipos.drawT();
+            tablaTipos.addT();
+            let etSalida = tablaTipos.drawEt();        
+            tablaTipos.addEt();
 
-        cadena += "if "+operacion +" goto "+tablaTipos.drawEt()+";\n"
-        let etTrue= tablaTipos.drawEt();
-        tablaTipos.addEt();
-        cadena += "goto "+tablaTipos.drawEt()+";\n";
-        let etFalse = tablaTipos.drawEt();
-        tablaTipos.addEt();
-        //t1 = 1
-        cadena += etTrue+":\n";
-        cadena += tNombre+" = 1;\n";
-        cadena += "goto "+etSalida+";\n";
+            cadena += "if ("+operacion +") goto "+tablaTipos.drawEt()+";\n"
+            let etTrue= tablaTipos.drawEt();
+            tablaTipos.addEt();
+            cadena += "goto "+tablaTipos.drawEt()+";\n";
+            let etFalse = tablaTipos.drawEt();
+            tablaTipos.addEt();
+            //t1 = 1
+            cadena += etTrue+":\n";
+            cadena += tNombre+" = 1;\n";
+            cadena += "goto "+etSalida+";\n";
 
-        //t1 = 0
-        cadena += etFalse+":\n";
-        cadena += tNombre+" = 0;\n";
-        cadena += "goto "+etSalida+";\n";
+            //t1 = 0
+            cadena += etFalse+":\n";
+            cadena += tNombre+" = 0;\n";
+            cadena += "goto "+etSalida+";\n";
 
-        this.setNombre(tNombre);
-        this.setOperacionFinal(operacion);
+            this.setNombre(tNombre);
+            this.setOperacionFinal(operacion);
+        }
         return cadena;
     }
     //Ejemplo comparacion

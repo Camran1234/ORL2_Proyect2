@@ -35,8 +35,8 @@ class Decimal extends Number{
         return null;
     }
 
-    getThisTipo(){
-        return  super.getThisTipo();
+    getTipo(){
+        return  super.getTipo();
     }
 
     setParamPuntero(op){

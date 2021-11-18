@@ -1,3 +1,5 @@
+const Cadena = require('../operadores/Cadena');
+const Decimal = require('../operadores/Decimal');
 var Instruccion = require('./Instruccion');
 
 class Switch extends Instruccion {
@@ -16,6 +18,7 @@ class Switch extends Instruccion {
         //cuartetos
         this.tIde = "";
         this.etSalida = "";
+        this.VTipo="";
     }
 
     setEtSalida(et){
@@ -52,6 +55,18 @@ class Switch extends Instruccion {
 
     setDefault(default_){
         this.default_ = default_;
+    }
+
+    setVTipo(tipo){
+        if(tipo == "CADENA"){
+            this.VTipo = new Cadena("",0,0,"");
+        }else{
+            this.VTipo = new Decimal("",0,0,"");
+        }
+    }
+
+    getVTipo(){
+        return this.VTipo;
     }
 
     getDefault(){

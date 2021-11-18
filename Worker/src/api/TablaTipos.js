@@ -17,6 +17,7 @@ const TIPO_LENGUAJE = require('./Instrucciones').TIPO_LENGUAJE;
 const Clase = require('../api/instrucciones/Clase');
 const Constructor = require('../api/instrucciones/Constructor');
 const Funcion = require('../api/instrucciones/Function');
+const Retornar = require('../api/instrucciones/Retornar');
 const Main = require('../api/instrucciones/Main');
 
 var Tipo = require('./Tipo');
@@ -47,8 +48,85 @@ class TablaTipos{
         this.t = 0;
         this.et = 0;
         this.ar=0;
-        this.c = 0;
         this.s = 0;
+        this.specialVoids = [];
+        this.cMode = false;
+    }
+
+    setCompilerMode(state){
+        this.cMode = state;
+    }
+
+    drawTParam(index){
+        return "t"+index;
+    }
+
+    drawTsParam(index){
+        return "ts"+index;
+    }
+
+    stablishType(tipo){
+        if(this.isCompiler()){
+            if(tipo instanceof Caracter){
+                this.actualTChar();
+            }else if(tipo instanceof Booleano){
+                this.actualTEntero();
+            }else if(tipo instanceof Entero){
+                this.actualTEntero();
+            }else if(tipo instanceof Decimal){
+                this.actualTFloat();
+            }else if(tipo instanceof Cadena){
+                this.actualTCadena();
+            }   
+        }
+    }
+
+    declararT(){
+        let cadena = "";
+        //Only the T params must be declared
+        // The ts not because they got declared during executions
+        cadena += "int g;\n";
+        for(let index=0; index< this.t.size; index++){
+            if(index == this.specialVoids[index]){
+                cadena += "void *"+this.drawTParam(index)+";\n";
+                this.specialVoids.shift();
+            }else if(index == this.specialInts[index]){
+                cadena += "int "+this.drawTParam(index)+";\n";   
+                this.specialInts.shift();
+            }else if (index == this.specialFloats[index]){
+                cadena += "float "+this.drawTParam(index)+";\n"   
+                this.specialFloats.shift();
+            }else if(index == this.specialChars[index]){
+                cadena += "char "+this.drawTParam(index)+";\n";
+                this.specialChars.shift();
+            }else if(index == this.specialCadenas[index]){
+                cadena += "char *"+this.drawTParam(index)+";\n";   
+                this.specialCadenas.shift();
+            }else{
+                cadena += "int "+this.drawTParam(index)+";\n";
+            }
+        }
+        return cadena;
+    }
+
+    actualTCadena(){
+        this.specialCadenas.push(this.t);
+    }
+
+    actualTVoid(){
+        this.specialVoids.push(this.t);
+    }
+
+    actualTFloat(){
+        this.specialFloats.push(this.t);
+    }
+
+    actualTChar(){
+        this.specialChars.push(this.t);
+    }
+
+    isCompiler(){
+        return this.cMode;
     }
 
     drawS(){
@@ -63,18 +141,6 @@ class TablaTipos{
         this.s++;
     }
 
-    getC(){
-        return this.c;
-    }
-
-    drawC(){
-        return "tc"+this.c;
-    }
-
-    addC(){
-        this.c++;
-    }
-
     drawAr(){
         return "arr"+this.ar;
     }
@@ -85,6 +151,22 @@ class TablaTipos{
 
     getAr(){
         return this.ar;
+    }
+
+    searchReturn(ambito){
+        let tabla = this.tipos;
+        for(let index= tabla.length-1; index>=0; index--){
+            let tipo = tabla[index];
+            let ambitoContenedor = tipo.getInstruccion().ambitoMayor();
+            if(ambitoContenedor!=null){
+                if(ambitoContenedor == ambito){
+                    if(tipo.getInstruccion() instanceof Retornar){
+                        return tipo;
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     sizeAmbito(ambito){
@@ -105,6 +187,9 @@ class TablaTipos{
                 let extension = ambito.getIdExtensionO().getInstruccion();
                 size += this.sizeAmbito(extension);
             }
+        }
+        if(ambito instanceof Funcion){
+            size--;
         }
 
         return size;
@@ -147,6 +232,12 @@ class TablaTipos{
 
     crear(visibilidad, id, tipo, ambito, longitud, esArreglo, rol, paquete, instruccion, lenguaje){
         return new Tipo(visibilidad, id, tipo, ambito, this.posMemoria, longitud, esArreglo, rol, paquete, instruccion, lenguaje);
+    }
+
+    forcePush(tipo){
+        if(tipo.getInstruccion() instanceof Retornar){
+            this.tipos.push(tipo);
+        }
     }
 
     agregarTipo(tipo){

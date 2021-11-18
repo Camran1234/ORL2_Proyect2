@@ -35,8 +35,8 @@ class Caracter extends Entero {
         return null;
     }
 
-    getThisTipo(){
-        return  super.getThisTipo();
+    getTipo(){
+        return  super.getTipo();
     }
 
     setParamPuntero(op){
@@ -93,7 +93,6 @@ class Caracter extends Entero {
     }
 
     generarExpresion(tablaTipos, instruccion){
-        this.setTipo(this.tipo);
         return super.generarExpresion(tablaTipos, instruccion)
     }
 

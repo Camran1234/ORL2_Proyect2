@@ -41,8 +41,8 @@ class Entero extends Decimal {
         return null;
     }
 
-    getThisTipo(){
-        return  super.getThisTipo();
+    getTipo(){
+        return  super.getTipo();
     }
 
     setParamPuntero(op){

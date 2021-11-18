@@ -313,7 +313,7 @@ print_parametros_re
 
 print_stmt
 	: PRINTF OPEN_PARENTHESIS print_parametros CLOSE_PARENTHESIS {
-		$$=instruccionesApi.nuevoImprimir($3,TIPO_PRINT.PRINTLN, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+		$$=instruccionesApi.nuevoImprimir($3,TIPO_PRINT.PRINT, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
 	}
 	| PRINTF error {addSyntaxError("Se esperaba \'(\'",$2,linea(this._$.first_line), columna(this._$.first_column));}
 	| PRINTF OPEN_PARENTHESIS error {addSyntaxError("Se esperaba una expresion", $3, linea(this._$.first_line), columna(this._$.first_column));}

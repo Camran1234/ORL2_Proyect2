@@ -12,6 +12,15 @@ class Asignacion extends Instruccion{
         this.magnitudO = [];
         this.esArreglo = false;
         this.puntero = false;
+        this.scan = false;
+    }
+
+    setScan(){
+        this.scan = true;
+    }
+
+    isScan(){
+        return this.scan;
     }
 
     setPuntero(puntero){

@@ -183,7 +183,7 @@ addSyntaxError("Se esperaba una expresion", $$[$0-1], linea(this._$.first_line),
 break;
 case 37:
 
-		this.$=instruccionesApi.nuevoImprimir($$[$0-1],TIPO_PRINT.PRINTLN, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
+		this.$=instruccionesApi.nuevoImprimir($$[$0-1],TIPO_PRINT.PRINT, lenguaje, linea(this._$.first_line), columna(this._$.first_column));
 	
 break;
 case 41: case 49: case 153:

@@ -31,10 +31,9 @@ class Function extends Instruccion{
         }
     }
 
-    generarReturnName(nombre, tablaTipos){
+    generarReturnName(nombre){
         if(this.returnName == null){
             this.returnName = nombre;
-            tablaTipos.addT();
             return nombre;
         }else{
             //posMemoria

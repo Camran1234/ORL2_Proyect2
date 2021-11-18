@@ -1,4 +1,4 @@
-const { TIPO_OPERACION } = require('../../api/Instrucciones');
+const { TIPO_OPERACION, TIPO_VALOR, TIPO_LENGUAJE } = require('../../api/Instrucciones');
 const Asignacion = require('../../api/instrucciones/Asignacion');
 const AsignacionClase = require('../../api/instrucciones/AsignacionClase');
 const Break = require('../../api/instrucciones/Break');
@@ -25,7 +25,10 @@ const Scanner = require('../../api/instrucciones/Scanner');
 const Switch = require('../../api/instrucciones/Switch');
 const Variable = require('../../api/instrucciones/Variable');
 const While = require('../../api/instrucciones/While');
+const Cadena = require('../../api/operadores/Cadena');
+const Caracter = require('../../api/operadores/Caracter');
 const Entero = require('../../api/operadores/Entero');
+const Object = require('../../api/operadores/Object');
 
 class Cuarteto {
 
@@ -54,10 +57,30 @@ class Cuarteto {
         if (ast == null) return "AST con errores, no se pudo crear el codigo 3d";
         var cuarteto = "";    
         if(estado ==1 ){
-            cuarteto += "ptr = 0;\n";
-            cuarteto += "h = 0;\n"
-            cuarteto += "stack [1000000] ;\n";
-            cuarteto += "heap [1000000] ; \n";
+            
+            if(tabla.isCompiler()){
+                cuarteto+= "char* concat(char *buf, char* buf2){\n";
+                cuarteto+= "    char *result = malloc(strlen(buf)+strlen(buf2)+1);\n"
+                cuarteto+= "    strcpy(result,buf);\n"
+                cuarteto+= "    strcat(result,buf2);\n"
+                cuarteto+= "    return result;\n"
+                cuarteto+= "}\n";
+
+                cuarteto = "char* convertNumber_String(float number){\n"
+                cuarteto = "   char *x = malloc(100*sizeof(char));\n";
+                cuarteto = "   sprintf(x,\"%f\", number);\n";
+                cuarteto = "   return x;\n";
+                cuarteto = "}\n";
+
+                cuarteto += "#define ARRAY_LENGTH 10000\n"
+                cuarteto += "void* stack [ARRAY_LENGTH];\n";
+                cuarteto += "void* heap [ARRAY_LENGTH];\n";
+            }else{
+                cuarteto += "ptr = 0;\n";
+                cuarteto += "h = 0;\n";
+                cuarteto += "stack [];\n";
+                cuarteto += "heap []; \n";
+            }
         }
         if(Array.isArray(ast)){
             for(let index=0; index<ast.length; index++){
@@ -150,13 +173,15 @@ class Cuarteto {
 
         cadena += expresionO.generarExpresion(tabla, instruccion);
         let tResult = expresionO.getNombre();
-        //Esto es R
-
         if(puntero){
             cadena += tabla.drawT() + " = ptr + "+tipoVar.getPosMemoria() + "; \n";
             tabla.addT();
             cadena += tabla.drawT() + " = stack[t"+(tabla.getT()-1)+"];\n";
             tLeft = tabla.drawT();
+            if(tabla.isCompiler()){
+                tLeft = "(*((float*)"+tLeft+"))";
+            }
+            tabla.actualTVoid();
             tabla.addT();
             cadena += "stack["+tLeft+"] = "+tResult+";\n";
             //Fin
@@ -166,10 +191,17 @@ class Cuarteto {
                 cadena += tabla.drawT() + " = ptr + 0 ;\n";
                 tabla.addT();
                 cadena += tabla.drawT() + "= stack[t"+(tabla.getT()-1)+"];\n"//Direccion de la clase 
+                let tFirst = tabla.drawT();
+                if(tabla.isCompiler){
+                    tFirst = "(*((float*)"+tFirst+"))";
+                }
                 tabla.addT();
-                cadena += tabla.drawT() + " = t"+(tabla.getT()-1)+" + "+(tipoVar.getPosMemoria()-1)+";\n";
+                cadena += tabla.drawT() + " = "+tFirst+" + "+(tipoVar.getPosMemoria()-1)+";\n";
                 tLeft = tabla.drawT();
-                tabla.addT(); 
+                tabla.addT();
+                if(tabla.isCompiler()){
+                    tLeft = "(*((float*)"+tLeft+"))";
+                } 
                 cadena += "Heap["+tLeft+"] = "+tResult+"; \n";
             }else{
                 //Es normal
@@ -184,7 +216,9 @@ class Cuarteto {
                     let tMagnitud = procesador3D.getNombre();
                     cadena += tabla.drawT() + " =  stack ["+tLeft+"];\n"; //Obtenemos el valor en este caso el arreglo
                     let tAux = tabla.drawT();//Es el arreglo
+                    tabla.actualTVoid();
                     tabla.addT();                    
+                    
                     cadena+= tAux+"["+tMagnitud+"] = "+tResult+" ;\n";//Asignamos el valor
                 }else{
                     cadena += "stack["+tLeft+"] = "+tResult+" ;\n";
@@ -260,7 +294,9 @@ class Cuarteto {
         let instrucciones = instruccion.getInstrucciones();
 
         //if
-        cadena += "if "+tIde+" == "+tNombre+" goto "+etT+";\n";
+        tIde = this.procesarCondicion_Object(instruccion.getVTipo(), tIde);
+        tNombre = this.procesarCondicion_Object(expresionO, tNombre);
+        cadena += "if ("+tIde+" == "+tNombre+") goto "+etT+";\n";
         cadena += "goto "+etF+";\n";
         cadena += etT+" :\n";
         let cuarteto_ = new Cuarteto(this.tabla);
@@ -337,10 +373,22 @@ class Cuarteto {
             let procesador3D = new Procesador3D()
             cadena += procesador3D.procesarParametrosArr(tabla, magnitudO, instruccion);
             let tArr = procesador3D.getNombre();
+            if(tabla.isCompiler()){
+                //Tipo del arreglo
+                cadena += "void * ";
+                let helper = tArr.split("");
+                if(helper[0] == "t"){
+                    tArr = "(*((int*)"+tArr+"))";
+                }
+            }
             cadena += tabla.drawAr()+"["+tArr+"];\n";
-            cadena += tabla.drawT() +" = "+tabla.drawAr()+";\n";
-            tabla.addAr();
+            cadena += tabla.drawT() + " = "+tabla.drawAr()+";\n";
             let arr = tabla.drawT();
+            if(tabla.isCompiler()){
+                arr = tabla.drawAr();
+            }
+            tabla.addAr();
+            tabla.actualTVoid();
             tabla.addT();
             //Asignacion en el stack
             cadena += tabla.drawT()+ " = ptr + "+(tipoIns.getPosMemoria())+";\n";
@@ -380,8 +428,9 @@ class Cuarteto {
         cadena+= "goto "+etDo+";\n";
         cadena+= expresionO.generarExpresion(this.tabla, instruccion);
         let tCondicion = expresionO.getNombre();
+        tCondicion = this.procesarCondicion_Object(expresionO, tCondicion);
         cadena+= etCondicion+":\n";
-        cadena += "if "+tCondicion+" > 0  goto "+etDo+";\n";
+        cadena += "if ("+tCondicion+" > 0)  goto "+etDo+";\n";
         cadena += "goto "+etFalso+";\n";
         cadena += etDo +" :\n";
         cadena += cuarteto_.procesar(instrucciones, 0);
@@ -424,8 +473,9 @@ class Cuarteto {
             let etFalse = this.tabla.drawEt();
             this.tabla.addEt();
             let instrucciones = instruccion.getInstrucciones();
-
-            cadena += "if "+expresion.getNombre()+" > 0 goto "+etTrue+";\n";
+            let tName = expresion.getNombre();
+            tName = this.procesarCondicion_Object(expresion, tName);
+            cadena += "if ("+tName+" > 0) goto "+etTrue+";\n";
             cadena += "goto "+etFalse+";\n";
             //Bloque interior
             cadena += etTrue+" :\n";
@@ -476,7 +526,8 @@ class Cuarteto {
         cadena += etCond+" :\n";
         cadena+= condicion.generarExpresion(this.tabla, instruccion);
         let tName = condicion.getNombre();
-        cadena += " if "+tName+" > 0 goto "+etTrue+";\n";
+        tName = this.procesarCondicion_Object(condicion, tName);
+        cadena += " if ("+tName+" > 0) goto "+etTrue+";\n";
         cadena += "goto "+etFalse+";\n";
         cadena += etTrue + " :\n";
 
@@ -497,6 +548,9 @@ class Cuarteto {
         instruccion.setEtSalida(this.tabla.drawEt());
         this.tabla.addEt();
         let instrucciones = instruccion.getInstrucciones();
+        if(this.tabla.isCompiler()){
+            cadena += "void ";
+        }
         cadena += instruccion.generarNombre() + " {\n";
         let cuarteto_ = new Cuarteto(this.tabla);
         cadena += cuarteto_.procesar(instrucciones, 0);
@@ -506,7 +560,11 @@ class Cuarteto {
     }
 
     procesarGetch(instruccion){
-        return "scan();\n";
+        if(this.tabla.isCompiler()){
+            return "scanf(\"%d\", g);\n";
+        }else{
+            return "scan();\n";
+        }
     }
 
     //Ya
@@ -528,7 +586,7 @@ class Cuarteto {
         let cuarteto_ = new Cuarteto(this.tabla);
 
         //Comparamos
-        cadena += "if "+expresion.getNombre()+"> 0 goto "+etTrue+";\n";
+        cadena += "if ("+expresion.getNombre()+"> 0) goto "+etTrue+";\n";
         cadena += "goto "+etFalsa+";\n";
             cadena += etTrue+":\n";
             cadena += cuarteto_.procesar(instrucciones, 0);
@@ -537,12 +595,26 @@ class Cuarteto {
         return cadena;
     }
 
+    printType(type){
+        if(type instanceof Caracter){
+            return "%c";
+        }if (type instanceof Entero){
+            return "%d";
+        }else if(type instanceof Decimal){
+            return "%f";
+        }else if (type instanceof Cadena){
+            return "%s";
+        }
+    }
+
     procesarImprimir(instruccion){
         let tabla = this.tabla;
         let cadena = "";
             
             let paramsT = [];
             let paramsO = instruccion.getParamsO();
+            let paramsN = instruccion.getParametros();
+            let results = instruccion.getResults();
             //Calculo de parametros
             for(let index=0; index<paramsO.length; index++){
                 let param = paramsO[index];
@@ -551,17 +623,43 @@ class Cuarteto {
             }
             //imprimimos
             let expresion = "";
-            for(let index=0; index<paramsO.length; index++){
-                if(index == paramsO.length-1){
-                    expresion += paramsT[index];
+            if(tabla.isCompiler()){
+                if(instruccion.getLenguaje() == TIPO_LENGUAJE.C){
+                    for(let index=0; index<paramsO.length; index++){
+                        if(paramsN[index].tipo == TIPO_VALOR.PUNTERO_IDENTIFICADOR){
+                            expresion += "&"+paramsT[index];
+                        }else{
+                            expresion += +paramsT[index]+", ";
+                        }
+                    }
+                    if(instruccion.getTipo() == 'PRINTLN'){
+                        //expresion += ", "+"\" \\n \"";
+                        expresion += ", \\n";
+                    }   
+                    cadena += "printf("+expresion+");\n";
                 }else{
-                    expresion += paramsT[index]+ ", ";
+                    for(let index=0; index<paramsO.length; index++){
+                        if(paramsN[index].tipo == TIPO_VALOR.PUNTERO_IDENTIFICADOR){
+                            //expresion += 
+                            let tipo = this.printType(results[index]);
+                            expresion += "printf(\""+tipo+"\", "+paramsT[index]+");\n";
+                        }
+                    }
                 }
+                
+            }else{
+                for(let index=0; index<paramsO.length; index++){
+                    if(paramsN[index].tipo == TIPO_VALOR.PUNTERO_IDENTIFICADOR){
+                        expresion += "imprimir(&"+paramsT[index]+");\n";
+                    }else{
+                        expresion += "imprimir("+paramsT[index]+");\n";
+                    }
+                }
+                if(instruccion.getTipo() == 'PRINTLN'){
+                    expresion += "imprimir(\\n);\n"
+                }
+                cadena += expresion;
             }
-            if(instruccion.getTipo() == 'PRINTLN'){
-                expresion += ", "+"\" \\n \"";
-            }
-            cadena += "print("+expresion+");\n";
         return cadena;
     }
 
@@ -574,11 +672,34 @@ class Cuarteto {
         return cadena;
     }
 
+    procesarValor_Tipo(tipo){
+        if(tipo == TIPO_VALOR.ENTERO
+            || tipo == TIPO_VALOR.BOOLEAN){
+            return "int";
+        }else if(tipo == TIPO_VALOR.DECIMAL){
+            return "float";
+        }else if(tipo == TIPO_VALOR.CARACTER){
+            return "char";
+        }else if(tipo == TIPO_VALOR.CADENA){
+            return "char *";
+        }
+    }
+
     //Ya
     procesarMain(instruccion){
         let instrucciones = instruccion.getInstrucciones();
         let cuarteto_ = new Cuarteto(this.tabla);
-        return cuarteto_.procesar(instrucciones, 0);
+        let cadena = cuarteto_.procesar(instrucciones, 0);
+        if(this.tabla.isCompiler()){
+            let aux = "";
+            let tipo = instruccion.getTipo();
+            let typeC = this.procesarValor_Tipo(tipo);
+            aux = typeC + " main {\n";
+            aux = cadena;
+            aux = "\n}\n;";
+            cadena = aux;
+        }
+        return cadena;
     }
 
     generarParametro(tabla, parametro, puntero){
@@ -704,14 +825,20 @@ class Cuarteto {
         let cadena = "";
         let ambito = instruccion.ambitoEnFuncion();
         let simbolo = this.tabla.buscarInstruccion(ambito);
+        let instruccionTipo = this.tabla.buscarInstruccion(instruccion);
         let funcionInstruccion = simbolo.getInstruccion();
 
         let expresionO = instruccion.getExpresionO();
         cadena += expresionO.generarExpresion(this.tabla);
-        let t = this.tabla.getT();
-        funcionInstruccion.generarReturnName(t, this.tabla);
-        t = funcionInstruccion.getReturnName();
-        cadena += "stack[t"+t+"]" + " = "+expresionO.getNombre()+";\n";
+        let t = instruccionTipo.getPosMemoria();//Es la pos de memoria
+        funcionInstruccion.generarReturnName(t);
+        t = funcionInstruccion.getReturnName();//Pos de memoria no Tnum
+        cadena += this.tabla.drawT() +" = ptr + "+t+";\n";
+        cadena += "stack["+this.tabla.drawT()+"]" + " = "+expresionO.getNombre()+";\n";
+        this.tabla.addT();
+        if(this.tabla.isCompiler() && instruccion.isFromMain()){
+            cadena += "return "+expresionO.getNombre()+";\n";
+        }
         //terminamos el retornar
         cadena += "goto "+funcionInstruccion.getEtSalida()+ " ; \n";
         return cadena;
@@ -729,8 +856,13 @@ class Cuarteto {
         cadena += tabla.drawT() + " = stack[t"+(tabla.getT()-1)+"];\n";//Como es en el contexto actual no agregamos nada        
         let variable = tabla.drawT();
         tabla.addT();
-        
-        cadena += "scanf("+texto+", &"+variable+");\n";
+        let resultado = "";
+        if (texto.tipo == TIPO_VALOR.CADENA){
+            resultado = "\""+texto.valor+"\"";
+        }else{
+            resultado = texto.valor;
+        }
+        cadena += "scanf("+resultado+", &"+variable+");\n";
 
         return cadena;
     }
@@ -750,6 +882,7 @@ class Cuarteto {
         tabla.addT();
 
         instruccion.setTIde(tIde);
+        instruccion.setVTipo(tipoV.getTipo());
         instruccion.setEtSalida(tabla.drawEt());
         let etSalida = tabla.drawEt();
         tabla.addEt();
@@ -788,6 +921,24 @@ class Cuarteto {
         return cadena;
     }
 
+    procesarCondicion_Object(expresionO, t){
+        let tCondicion = t;
+        if(this.tabla.isCompiler()){
+            if(expresionO instanceof Cadena){
+                let helper = t.split("");
+                if(helper[0] == "t"){
+                    tCondicion = "(*(char**)"+t+"))";
+                }
+            }else{
+                let helper = t.split("");
+                if(helper[0] == "t"){
+                    tCondicion = "(*(float*)"+t+"))";
+                }
+            }
+        }
+        return tCondicion;
+    }
+
     procesarWhile(instruccion){
         let cadena = "";
         let expresionO = instruccion.getExpresionO();
@@ -806,10 +957,11 @@ class Cuarteto {
         //condicion
         cadena += expresionO.generarExpresion(tabla, instruccion);
         let tCondicion = expresionO.getNombre();
+        tCondicion = this.procesarCondicion_Object(expresionO, tCondicion);
         let cuarteto_ = new Cuarteto(this.tabla);
         //condicion
         cadena += etCondicion +" :\n";
-        cadena += "if "+tCondicion+" > 0 goto "+etV + ";\n";
+        cadena += "if ("+tCondicion+" > 0) goto "+etV + ";\n";
         cadena += "goto "+etF + ";\n";
         cadena += etV + " :\n";
         cadena += cuarteto_.procesar(instrucciones, 0);

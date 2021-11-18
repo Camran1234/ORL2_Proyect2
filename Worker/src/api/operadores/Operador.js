@@ -310,7 +310,7 @@ class Operador{
             let lenguajeMetodo = metodo.lenguaje;
             let paqueteria = "";
             metodoInstruccion = new Metodo(idMetodo, newParametros, operacion.linea, operacion.columna, operacion.lenguaje, ambito, paqueteria, null, null);
-            metodoInstruccion.setParametrosO(operadorNuevo.getParamsO);//arreglo de los objetos generados correctamente
+            metodoInstruccion.setParametrosO(operadorNuevo.getParamsO());//arreglo de los objetos generados correctamente
             if(ambito!=null){
                 paqueteria = ambito.getPaqueteria();
             }

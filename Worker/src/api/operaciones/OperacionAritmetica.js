@@ -1,3 +1,4 @@
+const Cadena = require('../operadores/Cadena');
 var Operacion = require('./Operacion');
 
 class OperacionAritmetica extends Operacion {
@@ -91,10 +92,65 @@ class OperacionAritmetica extends Operacion {
         //Operar
         operacion = resultadoL + this.operador+resultadoR;
         
-        cadena += tablaTipos.drawT()+" = "+operacion +";\n";
-        this.setNombre(tablaTipos.drawT());
-        tablaTipos.addT();
-        this.setOperacionFinal(operacion);
+        if(tablaTipos.isCompiler()){
+            //Do something
+            if(operadorL.getTipo() instanceof Cadena || operadorR.getTipo() instanceof Cadena){
+                //Strings
+
+                if ((operadorL.getTipo() instanceof Cadena)==false){
+                    //number to string
+                    let helper = resultadoL.split("");
+                    if(helper[0]=="t"){
+                        resultadoL = "(*((float *)"+resultadoL+"))";
+                    }
+                    resultadoL = "convertNumber_String("+resultadoL+")";
+                }else{
+                    if(helper[0]=="t"){
+                        resultadoL = "*((char **)"+resultadoL+")";
+                    }
+                }
+                //,.........
+                if ((operadorR.getTipo() instanceof Cadena)==false){
+                    //number to string
+                    let helper = resultadoR.split("");
+                    if(helper[0]=="t"){
+                        resultadoR = "(*((float *)"+resultadoR+"))";
+                    }
+                    resultadoR = "convertNumber_String("+resultadoR+")";
+                }else{
+                    //Es cadena
+                    if(helper[0]=="t"){
+                        resultadoR = "*((char **)"+resultadoL+")";
+                    }
+                }
+                operacion = "concat("+resultadoL+", "+resultadoR+")";
+                cadena += "char *"+tablaTipos.drawS() +" = "+operacion+";\n";
+                this.setNombre(tablaTipos.drawS());
+                tablaTipos.addS();
+                this.setOperacionFinal(operacion);
+            }else{
+                let helper = resultadoL.split("");
+                if(helper[0]=="t"){
+                    resultadoL = "(*((float *)"+resultadoL+"))";
+                }
+                helper = resultadoR.split("");
+                if(helper[0]=="t"){
+                    resultadoR = "(*((float *)"+resultadoR+"))";
+                }
+                //Son numeros
+                operacion = resultadoL + this.operador + resultadoR;
+                cadena += tablaTipos.drawT() + " = "+operacion+";\n";
+                this.setNombre(tablaTipos.drawT());
+                tablaTipos.addT();
+                this.setOperacionFinal(operacion);
+            }
+            
+        }else{
+            cadena += tablaTipos.drawT()+" = "+operacion +";\n";
+            this.setNombre(tablaTipos.drawT());
+            tablaTipos.addT();
+            this.setOperacionFinal(operacion);
+        }
         return cadena;
     }    
 
