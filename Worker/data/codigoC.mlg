@@ -1,0 +1,339 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include <string.h>
+#include <stdint.h>
+
+
+char* concat(char *buf, char* buf2){
+    char *result = malloc(strlen(buf)+strlen(buf2)+1);
+    strcpy(result,buf);
+    strcat(result,buf2);
+    return result;
+}
+char* convertNumber_String(float number){
+   char *x = malloc(100*sizeof(char));
+   sprintf(x,"%f", number);
+   return x;
+}
+char* convertInt_String(int number){
+   char *x = malloc(100*sizeof(char));
+   sprintf(x,"%d", number);
+  return x;
+}
+char* convertChar_String(char number){
+   char *x = malloc(100*sizeof(char));
+   sprintf(x,"%c", number);
+  return x;
+}
+struct Var{
+   void * puntero;
+   int type;
+};
+
+char c;
+int *t0;
+int t1;
+int t2;
+int *t3;
+int *t4;
+int t5;
+int t6;
+int t7;
+char * t8;
+int t9;
+char * t10;
+char * t11;
+int t12;
+int t13;
+char * t14;
+char * t15;
+int t16;
+int t17;
+int t18;
+int t19;
+int t21;
+int t22;
+int t23;
+int t24;
+struct main_Mensajero1_ t25;
+int t26;
+int t27;
+int t28;
+int t29;
+int t30;
+int t31;
+int t32;
+int t33;
+int t34;
+int t35;
+int t36;
+int t37;
+int t38;
+int t39;
+int t40;
+int t41;
+int t42;
+int t43;
+int t44;
+int t45;
+int t46;
+int t47;
+int t48;
+int t49;
+int t50;
+int t51;
+int t52;
+int t53;
+int t54;
+int t55;
+int t56;
+int t57;
+int t59;
+int t60;
+int t61;
+int t62;
+int t64;
+int t66;
+int t67;
+int t68;
+int t69;
+int t70;
+int t72;
+int t73;
+int t74;
+int t75;
+int t76;
+int t78;
+int t79;
+int t80;
+int t58;
+int t63;
+int t65;
+int t71;
+int t77;
+int t81;
+
+struct main_Mensajero1_ {
+};
+void main_Mensajero1_Incremento_VOID_ENTERO ( struct main_Mensajero1_* $$) {
+t1 = 1;
+t2 = t0+t1;
+*t0 = t2;
+et0 : 
+}
+void main_Mensajero1_Intercambiar_VOID_ENTERO_ENTERO ( struct main_Mensajero1_* $$) {
+t5 = t4;
+*t4 = t3;
+*t3 = t5;
+et1 : 
+}
+void main_Mensajero1_mensaje_VOID_ENTERO ( struct main_Mensajero1_* $$) {
+t7 = 1;
+if (t6 == t7) goto et4;
+goto et5;
+et4 :
+t8 = "Arreglo antes de ordenarse";
+ printf("%s", t8);
+printf("\n");
+goto et3;
+et5 :
+t9 = 2;
+if (t6 == t9) goto et6;
+goto et7;
+et6 :
+t10 = "Arreglo despues de ordenarse";
+ printf("%s", t10);
+printf("\n");
+goto et3;
+et7 :
+t11 = "Default!";
+ printf("%s", t11);
+printf("\n");
+et3 :
+et2 : 
+}
+void main_Mensajero1_mostrar_VOID_ENTERO_ENTERO ( struct main_Mensajero1_* $$) {
+t14 = "arreglo[";
+ t15 = "] = ";
+ printf("%s", t14);
+printf("%d", t12);
+printf("%s", t15);
+printf("%d", t13);
+printf("\n");
+et8 : 
+}
+void main_Mensajero1__( struct main_Mensajero1_ * $$) {
+
+}
+void main() {
+t17 = 10;
+t16 = t17;
+t18 = 10;
+t19 = 10;
+int t20[t18] ;
+t22 = 0;
+t21 = t22;
+t24 = 0;
+t23 = t24;
+main_Mensajero1__(&t25);
+t26 = 7;
+t27 = 0;
+t28 = 0;
+t20[t27] = t26;
+t29 = 14;
+t30 = 1;
+t31 = 1;
+t20[t30] = t29;
+t32 = 18;
+t33 = 2;
+t34 = 2;
+t20[t33] = t32;
+t35 = 19;
+t36 = 3;
+t37 = 3;
+t20[t36] = t35;
+t38 = 21;
+t39 = 4;
+t40 = 4;
+t20[t39] = t38;
+t41 = 2;
+t42 = 5;
+t43 = 5;
+t20[t42] = t41;
+t44 = 9;
+t45 = 6;
+t46 = 6;
+t20[t45] = t44;
+t47 = 24;
+t48 = 7;
+t49 = 7;
+t20[t48] = t47;
+t50 = 29;
+t51 = 8;
+t52 = 8;
+t20[t51] = t50;
+t53 = 47;
+t54 = 9;
+t55 = 9;
+t20[t54] = t53;
+t56 = 1;
+t6 = t56;
+main_Mensajero1_mensaje_VOID_ENTERO(&t25);
+t57 = 0;
+t21 = t57;
+et9 :
+if (t21<t16) goto et13;
+goto et14;
+et13:
+t58 = 1;
+goto et12;
+et14:
+t58 = 0;
+goto et12;
+et12:
+ if (t58 > 0) goto et10;
+goto et11;
+et10 :
+t59 = 10;
+t12 = t21;
+t13 = t20[t21];
+main_Mensajero1_mostrar_VOID_ENTERO_ENTERO(&t25);
+t60 = 1;
+t61 = t21+t60;
+t21 = t61;
+goto et9;
+et11 :
+et15 :
+t62 = 10;
+if (t21<t62) goto et19;
+goto et20;
+et19:
+t63 = 1;
+goto et18;
+et20:
+t63 = 0;
+goto et18;
+et18:
+if (t63 > 0) goto et16;
+goto et17;
+et16 :
+et21 :
+t64 = 10;
+if (t23<t64) goto et25;
+goto et26;
+et25:
+t65 = 1;
+goto et24;
+et26:
+t65 = 0;
+goto et24;
+et24:
+if (t65 > 0) goto et22;
+goto et23;
+et22 :
+t67 = 1;
+t68 = t23+t67;
+t66 = t68;
+t69 = 10;
+t70 = 10;
+if (t20[t23]<t20[t66]) goto et29;
+goto et30;
+et29:
+t71 = 1;
+goto et28;
+et30:
+t71 = 0;
+goto et28;
+et28:
+if (t71> 0) goto et31;
+goto et32;
+et31:
+t72 = 10;
+t73 = 10;
+t3 = &t20[t23];
+t4 = &t20[t66];
+main_Mensajero1_Intercambiar_VOID_ENTERO_ENTERO(&t25);
+goto et27;
+et32:
+et27:
+t0 = &t23;
+main_Mensajero1_Incremento_VOID_ENTERO(&t25);
+goto et21;
+et23 :
+t74 = 0;
+t23 = t74;
+t0 = &t21;
+main_Mensajero1_Incremento_VOID_ENTERO(&t25);
+goto et15;
+et17 :
+t75 = 2;
+t6 = t75;
+main_Mensajero1_mensaje_VOID_ENTERO(&t25);
+t76 = 0;
+t21 = t76;
+et33 :
+if (t21<t16) goto et37;
+goto et38;
+et37:
+t77 = 1;
+goto et36;
+et38:
+t77 = 0;
+goto et36;
+et36:
+ if (t77 > 0) goto et34;
+goto et35;
+et34 :
+t78 = 10;
+t12 = t21;
+t13 = t20[t21];
+main_Mensajero1_mostrar_VOID_ENTERO_ENTERO(&t25);
+t79 = 1;
+t80 = t21+t79;
+t21 = t80;
+goto et33;
+et35 :
+scanf("%c", &c);
+
+}
+;

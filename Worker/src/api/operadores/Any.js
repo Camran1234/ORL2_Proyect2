@@ -15,6 +15,10 @@ class Any extends Object{
         return "any";
     }
 
+    tipo_int(){
+        return super.tipo_int();
+    }
+
     parse(operador, tablaTipos){
         return this.nombre;
     }

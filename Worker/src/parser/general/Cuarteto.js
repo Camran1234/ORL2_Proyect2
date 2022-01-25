@@ -25,11 +25,15 @@ const Scanner = require('../../api/instrucciones/Scanner');
 const Switch = require('../../api/instrucciones/Switch');
 const Variable = require('../../api/instrucciones/Variable');
 const While = require('../../api/instrucciones/While');
+const Operacion = require('../../api/operaciones/Operacion');
+const Any = require('../../api/operadores/Any');
 const Cadena = require('../../api/operadores/Cadena');
 const Caracter = require('../../api/operadores/Caracter');
+const Decimal = require('../../api/operadores/Decimal');
 const Entero = require('../../api/operadores/Entero');
+const Booleano = require('../../api/operadores/Booleano');
 const Object = require('../../api/operadores/Object');
-
+const ParametroHelper = require('../../safe/ParametroHelper');
 class Cuarteto {
 
     constructor(tablaTipos){
@@ -55,26 +59,52 @@ class Cuarteto {
     procesar(ast, estado){
         var tabla = this.tabla;
         if (ast == null) return "AST con errores, no se pudo crear el codigo 3d";
-        var cuarteto = "";    
+        var cuarteto = "";   
+        let auxCuarteto = ""; 
         if(estado ==1 ){
             
             if(tabla.isCompiler()){
-                cuarteto+= "char* concat(char *buf, char* buf2){\n";
-                cuarteto+= "    char *result = malloc(strlen(buf)+strlen(buf2)+1);\n"
-                cuarteto+= "    strcpy(result,buf);\n"
-                cuarteto+= "    strcat(result,buf2);\n"
-                cuarteto+= "    return result;\n"
-                cuarteto+= "}\n";
+                auxCuarteto += "#include<stdio.h>\n";
+                auxCuarteto += "#include<stdlib.h>\n";
+                auxCuarteto += "#include <string.h>\n";
+                auxCuarteto += "#include <stdint.h>\n";
+                auxCuarteto += "\n";
 
-                cuarteto = "char* convertNumber_String(float number){\n"
-                cuarteto = "   char *x = malloc(100*sizeof(char));\n";
-                cuarteto = "   sprintf(x,\"%f\", number);\n";
-                cuarteto = "   return x;\n";
-                cuarteto = "}\n";
+                auxCuarteto += "\n"
+                auxCuarteto+= "char* concat(char *buf, char* buf2){\n";
+                auxCuarteto+= "    char *result = malloc(strlen(buf)+strlen(buf2)+1);\n"
+                auxCuarteto+= "    strcpy(result,buf);\n"
+                auxCuarteto+= "    strcat(result,buf2);\n"
+                auxCuarteto+= "    return result;\n"
+                auxCuarteto+= "}\n";
 
-                cuarteto += "#define ARRAY_LENGTH 10000\n"
+                auxCuarteto += "char* convertNumber_String(float number){\n"
+                auxCuarteto += "   char *x = malloc(100*sizeof(char));\n";
+                auxCuarteto += "   sprintf(x,\"%f\", number);\n";
+                auxCuarteto += "   return x;\n";
+                auxCuarteto += "}\n";
+
+                auxCuarteto += "char* convertInt_String(int number){\n";
+                auxCuarteto += "   char *x = malloc(100*sizeof(char));\n"
+                auxCuarteto += "   sprintf(x,\"%d\", number);\n";
+                auxCuarteto += "  return x;\n"
+                auxCuarteto += "}\n";
+
+                auxCuarteto += "char* convertChar_String(char number){\n";
+                auxCuarteto += "   char *x = malloc(100*sizeof(char));\n"
+                auxCuarteto += "   sprintf(x,\"%c\", number);\n";
+                auxCuarteto += "  return x;\n";
+                auxCuarteto += "}\n";
+
+                auxCuarteto += "struct Var{\n";
+                auxCuarteto += "   void * puntero;\n";
+                auxCuarteto += "   int type;\n";
+                auxCuarteto += "};\n";
+
+                auxCuarteto += "\nchar c;\n";
+                /*cuarteto += "#define ARRAY_LENGTH 10000\n"
                 cuarteto += "void* stack [ARRAY_LENGTH];\n";
-                cuarteto += "void* heap [ARRAY_LENGTH];\n";
+                cuarteto += "void* heap [ARRAY_LENGTH];\n";*/
             }else{
                 cuarteto += "ptr = 0;\n";
                 cuarteto += "h = 0;\n";
@@ -91,6 +121,19 @@ class Cuarteto {
             cuarteto += this.generar3D(ast);
         }        
         cuarteto += this.colocarSalidaIf(new Entero("", 0,0,""));
+        /*if(tabla.isCompiler()){
+            if(estado == 1){
+                let aux = tabla.inscribirDeclaraciones();
+                cuarteto = aux + "\n" + cuarteto;
+            }
+        }*/
+        if(estado == 1){
+            if(tabla.isCompiler()){
+                auxCuarteto += tabla.inscribirDeclaraciones();
+                auxCuarteto += "\n";
+                cuarteto = auxCuarteto + cuarteto;
+            }
+        }
         return cuarteto;
     }
 
@@ -162,70 +205,235 @@ class Cuarteto {
 
     procesarAsignacion(instruccion){
         let cadena = "";
+        let auxCadena = "";
         //calculamos las expresiones
         let varAs = instruccion.getVariableReferencia();
         let tipoVar = this.tabla.buscarInstruccion(varAs);
+        if(tipoVar == null){
+            let declaracion = varAs.getDeclaracion();
+            tipoVar = this.tabla.buscarInstruccion(declaracion);
+            let r = 4;
+        }
         let tabla = this.tabla;
         let puntero = varAs.getPuntero();
         let tLeft = "";
         //Generamos el valor a asignar
         let expresionO = instruccion.getExpresionO();
 
-        cadena += expresionO.generarExpresion(tabla, instruccion);
+        auxCadena += expresionO.generarExpresion(tabla, instruccion);
         let tResult = expresionO.getNombre();
-        if(puntero){
-            cadena += tabla.drawT() + " = ptr + "+tipoVar.getPosMemoria() + "; \n";
-            tabla.addT();
-            cadena += tabla.drawT() + " = stack[t"+(tabla.getT()-1)+"];\n";
-            tLeft = tabla.drawT();
-            if(tabla.isCompiler()){
-                tLeft = "(*((float*)"+tLeft+"))";
-            }
-            tabla.actualTVoid();
-            tabla.addT();
-            cadena += "stack["+tLeft+"] = "+tResult+";\n";
-            //Fin
-        }else{
-            if(this.isState3(varAs)){
-                //Es heap
-                cadena += tabla.drawT() + " = ptr + 0 ;\n";
-                tabla.addT();
-                cadena += tabla.drawT() + "= stack[t"+(tabla.getT()-1)+"];\n"//Direccion de la clase 
-                let tFirst = tabla.drawT();
-                if(tabla.isCompiler){
-                    tFirst = "(*((float*)"+tFirst+"))";
+        tResult = this.procesarCondicion_Object(expresionO, tResult);
+        if(tabla.isCompiler()){
+            let declaracion = tipoVar.getInstruccion();
+            if(declaracion instanceof Asignacion){
+                let tipo = "ENTERO";
+                let expresionOO = declaracion.getExpresionO();
+                if(expresionOO.getTipo() == Caracter
+                || expresionOO.getTipo() == "CARACTER"){
+                    tipo = "CARACTER";
+                }else if(expresionOO.getTipo() == Booleano
+                || expresionOO.getTipo() == "BOOLEAN"){
+                    tipo = "BOOLEAN"
+                }else if(expresionOO.getTipo() == Entero
+                || expresionOO.getTipo() == "ENTERO"){
+                    tipo = "ENTERO";
+                }else if(expresionOO.getTipo() == Decimal
+                || expresionOO.getTipo() == "DECIMAL"){
+                    tipo = "DECIMAL";
+                }else if(expresionOO.getTipo() == Cadena
+                || expresionOO.getTipo() == "CADENA"){
+                    tipo = "CADENA";
+                }else{//Any
+                    tipo = "ANY";
                 }
-                tabla.addT();
-                cadena += tabla.drawT() + " = "+tFirst+" + "+(tipoVar.getPosMemoria()-1)+";\n";
-                tLeft = tabla.drawT();
-                tabla.addT();
-                if(tabla.isCompiler()){
-                    tLeft = "(*((float*)"+tLeft+"))";
-                } 
-                cadena += "Heap["+tLeft+"] = "+tResult+"; \n";
-            }else{
-                //Es normal
-                cadena += tabla.drawT() + "= ptr + "+(tipoVar.getPosMemoria())+";\n";
-                tLeft = tabla.drawT() ;
-                tabla.addT();
-                if(instruccion.isArray()){
-                    let magnitudO = instruccion.getMagnitudO();
-                    const Procesador3D = require('../../api/Procesador3D');
-                    let procesador3D = new Procesador3D();
-                    cadena += procesador3D.procesarParametrosArr(tabla, magnitudO, instruccion);
-                    let tMagnitud = procesador3D.getNombre();
-                    cadena += tabla.drawT() + " =  stack ["+tLeft+"];\n"; //Obtenemos el valor en este caso el arreglo
-                    let tAux = tabla.drawT();//Es el arreglo
-                    tabla.actualTVoid();
-                    tabla.addT();                    
-                    
-                    cadena+= tAux+"["+tMagnitud+"] = "+tResult+" ;\n";//Asignamos el valor
+                let simboloDeclaracion = new Declaracion("LOCAL", declaracion.getId(), [], tipo, declaracion.getLenguaje(), declaracion.getLinea(),
+                declaracion.getColumna(), declaracion.getAmbito(), declaracion.getPaqueteria());
+                let cuarteto_ = new Cuarteto(this.tabla);
+                cadena += cuarteto_.procesar(simboloDeclaracion, 0);
+                declaracion.setDeclaracion(simboloDeclaracion);
+                declaracion = simboloDeclaracion;
+            }
+            
+            if(puntero){
+                if(tResult == "scan()" || tResult == "input()"){
+                    if(declaracion.getTipo() == "ANY"
+                    || declaracion.getTipo() instanceof Any
+                    || declaracion.getTipo() == Any){
+                        let name = "*((unsigned int*)"+declaracion.getTName()+".puntero)";
+                        auxCadena += "if ("+declaracion.getTName()+".type == 0) {\n";
+                        auxCadena += "scanf(\"%d\", "+" &"+name+" );\n";
+                        auxCadena += "} else if ("+declaracion.getTName()+".type == 1){\n";
+                        auxCadena += "scanf(\"%f\" , "+"&"+name+" );\n";
+                        auxCadena += "} else if ("+declaracion.getTName()+".type == 2){\n";
+                        auxCadena += "scanf(\"%c\", "+"&"+name+" );\n";
+                        auxCadena += "} else if ("+declaracion.getTName()+".type == 3){\n";
+                        auxCadena += "scanf (\"%s\", &"+name+");\n";
+                        auxCadena += "}\n";
+                    }else if(declaracion.getTipo() == "CADENA"
+                    || declaracion.getTipo() instanceof Cadena
+                    || declaracion.getTipo() == Cadena){
+                        auxCadena += "scanf("+declaracion.printScan()+", "+declaracion.getTName()+");\n";
+                    }else{
+                        auxCadena += "scanf("+declaracion.printScan()+", "+ " &"+declaracion.getTName()+");\n";
+                    }
                 }else{
-                    cadena += "stack["+tLeft+"] = "+tResult+" ;\n";
+                    if(declaracion.getTipo() == "ANY"
+                    || declaracion.getTipo() instanceof Any
+                    || declaracion.getTipo() == Any){
+                        auxCadena += "*"+declaracion.getTName() + ".puntero = "+tResult+";\n";
+                        auxCadena += "*"+declaracion.getTName() + ".type = "+expresionO.tipo_int()+";\n";
+                    }else{
+                        auxCadena+= "*"+declaracion.getTName() + " = "+tResult+";\n";
+                    }
+                }
+            }else{
+                if(this.isState3(varAs)){//Dentro de una clase
+                    if(tResult == "scan()" || tResult=="input()"){
+                        if(declaracion.getTipo() == "ANY"
+                        || declaracion.getTipo() instanceof Any
+                        || declaracion.getTipo() == Any){
+                            let name = "*((unsigned int*)"+declaracion.getTName()+".puntero)";
+                            auxCadena += "if ("+declaracion.getTName()+".type == 0) {\n";
+                            auxCadena += "scanf(\"%d\", "+" &"+name+" );\n";
+                            auxCadena += "} else if ("+declaracion.getTName()+".type == 1){\n";
+                            auxCadena += "scanf(\"%f\" , "+"&"+name+" );\n";
+                            auxCadena += "} else if ("+declaracion.getTName()+".type == 2){\n";
+                            auxCadena += "scanf(\"%c\", "+"&"+name+" );\n";
+                            auxCadena += "} else if ("+declaracion.getTName()+".type == 3){\n";
+                            auxCadena += "scanf (\"%s\", &"+name+");\n";
+                            auxCadena += "}\n";
+                        }else if(declaracion.getTipo() == "CADENA"
+                        || declaracion.getTipo() instanceof Cadena
+                        || declaracion.getTipo() == Cadena){
+                            auxCadena += "scanf("+declaracion.printScan()+", "+declaracion.getTName()+");\n";
+                        }else{
+                            auxCadena += "scanf("+declaracion.printScan()+", "+ " &"+declaracion.getTName()+");\n";
+                        }
+                    }else{
+                        if(declaracion.getTipo() == "ANY" ||
+                        declaracion.getTipo() instanceof Any
+                        || declaracion.getTipo() == Any){
+                            auxCadena += declaracion.getTName() + ".puntero = &"+tResult+";\n";
+                            auxCadena += declaracion.getTName() + ".type = "+expresionO.tipo_int()+";\n";
+                        }else{
+                            auxCadena += declaracion.getTName() + " = "+tResult+";\n";
+                        }
+                    }
+                }else{
+                    if(instruccion.isArray()){
+                        let magnitudO = instruccion.getMagnitudO();
+                        const Procesador3D = require('../../api/Procesador3D');
+                        let procesador3D = new Procesador3D();
+                        auxCadena += procesador3D.procesarParametrosArr(tabla, magnitudO, instruccion);
+                        let tMagnitud = procesador3D.getNombre();
+                        if(declaracion.getTipo() == "ANY"
+                        || declaracion.getTipo() instanceof Any
+                        || declaracion.getTipo() == Any){
+                            auxCadena += declaracion.getTName()+"["+tMagnitud+"].puntero = &"+tResult+";\n";
+                            auxCadena += declaracion.getTName()+"["+tMagnitud+"].type = "+expresionO.tipo_int()+";\n";
+                        }else{
+                            auxCadena += declaracion.getTName() +"["+tMagnitud+"] = "+tResult+";\n";
+                        }
+                    }else{
+                        if(tResult == "input()" || tResult == "scan()"){
+                            if(declaracion.getTipo() == "ANY"
+                            || declaracion.getTipo() instanceof Any
+                            || declaracion.getTipo() == Any){
+                                let name = "*((unsigned int*)"+declaracion.getTName()+".puntero)";
+                                auxCadena += "if ("+declaracion.getTName()+".type == 0) {\n";
+                                auxCadena += "scanf(\"%d\", "+" &"+name+" );\n";
+                                auxCadena += "} else if ("+declaracion.getTName()+".type == 1){\n";
+                                auxCadena += "scanf(\"%f\" , "+"&"+name+" );\n";
+                                auxCadena += "} else if ("+declaracion.getTName()+".type == 2){\n";
+                                auxCadena += "scanf(\"%c\", "+"&"+name+" );\n";
+                                auxCadena += "} else if ("+declaracion.getTName()+".type == 3){\n";
+                                auxCadena += "scanf (\"%s\", &"+name+");\n";
+                                auxCadena += "}\n";
+                            }else if(declaracion.getTipo() == "CADENA"
+                            || declaracion.getTipo() instanceof Cadena
+                            || declaracion.getTipo() == Cadena){
+                                auxCadena += "scanf("+declaracion.printScan()+", "+declaracion.getTName()+");\n";
+                            }else{
+                                auxCadena += "scanf("+declaracion.printScan()+", "+ " &"+declaracion.getTName()+");\n";
+                            }
+                        }else{
+                            if(declaracion.getTipo() == "ANY" ||
+                            declaracion.getTipo() instanceof Any
+                            || declaracion.getTipo() == Any){
+                                auxCadena += declaracion.getTName() + ".puntero = &"+tResult+";\n";
+                                auxCadena += declaracion.getTName() + ".type = "+expresionO.tipo_int()+";\n";
+                            }else{
+                                auxCadena += declaracion.getTName() + " = "+tResult+";\n";
+                            }
+                        }
+                    }
                 }
             }
-        }        
 
+            if(declaracion.getTName() == "t30"){
+                let x=2;
+            }
+
+            if(instruccion.ambitoMayor() !=null){
+                if(instruccion.ambitoMayor() instanceof Clase){
+                    //Agregar a las asignaciones del constructor
+                    instruccion.ambitoMayor().agregarAsignacion(auxCadena);
+                }else{
+                    cadena += auxCadena;//Es una asignacion dentro de una funcion o main
+                }
+            }else{
+                tabla.agregarAsignacion(auxCadena);//Es una asignacion global
+            }
+        }else{
+            if(puntero){
+                cadena += tabla.drawT() + " = ptr + "+tipoVar.getPosMemoria() + "; \n";
+                tabla.addT();
+                cadena += tabla.drawT() + " = stack[t"+(tabla.getT()-1)+"];\n";
+                tLeft = tabla.drawT();
+                tabla.actualTVoid();
+                tabla.addT();
+                cadena += "stack["+tLeft+"] = "+tResult+";\n";
+                //Fin
+            }else{
+                if(this.isState3(varAs)){
+                    //Es heap
+                    cadena += tabla.drawT() + " = ptr + 0 ;\n";
+                    tabla.addT();
+                    cadena += tabla.drawT() + "= stack[t"+(tabla.getT()-1)+"];\n"//Direccion de la clase 
+                    let tFirst = tabla.drawT();
+                    tabla.addT();
+                    cadena += tabla.drawT() + " = "+tFirst+" + "+(tipoVar.getPosMemoria()-1)+";\n";
+                    tLeft = tabla.drawT();
+                    tabla.addT();
+                    cadena += "Heap["+tLeft+"] = "+tResult+"; \n";
+                }else{
+                    //Es normal
+                    cadena += tabla.drawT() + "= ptr + "+(tipoVar.getPosMemoria())+";\n";
+                    tLeft = tabla.drawT() ;
+                    tabla.addT();
+                    if(instruccion.isArray()){
+                        let magnitudO = instruccion.getMagnitudO();
+                        const Procesador3D = require('../../api/Procesador3D');
+                        let procesador3D = new Procesador3D();
+                        cadena += procesador3D.procesarParametrosArr(tabla, magnitudO, instruccion);
+                        let tMagnitud = procesador3D.getNombre();
+                        cadena += tabla.drawT() + " =  stack ["+tLeft+"];\n"; //Obtenemos el valor en este caso el arreglo
+                        let tAux = tabla.drawT();//Es el arreglo
+                        tabla.addT();                    
+                        
+                        cadena+= tAux+"["+tMagnitud+"] = "+tResult+" ;\n";//Asignamos el valor
+                    }else{
+                        cadena += "stack["+tLeft+"] = "+tResult+" ;\n";
+                    }
+                }
+            }  
+        }      
+        if(tabla.isCompiler()){
+            if(instruccion.ambitoMayor() == null){
+                tabla.agregarAsignacion(cadena);
+                cadena = "";
+            }
+        }
         return cadena;
     }
 
@@ -236,22 +444,38 @@ class Cuarteto {
         let maxSizeM = tabla.sizeAmbito(instruccion.ambitoMayor());
         let consBob = instruccion.getConstructor();
         let cadena = "";
-        //Llamamos al constructor inicializandolo
-        cadena += "ptr = ptr + "+maxSizeM+";\n";
-        cadena += consBob.generarNombre() + "() ;\n";
-        cadena += "ptr = ptr - "+maxSizeM+";\n";
+        if(tabla.isCompiler()){
+            let clase = tipoIns.getTipo();//Es el objeto clase
+            //Declarando la clase
+            let auxCadena = "struct "+clase.generarNombre()+" "+tabla.drawT()+";\n";
+            tabla.agregarTexto(auxCadena);
+            //asignando el valor al constructor
+            cadena += consBob.generarNombre()+"(&"+tabla.drawT()+");\n";
+            if(instruccion.ambitoMayor() == null){
+                tabla.agregarAsignacion(cadena);
+                cadena = "";
+            }
+            tabla.inscribirT();//Lo ignoramos en al declaracion
+            instruccion.setTName(tabla.drawT());
+            tabla.addT();
+        }else{
+            //Llamamos al constructor inicializandolo
+            cadena += "ptr = ptr + "+maxSizeM+";\n";
+            cadena += consBob.generarNombre() + "() ;\n";
+            cadena += "ptr = ptr - "+maxSizeM+";\n";
 
-        //Nos ubicamos en la pila del constructor
-        cadena += tabla.drawT() + " = ptr + "+maxSizeM+";\n";
-        tabla.addT();
-        cadena += tabla.drawT() + " = t"+(tabla.getT()-1)+" + 0;\n";//Agarramos la posicion del heap
-        tabla.addT();
-        cadena += tabla.drawT() + " = stack[t"+(tabla.getT()-1)+"];\n";//Obtenemos la direccion
-        let tDireccion = tabla.drawT();
-        tabla.addT();
-        cadena += tabla.drawT()+ " = ptr + "+tipoIns.getPosMemoria()+";\n";//COLOCAR VARIABLE REFERENCIA NO ASIGNACION
-        cadena += "stack["+tabla.drawT()+"] = "+tDireccion+";\n";//Asignamos en el stack la pos de memoria
-        tabla.addT();
+            //Nos ubicamos en la pila del constructor
+            cadena += tabla.drawT() + " = ptr + "+maxSizeM+";\n";
+            tabla.addT();
+            cadena += tabla.drawT() + " = t"+(tabla.getT()-1)+" + 0;\n";//Agarramos la posicion del heap
+            tabla.addT();
+            cadena += tabla.drawT() + " = stack[t"+(tabla.getT()-1)+"];\n";//Obtenemos la direccion
+            let tDireccion = tabla.drawT();
+            tabla.addT();
+            cadena += tabla.drawT()+ " = ptr + "+tipoIns.getPosMemoria()+";\n";//COLOCAR VARIABLE REFERENCIA NO ASIGNACION
+            cadena += "stack["+tabla.drawT()+"] = "+tDireccion+";\n";//Asignamos en el stack la pos de memoria
+            tabla.addT();
+        }
 
         return cadena;
     }
@@ -294,7 +518,7 @@ class Cuarteto {
         let instrucciones = instruccion.getInstrucciones();
 
         //if
-        tIde = this.procesarCondicion_Object(instruccion.getVTipo(), tIde);
+        tIde = this.procesarCondicion_Object(switch_.getVTipo(), tIde);
         tNombre = this.procesarCondicion_Object(expresionO, tNombre);
         cadena += "if ("+tIde+" == "+tNombre+") goto "+etT+";\n";
         cadena += "goto "+etF+";\n";
@@ -309,15 +533,30 @@ class Cuarteto {
 
     procesarClase(instruccion){
         let cadena = "";
-        instruccion.mergeConstructors();
-        let instrucciones = instruccion.getConstructores();    
+        
+        let instrucciones = instruccion.getInstrucciones();    
         let cuarteto_ = new Cuarteto(this.tabla);
-        cadena += cuarteto_.procesar(instrucciones, 0);
+        let tabla = this.tabla;
+        if(tabla.isCompiler()){
+            cadena += cuarteto_.procesar(instrucciones, 0);
+            let auxiliar = "struct "+instruccion.generarNombre()+" {\n";
+            auxiliar += instruccion.getCadena();
+            auxiliar += "};\n";
+            cadena = auxiliar + cadena;
+        }else{
+            instruccion.mergeConstructors();
+            cadena += cuarteto_.procesar(instrucciones, 0);
+        }
         return cadena;
     }
 
     procesarClean(instruccion){
-        let cadena = " clrscr();\n";
+        let cadena = "";
+        if(this.tabla.isCompiler()){
+            cadena = "system(\"clear\");\n";
+        }else{
+            cadena = "clrscr();\n";
+        }
         return cadena;
     }
 
@@ -329,14 +568,23 @@ class Cuarteto {
         let clase = instruccion.ambitoEnClase();//Obtenemos la clase
         let maxMemoriaC = tabla.sizeAmbito(clase)-1;//Descontamos el mismo constructor
 
-        cadena += instruccion.generarNombre() + "{\n"
-        //Establecemos la direccion del heap
-        cadena += tabla.drawT() +" = ptr + 0;\n";//Direccion del heap
-        cadena += "stack["+tabla.drawT()+"] = h;\n";//Asignamos el heap
-        cadena += "h = h + "+maxMemoriaC+";\n";
-        //Ejecutamos el resto de las acciones
-        cadena += cuarteto_.procesar(instrucciones, 0);
-        cadena += "}\n"
+        if(tabla.isCompiler()){
+            let clase = instruccion.getAmbito();
+            cadena += "void "+instruccion.generarNombre()+"( struct "+clase.generarNombre()+" * $$) {\n";
+            cadena += clase.getAsignaciones();
+            cadena += "\n";
+            cadena += cuarteto_.procesar(instrucciones,0);
+            cadena += "}\n";
+        }else{
+            cadena += instruccion.generarNombre() + "{\n"
+            //Establecemos la direccion del heap
+            cadena += tabla.drawT() +" = ptr + 0;\n";//Direccion del heap
+            cadena += "stack["+tabla.drawT()+"] = h;\n";//Asignamos el heap
+            cadena += "h = h + "+maxMemoriaC+";\n";
+            //Ejecutamos el resto de las acciones
+            cadena += cuarteto_.procesar(instrucciones, 0);
+            cadena += "}\n"
+        }
         return cadena;
     }
 
@@ -364,39 +612,59 @@ class Cuarteto {
 
     procesarDeclaracion(instruccion){
         let cadena = "";
+        let auxCadena = "";
         let tabla = this.tabla;
         let tipoIns = tabla.buscarInstruccion(instruccion);
-        if(instruccion.isArray()){
-            //Para arreglo
-            let magnitudO = instruccion.getMagnitudO();
-            const Procesador3D = require('../../api/Procesador3D');
-            let procesador3D = new Procesador3D()
-            cadena += procesador3D.procesarParametrosArr(tabla, magnitudO, instruccion);
-            let tArr = procesador3D.getNombre();
-            if(tabla.isCompiler()){
-                //Tipo del arreglo
-                cadena += "void * ";
-                let helper = tArr.split("");
-                if(helper[0] == "t"){
-                    tArr = "(*((int*)"+tArr+"))";
+        
+        if(tabla.isCompiler()){
+            if(instruccion.isArray()){
+                let magnitudO = instruccion.getMagnitudO();
+                const Procesador3D = require('../../api/Procesador3D');
+                let procesador3D = new Procesador3D();
+                auxCadena += procesador3D.procesarParametrosArr(tabla, magnitudO, instruccion);
+                let tArr = procesador3D.getNombre();
+                auxCadena += instruccion.escribirDeclaracion(tabla)+"["+tArr+"] ;\n";
+            }else{
+                auxCadena += instruccion.escribirDeclaracion(tabla)+";\n";
+            }
+            
+            if(instruccion.ambitoMayor() instanceof Clase){
+                //Esto es lo que va en el struct
+                instruccion.ambitoMayor().concatText(auxCadena);
+                instruccion.prexTName();//Poner esto despues
+            }else{
+                if(instruccion.isArray()){
+                    tabla.agregarAsignacion(auxCadena);
+                }else{
+                    tabla.agregarTexto(auxCadena);//Declaraciones al inicio
                 }
             }
-            cadena += tabla.drawAr()+"["+tArr+"];\n";
-            cadena += tabla.drawT() + " = "+tabla.drawAr()+";\n";
-            let arr = tabla.drawT();
-            if(tabla.isCompiler()){
-                arr = tabla.drawAr();
+        }else{
+            if(instruccion.isArray()){                
+                //Para arreglo
+                let magnitudO = instruccion.getMagnitudO();
+                const Procesador3D = require('../../api/Procesador3D');
+                let procesador3D = new Procesador3D();
+                cadena += procesador3D.procesarParametrosArr(tabla, magnitudO, instruccion);
+                let tArr = procesador3D.getNombre();
+                cadena += tabla.drawAr()+"["+tArr+"];\n";
+                cadena += tabla.drawT() + " = "+tabla.drawAr()+";\n";
+                let arr = tabla.drawT();
+                if(tabla.isCompiler()){
+                    arr = tabla.drawAr();
+                }
+                tabla.addAr();
+                tabla.actualTVoid();
+                tabla.addT();
+                //Asignacion en el stack
+                cadena += tabla.drawT()+ " = ptr + "+(tipoIns.getPosMemoria())+";\n";
+                let pos = tabla.drawT();
+                tabla.addT();
+                cadena += "stack["+pos+"] = "+arr+" ;\n";
+                //Fin declaracion arreglos
             }
-            tabla.addAr();
-            tabla.actualTVoid();
-            tabla.addT();
-            //Asignacion en el stack
-            cadena += tabla.drawT()+ " = ptr + "+(tipoIns.getPosMemoria())+";\n";
-            let pos = tabla.drawT();
-            tabla.addT();
-            cadena += "stack["+pos+"] = "+arr+" ;\n";
-            //Fin declaracion arreglos
         }
+        
         return cadena;
     }
 
@@ -426,10 +694,10 @@ class Cuarteto {
         let instrucciones = instruccion.getInstrucciones();
         let cuarteto_ = new Cuarteto(this.tabla);
         cadena+= "goto "+etDo+";\n";
-        cadena+= expresionO.generarExpresion(this.tabla, instruccion);
+        cadena+= etCondicion+":\n";
+        cadena += expresionO.generarExpresion(this.tabla, instruccion);
         let tCondicion = expresionO.getNombre();
         tCondicion = this.procesarCondicion_Object(expresionO, tCondicion);
-        cadena+= etCondicion+":\n";
         cadena += "if ("+tCondicion+" > 0)  goto "+etDo+";\n";
         cadena += "goto "+etFalso+";\n";
         cadena += etDo +" :\n";
@@ -445,6 +713,7 @@ class Cuarteto {
             if(!(instruccion instanceof If
                 || instruccion instanceof Else)){
                 cadena += this.if_.getEtSalida()+":\n";
+                this.if_ = null;
             }
         }
         return cadena;
@@ -462,9 +731,6 @@ class Cuarteto {
             let instrucciones = instruccion.getInstrucciones();
             cadena += cuarteto_.procesar(instrucciones, 0);
             cadena += "goto "+if_.getEtSalida()+";\n";
-
-            cadena += if_.getEtSalida()+":\n";
-            this.if_ = null;
         }else{
             //else if
             cadena += expresion.generarExpresion(this.tabla, instruccion);
@@ -485,8 +751,6 @@ class Cuarteto {
             //Bloque falso
             cadena += etFalse+" :\n";
         }
-
-        cadena += if_.getEtSalida()+ ":\n";
         return cadena;
     }
 
@@ -551,8 +815,19 @@ class Cuarteto {
         if(this.tabla.isCompiler()){
             cadena += "void ";
         }
-        cadena += instruccion.generarNombre() + " {\n";
+        cadena += instruccion.generarNombre();
+        cadena += " ( ";
+        if(this.tabla.isCompiler()){
+            let ambitoInstruccion = instruccion.ambitoEnClase();
+            try{
+                if(ambitoInstruccion instanceof Clase){
+                    cadena += "struct "+ambitoInstruccion.generarNombre()+"* $$";
+                }
+            }catch(ex){}
+        }
+        cadena += ") {\n";
         let cuarteto_ = new Cuarteto(this.tabla);
+        cadena += cuarteto_.procesar(instruccion.getParametrosO(), 0);
         cadena += cuarteto_.procesar(instrucciones, 0);
         cadena += instruccion.getEtSalida()+" : \n";
         cadena += "}\n"
@@ -561,7 +836,7 @@ class Cuarteto {
 
     procesarGetch(instruccion){
         if(this.tabla.isCompiler()){
-            return "scanf(\"%d\", g);\n";
+            return "scanf(\"%c\", &c);\n";
         }else{
             return "scan();\n";
         }
@@ -584,25 +859,37 @@ class Cuarteto {
         this.tabla.addEt();
         let instrucciones = instruccion.getInstrucciones();
         let cuarteto_ = new Cuarteto(this.tabla);
+        let tCondicion = expresion.getNombre();
+        
+        tCondicion = this.procesarCondicion_Object(expresion, tCondicion);
 
         //Comparamos
-        cadena += "if ("+expresion.getNombre()+"> 0) goto "+etTrue+";\n";
+        cadena += "if ("+tCondicion+"> 0) goto "+etTrue+";\n";
         cadena += "goto "+etFalsa+";\n";
             cadena += etTrue+":\n";
             cadena += cuarteto_.procesar(instrucciones, 0);
             cadena += "goto "+instruccion.getEtSalida()+";\n";
         cadena += etFalsa+":\n";
+        this.if_ = instruccion;
         return cadena;
     }
 
     printType(type){
-        if(type instanceof Caracter){
+        if(type instanceof Caracter
+            || type == "CARACTER"
+            || type == Caracter){
             return "%c";
-        }if (type instanceof Entero){
+        }if (type instanceof Entero
+            || type == "Entero"
+            || type == Entero){
             return "%d";
-        }else if(type instanceof Decimal){
+        }else if(type instanceof Decimal
+            || type == "Decimal"
+            || type == Decimal){
             return "%f";
-        }else if (type instanceof Cadena){
+        }else if (type instanceof Cadena
+            || type == "Cadena"
+            || type == Cadena){
             return "%s";
         }
     }
@@ -611,55 +898,78 @@ class Cuarteto {
         let tabla = this.tabla;
         let cadena = "";
             
-            let paramsT = [];
-            let paramsO = instruccion.getParamsO();
-            let paramsN = instruccion.getParametros();
-            let results = instruccion.getResults();
-            //Calculo de parametros
-            for(let index=0; index<paramsO.length; index++){
-                let param = paramsO[index];
-                cadena += param.generarExpresion(tabla, instruccion);
-                paramsT.push(param.getNombre());
-            }
-            //imprimimos
-            let expresion = "";
-            if(tabla.isCompiler()){
-                if(instruccion.getLenguaje() == TIPO_LENGUAJE.C){
-                    for(let index=0; index<paramsO.length; index++){
-                        if(paramsN[index].tipo == TIPO_VALOR.PUNTERO_IDENTIFICADOR){
-                            expresion += "&"+paramsT[index];
-                        }else{
-                            expresion += +paramsT[index]+", ";
-                        }
-                    }
-                    if(instruccion.getTipo() == 'PRINTLN'){
-                        //expresion += ", "+"\" \\n \"";
-                        expresion += ", \\n";
-                    }   
-                    cadena += "printf("+expresion+");\n";
-                }else{
-                    for(let index=0; index<paramsO.length; index++){
-                        if(paramsN[index].tipo == TIPO_VALOR.PUNTERO_IDENTIFICADOR){
-                            //expresion += 
-                            let tipo = this.printType(results[index]);
-                            expresion += "printf(\""+tipo+"\", "+paramsT[index]+");\n";
-                        }
-                    }
+        let paramsT = [];
+        let paramsO = instruccion.getParamsO();
+        let paramsN = instruccion.getParametros();
+        let results = instruccion.getResults();
+        //Calculo de parametros
+        for(let index=0; index<paramsO.length; index++){
+            let param = paramsO[index];
+            cadena += param.generarExpresion(tabla, instruccion);
+            let name = param.getNombre();
+            
+            let instruccionP = param.getInstruccion();
+            if(param instanceof Any && tabla.isCompiler()){
+                name = "*((unsigned int *)"+name+".puntero)";
+            }else if(instruccionP!=null){
+                if(instruccionP.getTipo() instanceof Any
+                || instruccionP.getTipo() == "ANY"
+                || instruccionP.getTipo() == Any){
+                    name = "*((unsigned int*)"+name+".puntero)";
                 }
-                
-            }else{
+            }
+            
+            paramsT.push(name);
+        }
+        //imprimimos
+        let expresion = "";
+        if(tabla.isCompiler()){
+            if(instruccion.getLenguaje() == TIPO_LENGUAJE.C){
                 for(let index=0; index<paramsO.length; index++){
                     if(paramsN[index].tipo == TIPO_VALOR.PUNTERO_IDENTIFICADOR){
-                        expresion += "imprimir(&"+paramsT[index]+");\n";
+                        expresion += "&"+paramsT[index];
                     }else{
-                        expresion += "imprimir("+paramsT[index]+");\n";
+                        expresion += paramsT[index];
+                    }
+                    if(index!=paramsO.length-1){
+                        expresion += ", ";
                     }
                 }
                 if(instruccion.getTipo() == 'PRINTLN'){
-                    expresion += "imprimir(\\n);\n"
+                    //expresion += ", "+"\" \\n \"";
+                    expresion += ", \\n";
+                }   
+                cadena += "printf("+expresion+");\n";
+            }else{
+                for(let index=0; index<paramsO.length; index++){
+                    let tipo = this.printType(results[index]);
+                    if(paramsN[index].tipo == TIPO_VALOR.PUNTERO_IDENTIFICADOR){
+                        //expresion += 
+                        expresion += "printf(\""+tipo+"\", &"+paramsT[index]+");\n";
+                    }else{
+                        expresion += "printf(\""+tipo+"\", "+paramsT[index]+");\n";
+                    }
                 }
+                if(instruccion.getTipo() == "PRINTLN"){
+                    expresion += "printf(\"\\n\");\n";
+                }
+
                 cadena += expresion;
             }
+                
+        }else{
+            for(let index=0; index<paramsO.length; index++){
+                if(paramsN[index].tipo == TIPO_VALOR.PUNTERO_IDENTIFICADOR){
+                    expresion += "imprimir(&"+paramsT[index]+");\n";
+                }else{
+                    expresion += "imprimir("+paramsT[index]+");\n";
+                }
+            }
+            if(instruccion.getTipo() == 'PRINTLN'){
+                expresion += "imprimir(\\n);\n"
+            }
+            cadena += expresion;
+        }
         return cadena;
     }
 
@@ -683,6 +993,7 @@ class Cuarteto {
         }else if(tipo == TIPO_VALOR.CADENA){
             return "char *";
         }
+        return "void";
     }
 
     //Ya
@@ -694,9 +1005,10 @@ class Cuarteto {
             let aux = "";
             let tipo = instruccion.getTipo();
             let typeC = this.procesarValor_Tipo(tipo);
-            aux = typeC + " main {\n";
-            aux = cadena;
-            aux = "\n}\n;";
+            aux += typeC + " main() {\n";
+            aux += this.tabla.inscribirAsignaciones();//Asignaciones de las variables globales
+            aux += cadena;
+            aux += "\n}\n;";
             cadena = aux;
         }
         return cadena;
@@ -708,6 +1020,9 @@ class Cuarteto {
         if(parametro instanceof Operacion){
             let cadena = parametro.generarExpresion(tabla, parametro);
             let resultado = parametro.getNombre();
+            if(parametro instanceof Any && tabla.isCompiler()){
+                resultado = "*((unsigned int*)"+resultado+")";
+            }
             parametro.setNombre(resultado);
             return cadena;
         }else if(parametro instanceof Object){
@@ -721,101 +1036,188 @@ class Cuarteto {
 
     //
     procesarMetodo(instruccion){
-        let variableReferencia = instruccion.getVariableReferencia();
+        let variableReferencia = instruccion.getVariableReferencia();//Variable de Java
         let tabla = this.tabla;
         let tipoIns = tabla.buscarInstruccion(instruccion);
         let cadena = "";
-        if(variableReferencia == null){
-            //Funcion normal
-            //Calculo de parametros
+        
+        if(tabla.isCompiler()){
             let funcionReferencia = instruccion.getFuncionReferencia();
-            let parametrosMetodo = instruccion.getParametrosO();
-            let parametrosT = [];
-            let tHeap = "";
-            for(let index=0; index<parametrosMetodo; index++){
-                let parametroM = parametrosMetodo[index];
-                cadena += this.generarParametro(tabla, parametroM, funcionReferencia.punteroParametro(index));
-                parametrosT.push(parametroM.getNombre());
-            }
-            //Movimiento de pila
-            
-            let tReferencia = tabla.drawT();
-            tabla.addT();
-            let sizePilaMov = tabla.sizeAmbito(instruccion.ambitoMayor());
-
-            //obtener el heap
-            if(instruccion.esJava()){
-                cadena += tabla.drawT() + " = ptr + 0;\n";
-                tabla.addT();
-                cadena += tabla.drawT() + " = stack[t"+(tabla.getT()-1)+"];\n";
-                tHeap = tabla.drawT();//Obtuvimos el heap
-                tabla.addT();
-            }
-
-            cadena += tReferencia + " = ptr +"+sizePilaMov+";\n";//Mov temporal
-            if(instruccion.esJava()){
-                cadena += tabla.drawT() + " = "+tReferencia+" + 0;\n";
-                cadena += "stack["+tabla.drawT()+"] = "+tHeap+";\n";
-                tabla.addT();
-            }
-            for(let index=0; index<parametrosT.length; index++){
-                let mem = index;
-                if(instruccion.esJava()){
-                    mem++;
+                let parametrosMetodo = instruccion.getParametrosO();
+                let parametrosT = [];
+                for(let index=0; index<parametrosMetodo.length; index++){
+                    let parametroM = parametrosMetodo[index];
+                    cadena += this.generarParametro(tabla, parametroM, funcionReferencia.punteroParametro(index));
+                    parametrosT.push(parametroM);
                 }
-                cadena += tabla.drawT()+" = "+tReferencia+" + "+mem+";\n";//Parametro primera memoria
-                cadena += "stack["+tabla.drawT()+"] = "+parametrosT[index]+";\n";
-                tabla.addT();
-            }
-            //Llamada al metodo
-            cadena += "ptr = ptr + "+sizePilaMov+";\n";
-            cadena += funcionReferencia.generarNombre()+"();\n";
-            cadena += "ptr = ptr - "+sizePilaMov+";\n";
+                //Asignar los parametros aqui
+                for(let index=0; index<parametrosT.length; index++){
+                    let parametroM = parametrosT[index];
+                    let size = index;
+                    let claseFuncion = funcionReferencia.ambitoEnClase();
+                    if(claseFuncion instanceof Clase){
+                        size += tabla.buscarParametroJavaSize(funcionReferencia)+1;
+                    }
+                    let variableTipo = tabla.buscarParametro(size, funcionReferencia);
+                    //PENDIENTE
+                    let variableInstruccion = variableTipo.getInstruccion();
+                    let agregarPuntero = function(variable, parametro){
+                        if(variable.getTipo() == "ANY"
+                        || variable.getTipo() instanceof Any
+                        || variable.getTipo() == Any){
+                            return "&"+parametro.getNombre();
+                        }else{
+                            if(variable.getPuntero()){
+                                return "&"+parametro.getNombre();
+                            }else{
+                                return parametro.getNombre();
+                            }
+                        }                        
+                    }
+                    //Asignar
+                    if(variableInstruccion.getTipo() == "ANY"
+                    || variableInstruccion.getTipo() instanceof Any
+                    || variableInstruccion.getTipo() == Any){
+                        let parametroHelper = new ParametroHelper();
+                        cadena += parametroHelper.createVoidParam(variableInstruccion, parametroM, tabla);
+                        if(parametroM.getTipo() == "BOOLEAN"
+                        || parametroM.getTipo() instanceof Booleano
+                        || parametroM.getTipo() == Booleano){
+                            cadena += variableInstruccion.getTName()+".puntero = &"+parametroHelper.getNombre()+";\n";
+                            cadena += variableInstruccion.getTName()+".type = 0;\n";
+                        }else if(parametroM.getTipo() == "CARACTER"
+                        || parametroM.getTipo() instanceof Caracter
+                        || parametroM.getTipo() == Caracter){
+                            cadena += variableInstruccion.getTName()+".puntero = &"+parametroHelper.getNombre()+";\n";
+                            cadena += variableInstruccion.getTName()+".type = 2;\n";
+                        }else if(parametroM.getTipo() == "ENTERO"
+                        || parametroM.getTipo() instanceof Entero
+                        || parametroM.getTipo() == Entero){
+                            cadena += variableInstruccion.getTName()+".puntero = &"+parametroHelper.getNombre()+";\n";
+                            cadena += variableInstruccion.getTName()+".type = 0;\n";
+                        }else if(parametroM.getTipo() == "DECIMAL"
+                        || parametroM.getTipo() instanceof Decimal
+                        || parametroM.getTipo() == Decimal){
+                            cadena += variableInstruccion.getTName()+".puntero = &"+parametroHelper.getNombre()+";\n";
+                            cadena += variableInstruccion.getTName()+".type = 1;\n";
+                        }else if(parametroM.getTipo() == "CADENA"
+                        || parametroM.getTipo() instanceof Cadena
+                        || parametroM.getTipo() == Cadena){
+                            cadena += variableInstruccion.getTName()+".puntero = &"+parametroHelper.getNombre()+";\n";
+                            cadena += variableInstruccion.getTName()+".type = 3;\n";
+                        }
+                    }else if(variableInstruccion.getTipo() == "CADENA"
+                    || variableInstruccion.getTipo() instanceof Cadena
+                    || variableInstruccion.getTipo() == Cadena){
+                        cadena += variableInstruccion.getTName()+" = "+agregarPuntero(variableInstruccion, parametroM)+";\n";
+                    }else {
+                        //enteros y decimales
+                        cadena += variableInstruccion.getTName()+" = "+agregarPuntero(variableInstruccion, parametroM)+";\n";
+                    }                    
+                }
 
-            //No obtenemos valor de vuelta
-
+                if(instruccion.esJava()){
+                    //Invocado desde java
+                    cadena += funcionReferencia.generarNombre() + "($$);\n";
+                }else if(variableReferencia!=null){
+                    cadena += funcionReferencia.generarNombre() + "(&"+variableReferencia.getTName()+");\n";
+                }else{
+                    //Invocado desde C
+                    cadena += funcionReferencia.generarNombre() + "();\n";
+                }
         }else{
-            //Funcion en clase
-            let variable = instruccion.getVariableReferencia();
-            let funcionReferencia = instruccion.getFuncionReferencia();
-            let tipoVar = tabla.buscarInstruccion(variable);
-            
-            let sizePilaMov = tabla.sizeAmbito(instruccion.ambitoMayor());
-            //Calculo de parametros
-            let parametrosMetodo = instruccion.getParametrosO();
-            let parametrosT = [];
-            for(let index=0; index<parametrosMetodo.length; index++){
-                let parametroM = parametrosMetodo[index];//Esto es una operacion o valor
-                cadena += this.generarParametro(tabla, parametroM, funcionReferencia.punteroParametro(index));
-                parametrosT.push(parametroM.getNombre());
-            }
-            //Trasposicion temporal
-            //Cambiar el getPosMemoria por el tamanio de la pila que andamos manejando
-            cadena += tabla.drawT() +" = ptr + "+tipoVar.getPosMemoria()+";\n";//Posicion de memoria de la variable, Este no
-            tabla.addT();
-            cadena += tabla.drawT()+ "= stack[t"+(tabla.getT()-1)+"];\n";//Valor de la variable Obtenemos su dir en heap
-            let tHeap = tabla.drawT();
-            tabla.addT();  
-            //MOvimiento temporal
-            cadena += tabla.drawT() + "= ptr + "+sizePilaMov+";\n";
-            tabla.addT();
-            cadena += tabla.drawT() + " = t"+(tabla.getT()-1)+" + 0;\n";
-            cadena += "stack["+tabla.drawT()+"] = "+tHeap+" ;\n";
-            
-            cadena += tabla.drawT() + " = ptr +"+sizePilaMov+";\n";//Mov temporalHeap+";\n" 
-            let tReferencia = tabla.drawT();
-            tabla.addT();
-            
-            //Enviamos los parametros
-            for(let index=0; index<parametrosT.length; index++){
-                cadena += tabla.drawT()+" = "+tReferencia+" + "+(index+1)+";\n";//Parametro primera memoria
-                cadena += "stack["+tabla.drawT()+"] = "+parametrosT[index]+";\n";
+            if(variableReferencia == null){
+                //Funcion normal
+                //Calculo de parametros
+                let funcionReferencia = instruccion.getFuncionReferencia();
+                let parametrosMetodo = instruccion.getParametrosO();
+                let parametrosT = [];
+                let tHeap = "";
+                for(let index=0; index<parametrosMetodo.length; index++){
+                    let parametroM = parametrosMetodo[index];
+                    cadena += this.generarParametro(tabla, parametroM, funcionReferencia.punteroParametro(index));
+                    parametrosT.push(parametroM.getNombre());
+                }
+                //Movimiento de pila
+                
+                let tReferencia = tabla.drawT();
                 tabla.addT();
+                let sizePilaMov = tabla.sizeAmbito(instruccion.ambitoMayor());
+    
+                //obtener el heap
+                if(instruccion.esJava()){
+                    cadena += tabla.drawT() + " = ptr + 0;\n";
+                    tabla.addT();
+                    cadena += tabla.drawT() + " = stack[t"+(tabla.getT()-1)+"];\n";
+                    tHeap = tabla.drawT();//Obtuvimos el heap
+                    tabla.addT();
+                }
+    
+                cadena += tReferencia + " = ptr +"+sizePilaMov+";\n";//Mov temporal
+                if(instruccion.esJava()){
+                    cadena += tabla.drawT() + " = "+tReferencia+" + 0;\n";
+                    cadena += "stack["+tabla.drawT()+"] = "+tHeap+";\n";
+                    tabla.addT();
+                }
+                for(let index=0; index<parametrosT.length; index++){
+                    let mem = index;
+                    if(instruccion.esJava()){
+                        mem++;
+                    }
+                    cadena += tabla.drawT()+" = "+tReferencia+" + "+mem+";\n";//Parametro primera memoria
+                    cadena += "stack["+tabla.drawT()+"] = "+parametrosT[index]+";\n";
+                    tabla.addT();
+                }
+                //Llamada al metodo
+                cadena += "ptr = ptr + "+sizePilaMov+";\n";
+                cadena += funcionReferencia.generarNombre()+"();\n";
+                cadena += "ptr = ptr - "+sizePilaMov+";\n";
+    
+                //No obtenemos valor de vuelta
+    
+            }else{
+                //Funcion en clase
+                let variable = instruccion.getVariableReferencia();
+                let funcionReferencia = instruccion.getFuncionReferencia();
+                let tipoVar = tabla.buscarInstruccion(variable);
+                
+                let sizePilaMov = tabla.sizeAmbito(instruccion.ambitoMayor());
+                //Calculo de parametros
+                let parametrosMetodo = instruccion.getParametrosO();
+                let parametrosT = [];
+                for(let index=0; index<parametrosMetodo.length; index++){
+                    let parametroM = parametrosMetodo[index];//Esto es una operacion o valor
+                    cadena += this.generarParametro(tabla, parametroM, funcionReferencia.punteroParametro(index));
+                    parametrosT.push(parametroM.getNombre());
+                }
+                //Trasposicion temporal
+                //Cambiar el getPosMemoria por el tamanio de la pila que andamos manejando
+                cadena += tabla.drawT() +" = ptr + "+tipoVar.getPosMemoria()+";\n";//Posicion de memoria de la variable, Este no
+                tabla.addT();
+                cadena += tabla.drawT()+ "= stack[t"+(tabla.getT()-1)+"];\n";//Valor de la variable Obtenemos su dir en heap
+                let tHeap = tabla.drawT();
+                tabla.addT();  
+                //MOvimiento temporal
+                cadena += tabla.drawT() + "= ptr + "+sizePilaMov+";\n";
+                tabla.addT();
+                cadena += tabla.drawT() + " = t"+(tabla.getT()-1)+" + 0;\n";
+                cadena += "stack["+tabla.drawT()+"] = "+tHeap+" ;\n";
+                
+                cadena += tabla.drawT() + " = ptr +"+sizePilaMov+";\n";//Mov temporalHeap+";\n" 
+                let tReferencia = tabla.drawT();
+                tabla.addT();
+                
+                //Enviamos los parametros
+                for(let index=0; index<parametrosT.length; index++){
+                    cadena += tabla.drawT()+" = "+tReferencia+" + "+(index+1)+";\n";//Parametro primera memoria
+                    cadena += "stack["+tabla.drawT()+"] = "+parametrosT[index]+";\n";
+                    tabla.addT();
+                }
+                //Llamada al metodo
+                cadena += "ptr = ptr + "+sizePilaMov+";\n";
+                cadena += funcionReferencia.generarNombre()+"();\n"
+                cadena += "ptr = ptr - "+sizePilaMov+";\n";
             }
-            //Llamada al metodo
-            cadena += "ptr = ptr + "+sizePilaMov+";\n";
-            cadena += funcionReferencia.generarNombre()+"();\n"
-            cadena += "ptr = ptr - "+sizePilaMov+";\n";
         }
         return cadena;
     }
@@ -828,19 +1230,39 @@ class Cuarteto {
         let instruccionTipo = this.tabla.buscarInstruccion(instruccion);
         let funcionInstruccion = simbolo.getInstruccion();
 
-        let expresionO = instruccion.getExpresionO();
-        cadena += expresionO.generarExpresion(this.tabla);
-        let t = instruccionTipo.getPosMemoria();//Es la pos de memoria
-        funcionInstruccion.generarReturnName(t);
-        t = funcionInstruccion.getReturnName();//Pos de memoria no Tnum
-        cadena += this.tabla.drawT() +" = ptr + "+t+";\n";
-        cadena += "stack["+this.tabla.drawT()+"]" + " = "+expresionO.getNombre()+";\n";
-        this.tabla.addT();
-        if(this.tabla.isCompiler() && instruccion.isFromMain()){
-            cadena += "return "+expresionO.getNombre()+";\n";
+        if(this.tabla.isCompiler()){
+            let expresionO = instruccion.getExpresionO();
+            cadena += expresionO.generarExpresion(this.tabla);
+            //Declaramos el nombre del return
+            instruccion.escribirDeclaracion(funcionInstruccion, this.tabla);
+            let nombreReturn = funcionInstruccion.getReturnName();
+            let tipo = funcionInstruccion.getTipo();
+            let tNombre = expresionO.getNombre();
+            /*if(expresionO instanceof Any){
+                tNombre = "*((unsigned int*)"+tNombre+")";
+            }*/
+
+            if(tipo == "ANY"){
+                cadena += nombreReturn + ".puntero = &"+tNombre+";\n";
+                cadena += nombreReturn + ".type = "+expresionO.tipo_int()+";\n";
+            }else{
+                cadena += nombreReturn + " = "+tNombre+";\n";
+            }
+        }else{
+            let expresionO = instruccion.getExpresionO();
+            cadena += expresionO.generarExpresion(this.tabla);
+            let t = instruccionTipo.getPosMemoria();//Es la pos de memoria
+            funcionInstruccion.generarReturnName(t);
+            t = funcionInstruccion.getReturnName();//Pos de memoria no Tnum
+            cadena += this.tabla.drawT() +" = ptr + "+t+";\n";
+            cadena += "stack["+this.tabla.drawT()+"]" + " = "+expresionO.getNombre()+";\n";
+            this.tabla.addT();
+            if(this.tabla.isCompiler() && instruccion.isFromMain()){
+                cadena += "return "+expresionO.getNombre()+";\n";
+            }
+            //terminamos el retornar
+            cadena += "goto "+funcionInstruccion.getEtSalida()+ " ; \n";
         }
-        //terminamos el retornar
-        cadena += "goto "+funcionInstruccion.getEtSalida()+ " ; \n";
         return cadena;
     }
 
@@ -851,18 +1273,29 @@ class Cuarteto {
         let tipo = tabla.buscarInstruccion(varReference);
         let texto = instruccion.getExpresion();
         
-        cadena += tabla.drawT() + " = ptr "+ tipo.getPosMemoria()+";\n";
-        tabla.addT();
-        cadena += tabla.drawT() + " = stack[t"+(tabla.getT()-1)+"];\n";//Como es en el contexto actual no agregamos nada        
-        let variable = tabla.drawT();
-        tabla.addT();
-        let resultado = "";
-        if (texto.tipo == TIPO_VALOR.CADENA){
-            resultado = "\""+texto.valor+"\"";
+        if(tabla.isCompiler()){
+            cadena += "scanf(\""+texto.valor+"\", ";
+            
+            if(varReference.getTipo() == "CADENA"){
+                cadena += varReference.getTName()+");\n";
+            }else{
+                cadena += "&"+varReference.getTName()+");\n";
+            }
+
         }else{
-            resultado = texto.valor;
+            cadena += tabla.drawT() + " = ptr "+ tipo.getPosMemoria()+";\n";
+            tabla.addT();
+            cadena += tabla.drawT() + " = stack[t"+(tabla.getT()-1)+"];\n";//Como es en el contexto actual no agregamos nada        
+            let variable = tabla.drawT();
+            tabla.addT();
+            let resultado = "";
+            if (texto.tipo == TIPO_VALOR.CADENA){
+                resultado = "\""+texto.valor+"\"";
+            }else{
+                resultado = texto.valor;
+            }
+            cadena += "scanf("+resultado+", &"+variable+");\n";
         }
-        cadena += "scanf("+resultado+", &"+variable+");\n";
 
         return cadena;
     }
@@ -875,36 +1308,68 @@ class Cuarteto {
         let posMemoria = tipoV.getPosMemoria();
         let cadena = "";
 
-        cadena += tabla.drawT()+" = ptr + "+posMemoria+";\n";
-        tabla.addT();
-        cadena += tabla.drawT()+" = stack[t"+(tabla.getT()-1)+"] ;\n";
-        let tIde = tabla.drawT();
-        tabla.addT();
+        if(tabla.isCompiler()){
+            let tIde = variableReferencia.getTName();
+            if(variableReferencia.getTipo() =="Any"
+            || variableReferencia.getTipo() == Any
+            || variableReferencia.getTipo() instanceof Any){
+                tIde = "*((unsigned int*)"+tIde+")";
+            }
+            instruccion.setTIde(tIde);
+            instruccion.setVTipo(tipoV.getTipo());
+            instruccion.setEtSalida(tabla.drawEt());
+            let etSalida = tabla.drawEt();
+            tabla.addEt();
+            //Introduciendo los casos
+            let cases = instruccion.getCases();
+            let default_ = instruccion.getDefault();
 
-        instruccion.setTIde(tIde);
-        instruccion.setVTipo(tipoV.getTipo());
-        instruccion.setEtSalida(tabla.drawEt());
-        let etSalida = tabla.drawEt();
-        tabla.addEt();
+            //Casos
+            for(let index=0; index<cases.length; index++){
+                let cuarteto_ = new Cuarteto(tabla);
+                let caso = cases[index];
+                cadena += cuarteto_.procesar(caso, 0);
+            }
+            //Default
 
-        //Introduciendo los casos
-        let cases = instruccion.getCases();
-        let default_ = instruccion.getDefault();
+            if(default_!=null){
+                let cuarteto_ = new Cuarteto(tabla);
+                cadena += cuarteto_.procesar(default_, 0);
+            }
 
-        //Casos
-        for(let index=0; index<cases.length; index++){
-            let cuarteto_ = new Cuarteto(tabla);
-            let caso = cases[index];
-            cadena += cuarteto_.procesar(caso, 0);
+            cadena += etSalida+" :\n"; 
+        }else{
+            cadena += tabla.drawT()+" = ptr + "+posMemoria+";\n";
+            tabla.addT();
+            cadena += tabla.drawT()+" = stack[t"+(tabla.getT()-1)+"] ;\n";
+            let tIde = tabla.drawT();
+            tabla.addT();
+
+            instruccion.setTIde(tIde);
+            instruccion.setVTipo(tipoV.getTipo());
+            instruccion.setEtSalida(tabla.drawEt());
+            let etSalida = tabla.drawEt();
+            tabla.addEt();
+
+            //Introduciendo los casos
+            let cases = instruccion.getCases();
+            let default_ = instruccion.getDefault();
+
+            //Casos
+            for(let index=0; index<cases.length; index++){
+                let cuarteto_ = new Cuarteto(tabla);
+                let caso = cases[index];
+                cadena += cuarteto_.procesar(caso, 0);
+            }
+            //Default
+
+            if(default_!=null){
+                let cuarteto_ = new Cuarteto(tabla);
+                cadena += cuarteto_.procesar(default_, 0);
+            }
+
+            cadena += etSalida+" :\n"; 
         }
-        //Default
-
-        if(default_!=null){
-            let cuarteto_ = new Cuarteto(tabla);
-            cadena += cuarteto_.procesar(default_, 0);
-        }
-
-        cadena += etSalida+" :\n"; 
 
         return cadena;
     }
@@ -924,15 +1389,10 @@ class Cuarteto {
     procesarCondicion_Object(expresionO, t){
         let tCondicion = t;
         if(this.tabla.isCompiler()){
-            if(expresionO instanceof Cadena){
-                let helper = t.split("");
-                if(helper[0] == "t"){
-                    tCondicion = "(*(char**)"+t+"))";
-                }
-            }else{
-                let helper = t.split("");
-                if(helper[0] == "t"){
-                    tCondicion = "(*(float*)"+t+"))";
+            if(expresionO instanceof Any){
+                if(!(expresionO instanceof Operacion) && t.split("")[0]!="*"
+                && t!="input()" && t!="scan()"){
+                    tCondicion = "*((unsigned int*)"+t+".puntero)";
                 }
             }
         }
@@ -954,13 +1414,13 @@ class Cuarteto {
         instruccion.setPuntoInicial(etCondicion);
         instruccion.setPuntoFinal(etF);
 
+        let cuarteto_ = new Cuarteto(this.tabla);
+        //condicion
+        cadena += etCondicion +" :\n";
         //condicion
         cadena += expresionO.generarExpresion(tabla, instruccion);
         let tCondicion = expresionO.getNombre();
         tCondicion = this.procesarCondicion_Object(expresionO, tCondicion);
-        let cuarteto_ = new Cuarteto(this.tabla);
-        //condicion
-        cadena += etCondicion +" :\n";
         cadena += "if ("+tCondicion+" > 0) goto "+etV + ";\n";
         cadena += "goto "+etF + ";\n";
         cadena += etV + " :\n";

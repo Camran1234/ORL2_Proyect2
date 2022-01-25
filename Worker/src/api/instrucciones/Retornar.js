@@ -11,6 +11,30 @@ class Retornar extends Instruccion{
         return this.valor;
     }
 
+    escribirDeclaracion(funcion, tabla){
+        if(!funcion.hasReturnName()){
+            let tipo = funcion.getTipo();
+            let cadena = "";    
+            if(tipo == "ENTERO"){
+                cadena += "int "+tabla.drawT()+";\n";
+            }else if(tipo == "DECIMAL"){
+                cadena += "float "+tabla.drawT()+";\n"; 
+            }else if(tipo == "CARACTER"){
+                cadena += "char "+tabla.drawT()+";\n";
+            }else if(tipo == "CADENA"){
+                cadena += "char * "+tabla.drawT()+";\n";
+            }else if(tipo == "BOOLEAN"){
+                cadena += "int "+tabla.drawT()+";\n";
+            }else if(tipo == "ANY"){
+                cadena += "struct Var "+tabla.drawT()+";\n";
+            }
+            tabla.inscribirT();
+            funcion.generarReturnName(tabla.drawT());
+            tabla.addT();
+            tabla.agregarTexto(cadena);
+        }
+    }
+
     isFromMain(){
         let ambit = this.ambitoEnMain();
         if (ambit !=null){

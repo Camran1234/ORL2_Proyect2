@@ -1,0 +1,454 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include <string.h>
+#include <stdint.h>
+
+
+char* concat(char *buf, char* buf2){
+    char *result = malloc(strlen(buf)+strlen(buf2)+1);
+    strcpy(result,buf);
+    strcat(result,buf2);
+    return result;
+}
+char* convertNumber_String(float number){
+   char *x = malloc(100*sizeof(char));
+   sprintf(x,"%f", number);
+   return x;
+}
+char* convertInt_String(int number){
+   char *x = malloc(100*sizeof(char));
+   sprintf(x,"%d", number);
+  return x;
+}
+char* convertChar_String(char number){
+   char *x = malloc(100*sizeof(char));
+   sprintf(x,"%c", number);
+  return x;
+}
+struct Var{
+   void * puntero;
+   int type;
+};
+
+char c;
+int t0;
+int t1;
+int t2;
+char * t4;
+int t5;
+int t6;
+char * t7;
+struct Var t8;
+struct Var t9;
+char * t10;
+int t11;
+int t12;
+char * t13;
+struct Var t14;
+int t15;
+int t16;
+int t17;
+int t18;
+int t19;
+int t21;
+struct Var t22;
+int t23;
+int t24;
+int t26;
+int t27;
+int t28;
+int t30;
+int t32;
+int t33;
+char * t34;
+int t35;
+int t36;
+int t37;
+char * t38;
+char * t39;
+int t40;
+char * t41;
+char * t42;
+int t43;
+int t44;
+int t45;
+int t46;
+int t47;
+int t48;
+int t49;
+int t50;
+struct com_algo_ t54;
+int t55;
+int t56;
+int t57;
+int t58;
+int t59;
+int t60;
+int t61;
+char * t62;
+char * t63;
+char * t64;
+int t65;
+int t67;
+char * t68;
+char * t69;
+int t70;
+int t71;
+int t74;
+int t75;
+int t76;
+int t77;
+int t78;
+int t81;
+int t83;
+int t84;
+int t85;
+char * t86;
+char * t87;
+char * t88;
+int t89;
+int t90;
+int t91;
+char * t93;
+int t94;
+int t95;
+int t96;
+char * t97;
+int t98;
+char * t99;
+int t100;
+char * t101;
+int t102;
+char * t103;
+char * t104;
+int t105;
+int t106;
+int t107;
+int t108;
+int t3;
+int t20;
+int t25;
+int t51;
+int t52;
+int t79;
+int t80;
+int t82;
+int t92;
+int t109;
+int t110;
+int t111;
+
+void com_Despedida_ANY__ ( ) {
+t1 = 0;
+t0 = t1;
+et1 :
+t2 = 15;
+if (t0<t2) goto et5;
+goto et6;
+et5:
+t3 = 1;
+goto et4;
+et6:
+t3 = 0;
+goto et4;
+et4:
+ if (t3 > 0) goto et2;
+goto et3;
+et2 :
+t4 = "ASD";
+ printf("%s", t4);
+printf("\n");
+t5 = 1;
+t6 = t0+t5;
+t0 = t6;
+goto et1;
+et3 :
+et0 : 
+}
+void com_Saludo_ANY__ ( ) {
+t7 = "Segundo Proyecto de Compiladores 2";
+ printf("%s", t7);
+printf("\n");
+et7 : 
+}
+void com_edadmeses_ANY_ANY_ANY_ ( ) {
+t10 = "Ingrese su edad:";
+ printf("%s", t10);
+printf("\n");
+if (t8.type == 0) {
+scanf("%d",  &*((unsigned int*)t8.puntero) );
+} else if (t8.type == 1){
+scanf("%f" , &*((unsigned int*)t8.puntero) );
+} else if (t8.type == 2){
+scanf("%c", &*((unsigned int*)t8.puntero) );
+} else if (t8.type == 3){
+scanf ("%s", &*((unsigned int*)t8.puntero));
+}
+t11 = 12;
+t12 = *((unsigned int*)t8.puntero)*t11;
+t9.puntero = &t12;
+t9.type = 0;
+t13 = "meses = ";
+ printf("%s", t13);
+printf("%d", *((unsigned int*)t9.puntero));
+et8 : 
+}
+void com_Factorial_ANY_ANY_ ( ) {
+t15 = 0;
+t16 = t15;
+t17 = 0;
+t18 = t17;
+t18 = *((unsigned int*)t14.puntero);
+t19 = 0;
+if (*((unsigned int*)t14.puntero)==t19) goto et12;
+goto et13;
+et12:
+t20 = 1;
+goto et11;
+et13:
+t20 = 0;
+goto et11;
+et11:
+if (t20> 0) goto et14;
+goto et15;
+et14:
+t21 = 1;
+t22.puntero = &t21;
+t22.type = 0;
+goto et10;
+et15:
+t23 = 1;
+t16 = t23;
+et16 :
+t24 = 1;
+if (*((unsigned int*)t14.puntero)>t24) goto et20;
+goto et21;
+et20:
+t25 = 1;
+goto et19;
+et21:
+t25 = 0;
+goto et19;
+et19:
+if (t25 > 0) goto et17;
+goto et18;
+et17 :
+t26 = t16**((unsigned int*)t14.puntero);
+t16 = t26;
+t27 = 1;
+t28 = *((unsigned int*)t14.puntero)-t27;
+t14.puntero = &t28;
+t14.type = 0;
+goto et16;
+et18 :
+t22.puntero = &t16;
+t22.type = 0;
+goto et10;
+et10:
+et9 : 
+}
+struct com_algo_ {
+int t29;
+int t31;
+};
+t30 = 95;
+void com_algo_holaMundo_ENTERO_ENTERO_ENTERO ( struct com_algo_* $$) {
+$$->t29 = t32;
+t34 = "Hola Mundo!!";
+ printf("%s", t34);
+printf("\n");
+t36 = 2;
+t35 = t36;
+t37 = 1;
+if (t35 == t37) goto et24;
+goto et25;
+et24 :
+t38 = "CASO 1 en JAVA";
+ printf("%s", t38);
+printf("\n");
+t39 = "Nuevo: ";
+ printf("%d", $$->t29);
+printf("%s", t39);
+printf("%d", t33);
+printf("\n");
+goto et23;
+et25 :
+t40 = 2;
+if (t35 == t40) goto et26;
+goto et27;
+et26 :
+t41 = "CASO 2 en JAVA";
+ printf("%s", t41);
+printf("\n");
+t42 = "Nuevo: ";
+ printf("%d", $$->t29);
+printf("%s", t42);
+printf("%d", t33);
+printf("\n");
+goto et23;
+et27 :
+et23 :
+t43 = 1;
+t44 = t43;
+et22 : 
+}
+void com_algo__( struct com_algo_ * $$) {
+$$->t29 = t30;
+
+}
+void main() {
+t45 = t46;
+t46 = 10;
+t47 = 1;
+t48 = 4;
+t49 = 1;
+t50 = 4;
+t51 = t47 * t50;
+t52 = t51 + t48;
+int t53[t52] ;
+com_algo__(&t54);
+system("clear");
+t60 = 100;
+t61 = 50;
+t32 = t60;
+t33 = t61;
+com_algo_holaMundo_ENTERO_ENTERO_ENTERO(&t54);
+scanf("%c", &c);
+t62 = "Bienvenido";
+ printf(t62);
+com_Saludo_ANY__();
+t63 = "Ingrese el primer valor entero: \n";
+ printf(t63);
+scanf("%d", &t59);
+t64 = "Ingrese el segudo valor entero: \n";
+ printf(t64);
+scanf("%d", &t55);
+t65 = t59+t55;
+int t66 = t65;
+t14.puntero = &t66;
+t14.type = 0;
+com_Factorial_ANY_ANY_();
+t57 = *((unsigned int *) t22.puntero);
+t67 = t59+t55;
+t58 = t67;
+t68 = "El factorial de %d es %d";
+ printf(t68, t58, t57);
+t69 = "Conversion de años a meses";
+ printf(t69);
+t70 = 2;
+t71 = 4;
+int t72 = t70;
+t8.puntero = &t72;
+t8.type = 0;
+int t73 = t71;
+t9.puntero = &t73;
+t9.type = 0;
+com_edadmeses_ANY_ANY_ANY_();
+scanf("%c", &c);
+t74 = 0;
+t75 = 1;
+t76 = 1;
+t77 = 1;
+t78 = 1;
+t79 = t75 * t78;
+t80 = t79 + t76;
+t53[t80] = t74;
+t81 = 0;
+t56 = t81;
+et28 :
+if (t56<=t55) goto et32;
+goto et33;
+et32:
+t82 = 1;
+goto et31;
+et33:
+t82 = 0;
+goto et31;
+et31:
+ if (t82 > 0) goto et29;
+goto et30;
+et29 :
+t83 = t57*t59;
+t57 = t83;
+t84 = 1;
+t85 = t56+t84;
+t56 = t85;
+goto et28;
+et30 :
+t86 = "%d ";
+ printf(t86, t59);
+t87 = "^ %d";
+ printf(t87, t55);
+t88 = " = %d";
+ printf(t88, t57);
+scanf("%c", &c);
+system("clear");
+t90 = 0;
+t89 = t90;
+goto et34;
+et35:
+t91 = 4;
+if (t89!=t91) goto et38;
+goto et39;
+et38:
+t92 = 1;
+goto et37;
+et39:
+t92 = 0;
+goto et37;
+et37:
+if (t92 > 0)  goto et34;
+goto et36;
+et34 :
+t93 = "Imprimiendo un hola mundo %d\n";
+ printf(t93, t89);
+t94 = 1;
+t95 = t89+t94;
+t89 = t95;
+goto et35;
+et36 :
+t96 = 1;
+if (t89 == t96) goto et41;
+goto et42;
+et41 :
+t97 = "CASO 1 FINALIZADO";
+ printf(t97);
+goto et40;
+et42 :
+t98 = 2;
+if (t89 == t98) goto et43;
+goto et44;
+et43 :
+t99 = "CASO 2 FINALIZADO";
+ printf(t99);
+goto et40;
+et44 :
+t100 = 3;
+if (t89 == t100) goto et45;
+goto et46;
+et45 :
+t101 = "CASO 3 FINALIZADO";
+ printf(t101);
+goto et40;
+et46 :
+t102 = 4;
+if (t89 == t102) goto et47;
+goto et48;
+et47 :
+t103 = "CASO 4 FINALIZADO";
+ printf(t103);
+goto et40;
+et48 :
+et40 :
+com_Despedida_ANY__();
+t104 = "%d";
+ t105 = 1;
+t106 = 1;
+t107 = 1;
+t108 = 4;
+t109 = t105 * t108;
+t110 = t109 + t106;
+printf(t104, t53[t110]);
+
+}
+;

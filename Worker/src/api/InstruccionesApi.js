@@ -363,7 +363,7 @@ const instruccionesApi = {
      * @returns 
      */
     nuevoFor: function(valor_inicial, expresion, accion_post, instrucciones, lenguaje, linea, columna){
-        if(instrucciones == undefined){
+        if(instrucciones == null){
             instrucciones = [];
         }
         if(!Array.isArray(valor_inicial)){

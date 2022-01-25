@@ -1,4 +1,5 @@
 
+
 class Instruccion{
     constructor(linea, columna, lenguaje, ambito, paqueteria, instrucciones){
         this.linea = linea;
@@ -13,6 +14,20 @@ class Instruccion{
         this.expresionO = null;
         this.cantidadMemoria = 0;
         this.etSalida = "";
+        this.cadena = "";
+    }
+
+    getCadena(){
+        return this.cadena;
+    }
+
+
+    concatText(text){
+        this.cadena += text;
+    }
+
+    getText(){
+        return this.cadena;
     }
 
     esJava(){
@@ -73,6 +88,7 @@ class Instruccion{
     }
 
     getTName(){
+        
         return this.tName;
     }
 
@@ -85,6 +101,8 @@ class Instruccion{
     }
 
     setInstrucciones(instrucciones){
+        const Constructor = require('./Constructor');
+        
         this.instrucciones = instrucciones;
     }
 

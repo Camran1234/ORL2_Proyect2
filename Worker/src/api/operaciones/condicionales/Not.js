@@ -8,10 +8,15 @@ const Number = require('../../operadores/Number');
 const Any = require('../../operadores/Any');
 const ErrorSemantico = require('../../../error/SemanticError');
 const  TIPO_LENGUAJE  = require('../../Instrucciones').TIPO_LENGUAJE;
+const ParametroHelper = require('../../../safe/ParametroHelper');
 class Negativo extends OperacionCondicional {
 
     constructor(operadorL, operadorR, linea, columna, lenguaje){
         super(operadorL, operadorR, linea, columna, lenguaje);
+    }
+
+    tipo_int(){
+        return super.tipo_int();
     }
 
     incluirLastOperacion(){
@@ -73,33 +78,67 @@ class Negativo extends OperacionCondicional {
             cadena += operadorL.codigo3D(tablaTipos);
             resultadoL = this.operadorL.parse(null,null);            
         }        
-        //Operar
-        operacion = this.operador+resultadoL;
 
-        let tName = tablaTipos.drawT();
-        tablaTipos.addT();
-        let etVer = tablaTipos.drawEt();
-        tablaTipos.addEt();
-        let etFalsa = tablaTipos.drawEt();
-        tablaTipos.addEt();
-        let etSalida = tablaTipos.drawEt();
-        tablaTipos.addEt();
+        if(tablaTipos.isCompiler()){
+            let parametroHelper = new ParametroHelper();
+            cadena += parametroHelper.stablishCuarteto(operadorL, resultadoL);
+            resultadoL = parametroHelper.getResultado();
+            //Operar
+            operacion = this.operador+resultadoL;
 
-        cadena += "if ("+resultadoL+" > 0) goto "+etVer+";\n";
-        cadena += "goto "+etFalsa+";\n";
-        
-        cadena += etVer+":\n"; // verdadero
-        cadena += tName+ " = 0 \n" ;
-        cadena += "goto "+etSalida+";\n";
+            let tName = tablaTipos.drawT();
+            tablaTipos.addT();
+            let etVer = tablaTipos.drawEt();
+            tablaTipos.addEt();
+            let etFalsa = tablaTipos.drawEt();
+            tablaTipos.addEt();
+            let etSalida = tablaTipos.drawEt();
+            tablaTipos.addEt();
 
-        cadena += etFalsa+":\n";
-        cadena += tName + " = 1\n";
-        cadena += "goto "+etSalida+";\n";
+            cadena += "if ("+resultadoL+" > 0) goto "+etVer+";\n";
+            cadena += "goto "+etFalsa+";\n";
+            
+            cadena += etVer+":\n"; // verdadero
+            cadena += tName+ " = 0 \n" ;
+            cadena += "goto "+etSalida+";\n";
 
-        cadena += etSalida+":\n";
+            cadena += etFalsa+":\n";
+            cadena += tName + " = 1\n";
+            cadena += "goto "+etSalida+";\n";
 
-        this.setNombre(tName);
-        this.setOperacionFinal(operacion);
+            cadena += etSalida+":\n";
+
+            this.setNombre(tName);
+            this.setOperacionFinal(operacion);
+        }else{
+            //Operar
+            operacion = this.operador+resultadoL;
+
+            let tName = tablaTipos.drawT();
+            tablaTipos.addT();
+            let etVer = tablaTipos.drawEt();
+            tablaTipos.addEt();
+            let etFalsa = tablaTipos.drawEt();
+            tablaTipos.addEt();
+            let etSalida = tablaTipos.drawEt();
+            tablaTipos.addEt();
+
+            cadena += "if ("+resultadoL+" > 0) goto "+etVer+";\n";
+            cadena += "goto "+etFalsa+";\n";
+            
+            cadena += etVer+":\n"; // verdadero
+            cadena += tName+ " = 0 \n" ;
+            cadena += "goto "+etSalida+";\n";
+
+            cadena += etFalsa+":\n";
+            cadena += tName + " = 1\n";
+            cadena += "goto "+etSalida+";\n";
+
+            cadena += etSalida+":\n";
+
+            this.setNombre(tName);
+            this.setOperacionFinal(operacion);
+        }
         return cadena;
     }
 

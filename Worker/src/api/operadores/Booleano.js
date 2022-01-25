@@ -15,6 +15,10 @@ class Booleano extends Entero{
         return "booleano";
     }
 
+    tipo_int(){
+        return super.tipo_int();
+    }
+
     parse(operador, tablaTipos){
         const Cadena = require('./Cadena');
         let valor = this.valor;

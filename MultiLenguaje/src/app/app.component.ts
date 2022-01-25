@@ -6,7 +6,7 @@ import * as ace from "ace-builds";
 import Parser from "../assets/js/Parser.js";
 import {CodeService} from "./client/app.server";
 import { MatTableDataSource } from '@angular/material/table';
-
+import * as FileSaver from "file-saver";
 //Tree View
 import {FlatTreeControl} from '@angular/cdk/tree';
 import { MatTreeFlatDataSource, MatTreeFlattener } from "@angular/material/tree";
@@ -65,6 +65,8 @@ export class AppComponent implements AfterViewInit {
   parser: Parser;
   tableCols = ['Fila', 'Columna', 'Tipo_de_Error', 'Simbolo_provocador', 'Descripcion'];
   tableData : any;
+  fileUrl;
+  
 
   private _transformer = (node: FoodNode, level: number) => {
     return {
@@ -150,6 +152,22 @@ export class AppComponent implements AfterViewInit {
       codigo3D = code.codigo;
     });
     aceEditor2.setValue(codigo3D);    
+  }
+
+  async fileDownloadC() {
+    let codigoC = "";
+    //Obtenemos el codigo
+    await this.codeService.getC().toPromise().then(response => {
+      let code = JSON.parse(JSON.stringify(response));
+      codigoC = code.codigo;
+      let blob:any = new Blob([codigoC], {type: 'text/json; charset=utf-8'});
+      const url = window.URL.createObjectURL(blob);
+
+      FileSaver.saveAs(blob, "codigoC.mlg");
+    }), (error: any) => console.log("Error downloading the file"),
+        () => console.info("File downloaded successfully");
+    //make the file
+  
   }
 
   async parseCode(){

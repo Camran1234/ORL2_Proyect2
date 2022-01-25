@@ -107,13 +107,23 @@ class Parser{
             let Cuarteto = require('../parser/general/Cuarteto');
             let cuartetoF = new Cuarteto(this.tablaTipos);
             let resultado = cuartetoF.procesar(this.reversaArreglo(this.ast), 1);
-            if(this.tablaTipos.isCompiler()){
+            /*if(this.tablaTipos.isCompiler()){
                 let cadena = this.tablaTipos.declararT();
                 cadena += resultado;
                 resultado = cadena;
-            }
+            }*/
             return resultado;
         }       
+    }
+
+    getCodigoC(){
+        if(this.haveErrores() == false){
+            this.tablaTipos.setCompilerMode(true);
+            let Cuarteto = require('../parser/general/Cuarteto');
+            let cuartetoF = new Cuarteto(this.tablaTipos);
+            let resultado = cuartetoF.procesar(this.reversaArreglo(this.ast), 1);
+            return resultado;
+        }
     }
 
     parse(codigo){

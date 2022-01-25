@@ -6,11 +6,16 @@ const Decimal = require('../../operadores/Decimal');
 const Entero = require('../../operadores/Entero');
 const ErrorSemantico = require('../../../error/SemanticError');
 const  TIPO_LENGUAJE  = require('../../Instrucciones').TIPO_LENGUAJE;
+const Any = require('../../operadores/Any');
 class Negativo extends OperacionAritmetica {
 
     constructor(operadorL, operadorR, linea, columna, lenguaje){
         super(operadorL, operadorR, linea, columna, lenguaje);
         this.operador = "-";
+    }
+
+    tipo_int(){
+        return super.tipo_int();
     }
 
     incluirLastOperacion(){
@@ -74,12 +79,28 @@ class Negativo extends OperacionAritmetica {
         }        
         //Operar
         operacion = this.operador+resultadoL;
-        
-        cadena += tablaTipos.drawT()+" = "+operacion +";\n";
-        this.setNombre(tablaTipos.drawT());
-        tablaTipos.addT();
-        
-        this.setOperacionFinal(operacion);
+
+        if(tablaTipos.isCompiler()){
+            if(operadorL.getTipo() instanceof Any
+            || operadorL.getTipo() == Any){
+                if(!(operadorL instanceof Operacion)){
+                    resultadoL = "*((unsigned int *)"+resultadoL+".puntero)";
+                }
+            }
+            operacion = this.operador +resultadoL;
+            tablaTipos.agregarTexto("float "+tablaTipos.drawT()+ ";\n");
+            cadena += tablaTipos.drawT() + " = "+operacion + ";\n";
+            this.setNombre(tablaTipos.drawT());
+            this.setOperacionFinal(operacion);
+            tablaTipos.inscribirT();
+            tablaTipos.addT();
+        }else{            
+            cadena += tablaTipos.drawT()+" = "+operacion +";\n";
+            this.setNombre(tablaTipos.drawT());
+            tablaTipos.addT();
+            
+            this.setOperacionFinal(operacion);
+        }
         return cadena;
     }
 

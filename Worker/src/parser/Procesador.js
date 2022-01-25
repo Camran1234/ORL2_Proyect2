@@ -681,7 +681,7 @@ class Procesador{
             }            
         }
         let newExpresion = expresion;
-        let newValor = instruccionesApi.nuevoValor(id, magnitud, tipoCreado.getTipo(), instruccion.lenguaje, instruccion.linea, instruccion.columna);
+        let newValor = instruccionesApi.nuevoValor(id, magnitud, tipoCreado.getTipoParam(), instruccion.lenguaje, instruccion.linea, instruccion.columna);
         if(operador == TIPO_OPERACION.IGUAL){
             newExpresion = expresion;
         }else if(operador == TIPO_OPERACION.SUMA){
@@ -698,9 +698,11 @@ class Procesador{
             newExpresion = instruccionesApi.operacionAritmetica(newValor, expresion, TIPO_OPERACION.POW, instruccion.lenguaje, instruccion.linea, instruccion.columna);
         }else if(operador == TIPO_OPERACION.INCREMENTO){
             let auxiliarValor = instruccionesApi.nuevoValor(1, null, TIPO_VALOR.ENTERO, instruccion.lenguaje, instruccion.linea, instruccion.columna);
+            newValor.tipo = TIPO_VALOR.IDENTIFICADOR;
             newExpresion = instruccionesApi.operacionAritmetica(newValor, auxiliarValor,TIPO_OPERACION.SUMA, instruccion.lenguaje, instruccion.linea, instruccion.columna)
         }else if(operador == TIPO_EXPRESION.DECREMENTO){
             let aux = instruccionesApi.nuevoValor(1, null, TIPO_VALOR.ENTERO, instruccion.lenguaje, instruccion.linea, instruccion.columna);
+            newValor.tipo = TIPO_VALOR.IDENTIFICADOR;
             newExpresion = instruccionesApi.operacionAritmetica(newValor, aux,TIPO_OPERACION.RESTA, instruccion.lenguaje, instruccion.linea, instruccion.columna)
         }
         simbolo.setExpresion(newExpresion);

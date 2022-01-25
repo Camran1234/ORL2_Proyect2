@@ -1,12 +1,19 @@
+const ParametroHelper = require('../../safe/ParametroHelper');
+const Booleano = require('../operadores/Booleano');
 const Cadena = require('../operadores/Cadena');
+const Caracter = require('../operadores/Caracter');
+const Decimal = require('../operadores/Decimal');
+const Entero = require('../operadores/Entero');
 var Operacion = require('./Operacion');
 
 class OperacionComparacion extends Operacion {
 
     constructor(operadorL, operadorR, linea, columna, lenguaje){
         super(operadorL, operadorR, linea, columna, lenguaje);
+    }
 
-        
+    tipo_int(){
+        return super.tipo_int();
     }
 
     incluirLastOperacion(){
@@ -91,43 +98,21 @@ class OperacionComparacion extends Operacion {
         }
         //Operar
         if(tablaTipos.isCompiler()){
-            if(operadorL.getTipo() instanceof Cadena || operadorR.getTipo() instanceof Cadena){
-                if(operadorL.getTipo() instanceof Cadena){
-                    let helper = resultadoL.split("");
-                    if(helper[0] == "t"){
-                        resultadoL = "(*((char **)"+resultadoL+"))";
-                    }
-                }else{
-                    let helper = resultadoL.split("");
-                    if(helper[0] == "t"){
-                        resultadoL = "(*((float*)"+resultadoL+"))";
-                    }
-                    resultadoL = "convertNumber_String("+resultadoL+")";
-                } 
-
-                if(operadorR.getTipo() instanceof Cadena){
-                    let helper = resultadoR.split("");
-                    if(helper[0] == "t"){
-                        resultadoR = "(*((char **)"+resultadoR+"))";
-                    }
-                }else{
-                    let helper = resultadoR.split("");
-                    if(helper[0] == "t"){
-                        resultadoR = "(*((float*)"+resultadoR+"))";
-                    }
-                    resultadoR = "convertNumber_String("+resultadoR+")";
-                }
+            let parametroHelper = new ParametroHelper();
+            if(operadorL.getTipo() instanceof Cadena || operadorR.getTipo() instanceof Cadena
+            || operadorL.getTipo() == Cadena || operadorR.getTipo() == Cadena){
+                cadena += parametroHelper.stablishCuarteto(operadorL, resultadoL);
+                resultadoL = parametroHelper.getResultado();
+                cadena += parametroHelper.stablishCuarteto(operadorR, resultadoR);
+                resultadoR = parametroHelper.getResultado();
                 operacion = "strcmp("+resultadoL+", "+resultadoR+") "+this.operador+" 0";
-            }else{
-                let helper = resultadoL.split("");
-                if(helper[0]=="t"){
-                    resultadoL = "(*((float *)"+resultadoL+"))";
-                }
-                helper = resultadoR.split("");
-                if(helper[0]=="t"){
-                    resultadoR = "(*((float *)"+resultadoR+"))";
-                }
-                operacion = resultadoL+this.operador+resultadoR;
+            }else if(!(operadorL.getTipo() instanceof Cadena) || !(operadorR.getTipo() instanceof Cadena)
+            || !(operadorL.getTipo() == Cadena) || !(operadorR.getTipo() == Cadena) ){
+                cadena += parametroHelper.stablishCuarteto(operadorL, resultadoL);
+                resultadoL = parametroHelper.getResultado();
+                cadena += parametroHelper.stablishCuarteto(operadorR, resultadoR);
+                resultadoR = parametroHelper.getResultado();
+                operacion = resultadoL + this.operador + resultadoR;
             }
             
             let tNombre = tablaTipos.drawT();
@@ -145,12 +130,11 @@ class OperacionComparacion extends Operacion {
             cadena += etTrue+":\n";
             cadena += tNombre+" = 1;\n";
             cadena += "goto "+etSalida+";\n";
-
             //t1 = 0
             cadena += etFalse+":\n";
             cadena += tNombre+" = 0;\n";
             cadena += "goto "+etSalida+";\n";
-
+            cadena += etSalida+":\n";
             this.setNombre(tNombre);
             this.setOperacionFinal(operacion);
         }else{
@@ -176,7 +160,7 @@ class OperacionComparacion extends Operacion {
             cadena += etFalse+":\n";
             cadena += tNombre+" = 0;\n";
             cadena += "goto "+etSalida+";\n";
-
+            cadena += etSalida+":\n";
             this.setNombre(tNombre);
             this.setOperacionFinal(operacion);
         }

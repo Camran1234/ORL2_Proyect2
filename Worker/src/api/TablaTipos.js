@@ -51,6 +51,14 @@ class TablaTipos{
         this.s = 0;
         this.specialVoids = [];
         this.cMode = false;
+        this.specialInts = [];
+        this.specialFloats = [];
+        this.specialCadenas = [];
+        this.specialChars = [];
+        this.nombres = [];
+        this.excluidos = [];
+        this.cadena = "";
+        this.asignaciones = "";
     }
 
     setCompilerMode(state){
@@ -87,47 +95,87 @@ class TablaTipos{
         // The ts not because they got declared during executions
         cadena += "int g;\n";
         for(let index=0; index< this.t.size; index++){
-            if(index == this.specialVoids[index]){
-                cadena += "void *"+this.drawTParam(index)+";\n";
-                this.specialVoids.shift();
-            }else if(index == this.specialInts[index]){
-                cadena += "int "+this.drawTParam(index)+";\n";   
-                this.specialInts.shift();
-            }else if (index == this.specialFloats[index]){
-                cadena += "float "+this.drawTParam(index)+";\n"   
-                this.specialFloats.shift();
-            }else if(index == this.specialChars[index]){
-                cadena += "char "+this.drawTParam(index)+";\n";
-                this.specialChars.shift();
-            }else if(index == this.specialCadenas[index]){
-                cadena += "char *"+this.drawTParam(index)+";\n";   
-                this.specialCadenas.shift();
-            }else{
+            cadena += "int "+this.drawTParam(index)+";\n";
+        }
+        for(let index=0; index< this.specialCadenas.size; index++){
+            cadena += "char *"+this.specialCadenas[index]+";\n";
+        }
+        for(let index=0; index< this.specialVoids.size; index++){
+            cadena += "void *"+this.specialVoids[index]+";\n";
+        }
+        for(let index=0; index< this.specialFloats.size; index++){
+            cadena += "float "+this.specialFloats[index]+";\n";
+        }
+        for(let index=0; index<this.specialChars.size; index++){
+            cadena += "char "+this.specialChars[index]+";\n";
+        }
+        for(let index=0; index<this.specialInts.size; index++){
+            cadena += "int "+this.specialInts[index]+";\n";
+        }
+        return cadena;
+    }
+
+    inscribirDeclaraciones(){
+        let cadena = "";
+        cadena += this.cadena;
+        for(let index=0; index<= this.t; index++){
+            let flag = false;
+            if(this.excluidos.length!=0){
+                if(index == this.excluidos[0]){
+                    flag = true;
+                    this.excluidos.shift();
+                }
+            }
+            if(!flag){
                 cadena += "int "+this.drawTParam(index)+";\n";
             }
         }
         return cadena;
     }
 
-    actualTCadena(){
-        this.specialCadenas.push(this.t);
+    
+
+    inscribirAsignaciones(){
+        return this.asignaciones;
     }
 
-    actualTVoid(){
-        this.specialVoids.push(this.t);
+    agregarAsignacion(texto){
+        this.asignaciones += texto;
     }
 
-    actualTFloat(){
-        this.specialFloats.push(this.t);
+    agregarTexto(cadena){
+        this.cadena += cadena;
     }
 
-    actualTChar(){
-        this.specialChars.push(this.t);
+    inscribirT(){
+        this.excluidos.push(this.t);
+    }
+
+    actualTCadena(nombre){
+        this.specialCadenas.push(nombre);
+    }
+
+    actualTVoid(nombre){
+        this.specialVoids.push(nombre);
+    }
+
+    actualTFloat(nombre){
+        this.specialFloats.push(nombre);
+    }
+
+    actualTChar(nombre){
+        this.specialChars.push(nombre);
+    }
+
+    actualTInt(nombre){
+        this.specialInts.push(nombre);
     }
 
     isCompiler(){
         return this.cMode;
     }
+
+    
 
     drawS(){
         return "ts"+this.s;
@@ -196,6 +244,7 @@ class TablaTipos{
     }
 
     addT(){
+        
         this.t++;
     }
 
@@ -212,10 +261,18 @@ class TablaTipos{
     }
 
     drawT(){
+        if(this.cMode){
+            if(this.t == 30){
+                let x = 2;
+            }
+        }
         return "t"+this.t;
     }
 
     drawEt(){
+        if(this.cMode){
+            
+        }
         return "et"+this.et;
     }
 
@@ -408,6 +465,45 @@ class TablaTipos{
             }
         }
         return resultado;
+    }
+
+    buscarParametroJavaSize(funcion){
+        let tabla = this.tipos;
+        const Clase = require('../api/instrucciones/Clase');
+        const Declaracion = require('../api/instrucciones/Declaracion');
+        const Asignacion = require('../api/instrucciones/Asignacion');
+        let size=0; 
+
+        if(funcion.ambitoEnClase()!=null){
+            if(funcion.ambitoEnClase() instanceof Clase){
+                for(let index=tabla.length-1; index>=0; index--){
+                    let tipo = tabla[index];
+                    if(tipo.getInstruccion().ambitoMayor() == funcion.ambitoEnClase()
+                    &&( tipo.getInstruccion() instanceof Declaracion
+                    || tipo.getInstruccion() instanceof Asignacion)){
+                        size++;
+                    }
+                }
+            }
+        }
+        
+        return size;
+    }
+
+    buscarParametro(posMemoria, funcion){
+        let tabla = this.tipos;
+        for(let index=tabla.length-1; index>=0; index--){
+            let tipo = tabla[index];
+            const Declaracion = require('../api/instrucciones/Declaracion');
+            const Asignacion = require('../api/instrucciones/Asignacion');
+            if(tipo.getInstruccion().ambitoMayor() == funcion
+            &&( tipo.getInstruccion() instanceof Declaracion
+            || tipo.getInstruccion() instanceof Asignacion)){
+                if(tipo.getPosMemoria() == posMemoria){
+                    return tipo;
+                }
+            }
+        }
     }
 
     buscarInstruccion(instruccion){

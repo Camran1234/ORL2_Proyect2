@@ -21,6 +21,30 @@ class Operacion{
         this.lastOperacion = true;;
     }
 
+    tipo_int(){
+        if(this.tipo == "Caracter"
+        || this.tipo instanceof Caracter
+        || this.tipo == Caracter){
+            return 2;
+        }else if(this.tipo == "BOOLEAN"
+        || this.tipo instanceof Booleano
+        || this.tipo == Booleano){
+            return 0;
+        }else if(this.tipo == "ENTERO"
+        || this.tipo instanceof Entero
+        || this.tipo == Entero){
+            return 0;
+        }else if(this.tipo == "DECIMAL"
+        || this.tipo instanceof Decimal
+        || this.tipo == Decimal){
+            return 1;
+        }else if(this.tipo == "CADENA"
+        || this.tipo instanceof Cadena
+        || this.tipo == Cadena){
+            return 3;
+        }
+        return 0;
+    }
 
     incluirLastOperacion(){
         this.lastOperacion = true;

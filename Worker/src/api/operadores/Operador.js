@@ -66,8 +66,6 @@ class Operador{
      * @returns 
      */
     procesarOperaciones(operacion, ambito, tablaTipos, errores){
-        
-        this.paramsO = [];
         if(Array.isArray(operacion)){
             let ast = [];
             for(let index=0; index<operacion.length; index++){

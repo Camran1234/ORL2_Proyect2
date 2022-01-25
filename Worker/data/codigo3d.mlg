@@ -2,54 +2,333 @@ ptr = 0;
 h = 0;
 stack [];
 heap []; 
-com_calcular_ANY_ANY_ {
-t0 = ptr +0;
-t1= stack[t0];
-t2 = ptr + 1;
-stack[t2] = t1;
-goto et0 ; 
+main_Mensajero1_Incremento_VOID_ENTERO ( ) {
+t4 = ptr + 1; 
+t5 = stack[t4];
+stack[t5] = t3;
 et0 : 
 }
-com_clase_nuevo_VOID_ {
-t3 = 2+4;
-ts0 = "ASD";
- t4 = t3+ts0;
-t5= ptr + 1;
-stack[t5] = t4 ;
-ts1 = "AH";
- ts2 = "RE";
- if ts1==ts2 goto et4;
-goto et5;
-et4:
-t6 = 1;
-goto et3;
-et5:
-t6 = 0;
-goto et3;
-if t6> 0 goto et6;
-goto et7;
-et6:
-goto et2;
-et7:
-et2:
+main_Mensajero1_Intercambiar_VOID_ENTERO_ENTERO ( ) {
+t9= ptr + 3;
+stack[t9] = t8 ;
+t13 = ptr + 2; 
+t14 = stack[t13];
+stack[t14] = t12;
+t17 = ptr + 1; 
+t18 = stack[t17];
+stack[t18] = t16;
 et1 : 
 }
-com_clase__{
-t7 = ptr + 0;
-stack[t7] = h;
+main_Mensajero1_mensaje_VOID_ENTERO ( ) {
+t19 = ptr + 1;
+t20 = stack[t19] ;
+if (t20 == 1) goto et4;
+goto et5;
+et4 :
+t21 = "Arreglo antes de ordenarse";
+ imprimir(t21);
+imprimir(\n);
+goto et3;
+et5 :
+if (t20 == 2) goto et6;
+goto et7;
+et6 :
+t22 = "Arreglo despues de ordenarse";
+ imprimir(t22);
+imprimir(\n);
+goto et3;
+et7 :
+t23 = "Default!";
+ imprimir(t23);
+imprimir(\n);
+et3 :
+et2 : 
+}
+main_Mensajero1_mostrar_VOID_ENTERO_ENTERO ( ) {
+t24 = "arreglo[";
+ t25 = ptr +1;
+t26= stack[t25];
+t27 = "] = ";
+ t28 = ptr +2;
+t29= stack[t28];
+imprimir(t24);
+imprimir(t26);
+imprimir(t27);
+imprimir(t29);
+imprimir(\n);
+et8 : 
+}
+main_Mensajero1__{
+t30 = ptr + 0;
+stack[t30] = h;
 h = h + 0;
 }
-t7= ptr + 0;
-stack[t7] = 5 ;
-t8 = ptr +0;
-t9= stack[t8];
-t10 = ptr + 3;
-t11 = t10 + 0;
-stack[t11] = t9;
-ptr = ptr + 3;
-com_calcular_ANY_ANY_();
-ptr = ptr - 3;
-t12= ptr + 3;
-t13 = t12 + t1;
-t14= ptr + 1;
-stack[t14] = t13 ;
+t30= ptr + 1;
+stack[t30] = 10 ;
+arr0[10];
+t31 = arr0;
+t32 = ptr + 2;
+stack[t32] = t31 ;
+t33= ptr + 3;
+stack[t33] = 0 ;
+t34= ptr + 4;
+stack[t34] = 0 ;
+ptr = ptr + 0;
+main_Mensajero1__() ;
+ptr = ptr - 0;
+t35 = ptr + 0;
+t36 = t35 + 0;
+t37 = stack[t36];
+t38 = ptr + 5;
+stack[t38] = t37;
+t39= ptr + 2;
+t40 =  stack [t39];
+t40[0] = 7 ;
+t41= ptr + 2;
+t42 =  stack [t41];
+t42[1] = 14 ;
+t43= ptr + 2;
+t44 =  stack [t43];
+t44[2] = 18 ;
+t45= ptr + 2;
+t46 =  stack [t45];
+t46[3] = 19 ;
+t47= ptr + 2;
+t48 =  stack [t47];
+t48[4] = 21 ;
+t49= ptr + 2;
+t50 =  stack [t49];
+t50[5] = 2 ;
+t51= ptr + 2;
+t52 =  stack [t51];
+t52[6] = 9 ;
+t53= ptr + 2;
+t54 =  stack [t53];
+t54[7] = 24 ;
+t55= ptr + 2;
+t56 =  stack [t55];
+t56[8] = 29 ;
+t57= ptr + 2;
+t58 =  stack [t57];
+t58[9] = 47 ;
+t59 = ptr + 5;
+t60= stack[t59];
+t61= ptr + 2;
+t62 = t61 + 0;
+stack[t62] = t60 ;
+t62 = ptr +2;
+t63 = t62 + 1;
+stack[t63] = 1;
+ptr = ptr + 2;
+main_Mensajero1_mensaje_VOID_ENTERO();
+ptr = ptr - 2;
+t64= ptr + 3;
+stack[t64] = 0 ;
+et9 :
+t65 = ptr +3;
+t66= stack[t65];
+t67 = ptr +1;
+t68= stack[t67];
+if (t66<t68) goto et13;
+goto et14;
+et13:
+t69 = 1;
+goto et12;
+et14:
+t69 = 0;
+goto et12;
+et12:
+ if (t69 > 0) goto et10;
+goto et11;
+et10 :
+t70 = ptr +3;
+t71= stack[t70];
+t72 = ptr +2;
+t73= stack[t72];
+t74 = ptr +3;
+t75= stack[t74];
+t76= t75[t75];
+t77 = ptr + 5;
+t78= stack[t77];
+t79= ptr + 2;
+t80 = t79 + 0;
+stack[t80] = t78 ;
+t80 = ptr +2;
+t81 = t80 + 1;
+stack[t81] = t71;
+t82 = t80 + 2;
+stack[t82] = t76;
+ptr = ptr + 2;
+main_Mensajero1_mostrar_VOID_ENTERO_ENTERO();
+ptr = ptr - 2;
+t86= ptr + 3;
+stack[t86] = t85 ;
+goto et9;
+et11 :
+et15 :
+t87 = ptr +3;
+t88= stack[t87];
+if (t88<10) goto et19;
+goto et20;
+et19:
+t89 = 1;
+goto et18;
+et20:
+t89 = 0;
+goto et18;
+et18:
+if (t89 > 0) goto et16;
+goto et17;
+et16 :
+et21 :
+t90 = ptr +4;
+t91= stack[t90];
+if (t91<10) goto et25;
+goto et26;
+et25:
+t92 = 1;
+goto et24;
+et26:
+t92 = 0;
+goto et24;
+et24:
+if (t92 > 0) goto et22;
+goto et23;
+et22 :
+t96= ptr + 0;
+stack[t96] = t95 ;
+t97 = ptr +2;
+t98= stack[t97];
+t99 = ptr +4;
+t100= stack[t99];
+t101= t100[t100];
+t102 = ptr +2;
+t103= stack[t102];
+t104 = ptr +0;
+t105= stack[t104];
+t106= t105[t105];
+if (t101<t106) goto et29;
+goto et30;
+et29:
+t107 = 1;
+goto et28;
+et30:
+t107 = 0;
+goto et28;
+et28:
+if (t107> 0) goto et31;
+goto et32;
+et31:
+t108 = ptr +2;
+t109= stack[t108];
+t110 = ptr +4;
+t111= stack[t110];
+t112= t111[t111];
+t113 = ptr +2;
+t114= stack[t113];
+t115 = ptr +0;
+t116= stack[t115];
+t117= t116[t116];
+t118 = ptr + 5;
+t119= stack[t118];
+t120= ptr + 2;
+t121 = t120 + 0;
+stack[t121] = t119 ;
+t121 = ptr +2;
+t122 = t121 + 1;
+stack[t122] = t112;
+t123 = t121 + 2;
+stack[t123] = t117;
+ptr = ptr + 2;
+main_Mensajero1_Intercambiar_VOID_ENTERO_ENTERO();
+ptr = ptr - 2;
+goto et27;
+et32:
+et27:
+t124 = ptr +4;
+t125= stack[t124];
+t126 = ptr + 5;
+t127= stack[t126];
+t128= ptr + 2;
+t129 = t128 + 0;
+stack[t129] = t127 ;
+t129 = ptr +2;
+t130 = t129 + 1;
+stack[t130] = t125;
+ptr = ptr + 2;
+main_Mensajero1_Incremento_VOID_ENTERO();
+ptr = ptr - 2;
+goto et21;
+et23 :
+t131= ptr + 4;
+stack[t131] = 0 ;
+t132 = ptr +3;
+t133= stack[t132];
+t134 = ptr + 5;
+t135= stack[t134];
+t136= ptr + 2;
+t137 = t136 + 0;
+stack[t137] = t135 ;
+t137 = ptr +2;
+t138 = t137 + 1;
+stack[t138] = t133;
+ptr = ptr + 2;
+main_Mensajero1_Incremento_VOID_ENTERO();
+ptr = ptr - 2;
+goto et15;
+et17 :
+t139 = ptr + 5;
+t140= stack[t139];
+t141= ptr + 2;
+t142 = t141 + 0;
+stack[t142] = t140 ;
+t142 = ptr +2;
+t143 = t142 + 1;
+stack[t143] = 2;
+ptr = ptr + 2;
+main_Mensajero1_mensaje_VOID_ENTERO();
+ptr = ptr - 2;
+t144= ptr + 3;
+stack[t144] = 0 ;
+et33 :
+t145 = ptr +3;
+t146= stack[t145];
+t147 = ptr +1;
+t148= stack[t147];
+if (t146<t148) goto et37;
+goto et38;
+et37:
+t149 = 1;
+goto et36;
+et38:
+t149 = 0;
+goto et36;
+et36:
+ if (t149 > 0) goto et34;
+goto et35;
+et34 :
+t150 = ptr +3;
+t151= stack[t150];
+t152 = ptr +2;
+t153= stack[t152];
+t154 = ptr +3;
+t155= stack[t154];
+t156= t155[t155];
+t157 = ptr + 5;
+t158= stack[t157];
+t159= ptr + 2;
+t160 = t159 + 0;
+stack[t160] = t158 ;
+t160 = ptr +2;
+t161 = t160 + 1;
+stack[t161] = t151;
+t162 = t160 + 2;
+stack[t162] = t156;
+ptr = ptr + 2;
+main_Mensajero1_mostrar_VOID_ENTERO_ENTERO();
+ptr = ptr - 2;
+t166= ptr + 3;
+stack[t166] = t165 ;
+goto et33;
+et35 :
+scan();

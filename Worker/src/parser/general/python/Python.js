@@ -213,7 +213,9 @@ break;
 case 42:
 
         if($$[$0-1].length>0){
-            agregarInstrucciones($$[$0], $$[$0-1], linea(this._$.first_line), columna(this._$.first_column));
+            let left = $$[$0];
+            let right = $$[$0-1]
+            agregarInstrucciones(left, right, linea(this._$.first_line), columna(this._$.first_column));
         }else{
             var token = "";
             if($$[$0].rol == TIPO_INSTRUCCION.VARIABLE){
@@ -869,8 +871,10 @@ _handle_error:
                     if(flag){
                         indentacionActual = aux;
                         if(instruccionesEliminadas != 0){
-                            for(var index=0; index<instruccionesEliminadas; index++){
-                                instruccionAcumulada.pop();
+                            if(instruccionesEliminadas != instruccionAcumulada.length ){
+                                for(var index=0; index<instruccionesEliminadas; index++){
+                                    instruccionAcumulada.pop();
+                                }
                             }
                             try{
                                 instruccionAcumulada[instruccionAcumulada.length-1].instrucciones.push(stmt);

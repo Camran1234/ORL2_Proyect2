@@ -11,7 +11,7 @@ app.use(cors());
  
 let errores = [];
 
-function parse(codigo){
+function parse(codigo, option){
     answer = [];
     errores = [];
     tablaTipos = new TablaTipos();
@@ -21,12 +21,16 @@ function parse(codigo){
     let parser = new Parser(tablaTipos, 0);
     //Parseando
     parser.parse(codigo);
-    
+
     if(!parser.haveErrores()){
         //Generamos el codigo3d
-        let safe = new Safe();
-        safe.guardarCodigo3D(parser.getCodigo3D());
-
+        if(option == 0){
+            let safe = new Safe();
+            safe.guardarCodigo3D(parser.getCodigo3D());
+        }else {
+            let safe = new Safe();
+            safe.guardarCodigoC(parser.getCodigoC());
+        }
     }        
     //Obteniendo errores
     errores = parser.getErrores();
@@ -39,6 +43,18 @@ function parse(codigo){
     respuesta= JSON.parse(respuesta);
     return respuesta;
 }
+
+app.post('/getCodigoC', function(req, res){
+    const Safe = require('./src/parser/Safe');
+    let safe = new Safe();
+    let codigo = "";
+    codigo = safe.obtenerCodigoC();
+    let jsonAnswer = {
+        codigo: codigo
+    };
+    res.send(JSON.parse(JSON.stringify(jsonAnswer)));
+    res.end;
+});
 
 app.post('/getCodigo3d', function(req, res) {
     const Safe = require('./src/parser/Safe');
@@ -54,14 +70,16 @@ app.post('/getCodigo3d', function(req, res) {
 
 app.post('/codigo3d', function(req, res) {
     let codigo = req.body.codigo;
-    let resultado = parse(codigo);
+    let resultado = parse(codigo, 0);
+    parse(codigo, 1);
     res.send(resultado);
     res.end;
 });
 
 app.post('/parse', function (req, res) {
     let codigo = req.body.codigo;
-    let resultado = parse(codigo);
+    let resultado = parse(codigo, 0);
+    parse(codigo, 1);
     res.send(resultado);
     res.end;    
 });

@@ -1,3 +1,6 @@
+const { TIPO_VALOR } = require("./Instrucciones");
+const Asignacion = require("./instrucciones/Asignacion");
+
 class Tipo{
 
     constructor(visibilidad, id, tipo, ambito, posMemoria, longitud, esArreglo, rol, paquete, instruccion, lenguaje){
@@ -18,6 +21,10 @@ class Tipo{
     }    
 
     getInstruccion(){
+        let instruccion = this.instruccion;
+        if(instruccion instanceof Asignacion){
+            return instruccion.getDeclaracion();
+        }
         return this.instruccion;
     }
 
@@ -31,6 +38,22 @@ class Tipo{
 
     getId(){
         return this.id;
+    }
+
+    getTipoParam(){
+        const Declaracion = require('../api/instrucciones/Declaracion');
+        const Asignacion = require('../api/instrucciones/Asignacion');
+        if(this.instruccion instanceof Declaracion
+            || this.instruccion == Declaracion){
+                if(this.instruccion.getPuntero()){
+                    return TIPO_VALOR.PUNTERO_IDENTIFICADOR;
+                }else{
+                    return TIPO_VALOR.IDENTIFICADOR;
+                }
+        }else if(this.instruccion instanceof Asignacion
+            || this.instruccion == Asignacion){
+                return TIPO_VALOR.IDENTIFICADOR;
+        }
     }
 
     getTipo(){

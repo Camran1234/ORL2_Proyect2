@@ -17,6 +17,10 @@ class Cadena extends Objeto {
         return "cadena";
     }
 
+    tipo_int(){
+        return super.tipo_int();
+    }
+
     parse(operador, tablaTipos){
         let valor = this.valor;
         if(this.nombre != null ){

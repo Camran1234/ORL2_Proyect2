@@ -1,7 +1,6 @@
 
 const Object = require('./Object');
 
-
 class Number extends Object{
     constructor(valor, linea, columna, lenguaje){
         super(valor, linea, columna, lenguaje);
@@ -9,6 +8,10 @@ class Number extends Object{
 
     type(){
         return Number;
+    }
+
+    tipo_int(){
+        return super.tipo_int();
     }
 
     parse(){

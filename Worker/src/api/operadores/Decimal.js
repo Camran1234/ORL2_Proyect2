@@ -1,5 +1,3 @@
-
-
 const Number = require('./Number');
 
 class Decimal extends Number{
@@ -11,6 +9,10 @@ class Decimal extends Number{
 
     type(){
         return "decimal";
+    }
+
+    tipo_int(){
+        return super.tipo_int();
     }
 
     parse(operador, tablaTipos){

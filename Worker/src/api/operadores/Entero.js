@@ -13,6 +13,10 @@ class Entero extends Decimal {
         return "entero";
     }
 
+    tipo_int(){
+        return super.tipo_int();
+    }
+
     parse(operador, tablaTipos){
         let valor = this.generarValor(tablaTipos);
         const Cadena = require('./Cadena');

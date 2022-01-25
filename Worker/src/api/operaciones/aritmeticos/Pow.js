@@ -12,6 +12,10 @@ class Pow extends OperacionAritmetica {
         this.operador = "^";
     }
 
+    tipo_int(){
+        return super.tipo_int();
+    }
+
     incluirLastOperacion(){
         return super.incluirLastOperacion();
      }

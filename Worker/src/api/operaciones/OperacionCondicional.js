@@ -6,6 +6,9 @@ class OperacionCondicional extends Operacion {
         super(operadorL, operadorR, linea, columna, lenguaje);
     }
 
+    tipo_int(){
+        return super.tipo_int();
+    }
 
     incluirLastOperacion(){
         return super.incluirLastOperacion();

@@ -13,6 +13,18 @@ class Asignacion extends Instruccion{
         this.esArreglo = false;
         this.puntero = false;
         this.scan = false;
+        this.declaracion = null;
+    }
+
+    getDeclaracion(){
+        if(this.declaracion == null){
+            return this;
+        }
+        return this.declaracion;
+    }
+
+    setDeclaracion(declaracion){
+        this.declaracion = declaracion;
     }
 
     setScan(){

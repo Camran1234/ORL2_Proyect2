@@ -1,5 +1,10 @@
+const Booleano = require('../operadores/Booleano');
 const Cadena = require('../operadores/Cadena');
+const Decimal = require('../operadores/Decimal');
+const ParametroHelper = require('../../safe/ParametroHelper');
 var Operacion = require('./Operacion');
+const Caracter = require('../operadores/Caracter');
+const Any = require('../operadores/Any');
 
 class OperacionAritmetica extends Operacion {
 
@@ -8,6 +13,9 @@ class OperacionAritmetica extends Operacion {
         
     }
 
+    tipo_int(){
+        return super.tipo_int();
+    }
 
     incluirLastOperacion(){
        return super.incluirLastOperacion();
@@ -94,55 +102,139 @@ class OperacionAritmetica extends Operacion {
         
         if(tablaTipos.isCompiler()){
             //Do something
-            if(operadorL.getTipo() instanceof Cadena || operadorR.getTipo() instanceof Cadena){
-                //Strings
-
-                if ((operadorL.getTipo() instanceof Cadena)==false){
-                    //number to string
-                    let helper = resultadoL.split("");
-                    if(helper[0]=="t"){
-                        resultadoL = "(*((float *)"+resultadoL+"))";
-                    }
-                    resultadoL = "convertNumber_String("+resultadoL+")";
-                }else{
-                    if(helper[0]=="t"){
-                        resultadoL = "*((char **)"+resultadoL+")";
-                    }
-                }
-                //,.........
-                if ((operadorR.getTipo() instanceof Cadena)==false){
-                    //number to string
-                    let helper = resultadoR.split("");
-                    if(helper[0]=="t"){
-                        resultadoR = "(*((float *)"+resultadoR+"))";
-                    }
-                    resultadoR = "convertNumber_String("+resultadoR+")";
-                }else{
-                    //Es cadena
-                    if(helper[0]=="t"){
-                        resultadoR = "*((char **)"+resultadoL+")";
-                    }
-                }
+            if(operadorL.getTipo() instanceof Cadena && operadorR.getTipo() instanceof Cadena()
+            || operadorL.getTipo() == Cadena && operadorR.getTipo() == Cadena()){
+                cadena += "char *"+tablaTipos.drawT()+";\n";
                 operacion = "concat("+resultadoL+", "+resultadoR+")";
-                cadena += "char *"+tablaTipos.drawS() +" = "+operacion+";\n";
-                this.setNombre(tablaTipos.drawS());
-                tablaTipos.addS();
+                cadena += tablaTipos.drawT() + " = "+operacion+";\n";
+                this.setNombre(tablaTipos.drawT());
                 this.setOperacionFinal(operacion);
-            }else{
-                let helper = resultadoL.split("");
-                if(helper[0]=="t"){
-                    resultadoL = "(*((float *)"+resultadoL+"))";
+                tablaTipos.inscribirT();
+                tablaTipos.addT();
+            }else if(!(operadorL.getTipo() instanceof Cadena) && operadorR.getTipo() instanceof Cadena
+            || !(operadorL.getTipo() == Cadena) && operadorR.getTipo() == Cadena){
+                let nombre = resultadoL;
+                
+                if(operadorL.getTipo() instanceof Any
+                || operadorL.getTipo() == "ANY"
+                || operadorL.getTipo() == Any){ 
+                    let aux = "*((unsigned int *)"+nombre+".puntero)";
+                    let auxType = nombre+".type"
+                    if(operadorL instanceof Operacion){
+                        aux = nombre;
+                        auxType = 4;
+                    }
+                    tablaTipos.agregarTexto("char *"+tablaTipos.drawT()+";\n");
+                    cadena += "if ("+auxType+" == 0){\n";
+                    cadena += tablaTipos.drawT()+" = concat(convertInt_String("+aux+"), "+resultadoR+");\n";
+                    cadena += "}else if("+auxType+" == 1){\n";
+                    cadena += tablaTipos.drawT() + " = concat(convertFloat_String("+aux+"), "+resultadoR+");\n";
+                    cadena += "}else if("+auxType+" == 2){\n";
+                    cadena += tablaTipos.drawT() + " = concat(convertChar_String("+aux+"), "+resultadoR+");\n";
+                    cadena += "}else if("+auxType+" == 3){\n";
+                    cadena += tablaTipos.drawT() + " = concat("+aux+", "+resultadoR+");\n";
+                    cadena += "} else{\n";
+                    cadena += tablaTipos.drawT() + " = concat("+aux+", "+resultadoR+");\n";
+                    cadena += "}\n";
+                    operacion = tablaTipos.drawT()+" = concat("+aux+", "+resultadoR+");\n";
+                }else if(operadorL.getTipo() instanceof Caracter
+                || operadorL.getTipo() == "CARACTER"
+                || operadorL.getTipo() == Caracter){
+                    tablaTipos.agregarTexto("char *"+tablaTipos.drawT()+";\n");
+                    resultadoL = "convertChar_String("+resultadoL+")";
+                    operacion = "concat("+resultadoL+", "+resultadoR+")";
+                    cadena += tablaTipos.drawT()+" = "+operacion+";\n";
+                }else if(operadorL.getTipo() instanceof Booleano || operadorL.getTipo() instanceof Entero
+                || operadorL.getTipo() == "BOOLEAN"
+                || operadorL.getTipo() == "ENTERO"
+                || operadorL.getTipo() == Booleano
+                || operadorL.getTipo() == Entero){
+                    tablaTipos.agregarTexto("char *"+tablaTipos.drawT()+ ";\n");
+                    resultadoL = "convertInt_String("+resultadoL+")";
+                    operacion = "concat("+resultadoL+", "+resultadoR+")";
+                    cadena += tablaTipos.drawT() + " = "+operacion + ";\n";
+                }else if(operadorL.getTipo() instanceof Decimal
+                || operadorL.getTipo() == Decimal
+                || operadorL.getTipo() == 'DECIMAL'){
+                    tablaTipos.agregarTexto("char *"+tablaTipos.drawT()+";\n");
+                    resultadoL = "convertFloat_String("+resultadoL+")";
+                    operacion = "concat("+resultadoL+", "+resultadoR+")";
+                    cadena += tablaTipos.drawT() + " = "+operacion+ ";\n";
                 }
-                helper = resultadoR.split("");
-                if(helper[0]=="t"){
-                    resultadoR = "(*((float *)"+resultadoR+"))";
+
+                this.setNombre(tablaTipos.drawT());
+                this.setOperacionFinal(operacion);
+                tablaTipos.inscribirT();
+                tablaTipos.addT();
+            }else if(operadorL.getTipo() instanceof Cadena && !(operadorR.getTipo() instanceof Cadena)
+            || operadorL.getTipo() == Cadena && !(operadorR.getTipo() == Cadena)){
+                let nombre = resultadoR;
+                
+                if(operadorR.getTipo() instanceof Any
+                || operadorR.getTipo() == "ANY"
+                || operadorR.getTipo() == Any){ 
+                    let aux = "*((unsigned int *)"+nombre+".puntero)";
+                    let auxType = nombre+".type"
+                    if(operadorR instanceof Operacion){
+                        aux = nombre;
+                        auxType = 4;
+                    }
+                    tablaTipos.agregarTexto("char *"+tablaTipos.drawT()+";\n");
+                    cadena += "if ("+auxType+" == 0){\n";
+                    cadena += tablaTipos.drawT()+" = concat("+resultadoL+", convertInt_String("+aux+"));\n";
+                    cadena += "}else if("+auxType+" == 1){\n";
+                    cadena += tablaTipos.drawT()+" = concat("+resultadoL+", convertFloat_String("+aux+"));\n";
+                    cadena += "}else if("+auxType+" == 2){\n";
+                    cadena += tablaTipos.drawT()+" = concat("+resultadoL+", convertChar_String("+aux+"));\n";
+                    cadena += "}else if("+auxType+" == 3){\n";
+                    cadena += tablaTipos.drawT() + " = concat("+resultadoL+", "+aux+");\n";
+                    cadena += "} else{\n";
+                    cadena += tablaTipos.drawT() + " = concat("+resultadoL+", "+aux+");\n";
+                    cadena += "}\n";
+                    cadena += tablaTipos.drawT() + " = concat("+resultadoL+", "+aux+");\n";
+                }else if(operadorR.getTipo() instanceof Caracter
+                || operadorR.getTipo() == "CARACTER"
+                || operadorR.getTipo() == Caracter){
+                    tablaTipos.agregarTexto("char *"+tablaTipos.drawT()+";\n");
+                    resultadoR = "convertChar_String("+resultadoR+")";
+                    operacion = "concat("+resultadoL+", "+resultadoR+")";
+                    cadena += tablaTipos.drawT()+" = "+operacion+";\n";
+                }else if(operadorR.getTipo() instanceof Booleano || operadorR.getTipo() instanceof Entero
+                || operadorR.getTipo() == "BOOLEAN"
+                || operadorR.getTipo() == "ENTERO"
+                || operadorR.getTipo() == Booleano
+                || operadorR.getTipo() == Entero){
+                    tablaTipos.agregarTexto("char *"+tablaTipos.drawT()+ ";\n");
+                    resultadoR = "convertInt_String("+resultadoR+")";
+                    operacion = "concat("+resultadoL+", "+resultadoR+")";
+                    cadena += tablaTipos.drawT() + " = "+operacion + ";\n";
+                }else if(operadorR.getTipo() instanceof Decimal
+                || operadorR.getTipo() == "DECIMAL"
+                || operadorR.getTipo() == Decimal){
+                    tablaTipos.agregarTexto("char *"+tablaTipos.drawT()+";\n");
+                    resultadoR = "convertFloat_String("+resultadoR+")";
+                    operacion = "concat("+resultadoL+", "+resultadoR+")";
+                    cadena += tablaTipos.drawT() + " = "+operacion+ ";\n";
                 }
-                //Son numeros
+
+                this.setNombre(tablaTipos.drawT());
+                this.setOperacionFinal(operacion);
+                tablaTipos.inscribirT();
+                tablaTipos.addT();
+            }else if(!(operadorL.getTipo() instanceof Cadena) && !(operadorR.getTipo() instanceof Cadena)
+            ||!(operadorL.getTipo() == Cadena) && !(operadorR.getTipo() == Cadena)){
+                let parametroHelper = new ParametroHelper();
+                cadena += parametroHelper.stablishCuarteto(operadorL, resultadoL);
+                resultadoL = parametroHelper.getResultado();
+                cadena += parametroHelper.stablishCuarteto(operadorR, resultadoR);
+                resultadoR = parametroHelper.getResultado();
+                tablaTipos.agregarTexto("int "+tablaTipos.drawT()+";\n");
                 operacion = resultadoL + this.operador + resultadoR;
                 cadena += tablaTipos.drawT() + " = "+operacion+";\n";
                 this.setNombre(tablaTipos.drawT());
-                tablaTipos.addT();
                 this.setOperacionFinal(operacion);
+                tablaTipos.inscribirT();
+                tablaTipos.addT();
             }
             
         }else{

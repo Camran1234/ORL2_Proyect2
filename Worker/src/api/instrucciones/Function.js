@@ -22,12 +22,22 @@ class Function extends Instruccion{
         return this.etSalida;
     }
 
+    
+
     punteroParametro(index){
         try{
             let answer = this.parametros[index].puntero;
             return answer;
         }catch(ex){
             return false;
+        }
+    }
+
+    hasReturnName(){
+        if(this.returnName == null){
+            return false;
+        }else{
+            return true;
         }
     }
 

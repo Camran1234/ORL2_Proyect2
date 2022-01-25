@@ -9,6 +9,15 @@ class Clase extends Instruccion{
         this.constructores = [];
         this.variables = [];
         this.idExtensionO = null;
+        this.asignaciones = "";
+    }
+
+    getAsignaciones(){
+        return this.asignaciones;
+    }
+
+    agregarAsignacion(texto){
+        this.asignaciones += texto;
     }
 
     getIdExtensionO(){
@@ -29,6 +38,15 @@ class Clase extends Instruccion{
                 this.idExtensionO = tabla.buscarClase(this.idExtension,this.paqueteria);
             }
         }        
+    }
+
+    generarNombre(){
+        let cadena = "";
+        let paquete = this.getPaqueteria();
+        let nombreClase = this.id;
+        cadena += paquete+"_";
+        cadena += nombreClase+"_";
+        return cadena;
     }
 
     getConstructores(){

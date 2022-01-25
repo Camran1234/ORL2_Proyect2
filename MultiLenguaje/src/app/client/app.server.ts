@@ -22,6 +22,14 @@ export class CodeService {
         return this.http.post<any>(parseUrl,JSON.stringify(body));
     }
 
+    public getC(): Observable<any>{
+        let parseUrl = this.url+"getCodigoC";
+        let body = {
+
+        };
+        return this.http.post<any>(parseUrl, JSON.stringify(body));
+    }
+
     public parse(codigo:JSON): Observable<any> {
         let parseUrl = this.url+"parse";
         //console.log(parseUrl.toString());
